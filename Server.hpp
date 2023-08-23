@@ -39,7 +39,7 @@
 #define BACKLOG 10
 #define BAD_FD  -1
 #define EPOLL_QUEUE_LEN 10
-#define BUF_SIZE 10000
+#define BUF_SIZE 10
 
 class Server
 {

@@ -155,6 +155,7 @@ int	Server::handle_new_connection(void)
 		return (7);
 	}
 	std::cout << "NEW fd = " << connfd << " added to epoll" << std::endl;
+	requests.insert(std::pair<int, std::string>(connfd, ""));
 	return (0);
 }
 
@@ -164,16 +165,20 @@ int	Server::receive_data(int i)
 	ssize_t				nread;
 	char				buf[BUF_SIZE + 1];
 
-	nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
-	buf[nread] = 0;
-	std::cout << buf;
-	while (nread >= 2 && buf[nread] != '\n' && buf[nread - 1] != '\n')
+	nread = 1;
+	// get to the end of the message
+	// the end of the message could be signaled by many things
+	// if GET or DELETE, the first "\n\n" or until we can't read no more
+	// if POST, we expect a body, could be chunked encoding
+	while (nread >= 0)
 	{
 		nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
-		buf[nread] = 0;
-		std::cout << buf;
+		buf[nread] = '\0';
+		(requests.find(events[i].data.fd))->second += buf;
 	}
+	// parse the message before knowing if we should keep listening or begin sending the response
 	// reading or receiving is over, now let's get to writing or sending
+	std::cout << (requests.find(events[i].data.fd))->second << std::endl;
 	event.events = EPOLLOUT | EPOLLET;
 	event.data.fd = events[i].data.fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
@@ -202,8 +207,12 @@ int	Server::send_data(int i)
 		return (9);
 	}
 	close(events[i].data.fd);
+	requests.erase(events[i].data.fd);
 	return (0);
 }
+
+//for each new connection, we should assign a place on the map
+//when the connection is over, delete it from the map.
 
 //each request should be associated with an fd and we should check if we read the end or not each time, if the end, cool, if not, add it to the existing structure
 //create a map of fd-request
