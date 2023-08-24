@@ -27,7 +27,7 @@ typedef struct s_server
 	std::string				allow_methods;
 	std::string				root;
 	std::string				link_location;
-	std::vector<t_location> location;	
+	std::vector<t_location>	location;
 }		t_server;
 
 
