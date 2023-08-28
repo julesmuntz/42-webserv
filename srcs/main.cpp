@@ -11,19 +11,23 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "Exodus.hpp"
 
 int main()
 {
-	//should handle signals
-	//if a sigint is received
-	//put it in global
-	//global variable is triggered
-	// if global variable is triggered
-	//server stops to serve and does the necessary freeing
-
-	Server webserver;
+	Server	webserver;
 	int		ret;
+	Exodus pp("conf/default.conf");
 
+	try {
+		pp.get_Exodus();
+	}
+	catch(const std::exception &e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+	std::cout << "Port is: " << pp.get_parss()[0].listen << std::endl;
+	std::cout << "Server names are: " << pp.get_parss()[0].server_name << std::endl;
 	ret = webserver.serve_do_your_stuff();
 	return (ret);
 }

@@ -1,4 +1,4 @@
-NAME = werserv
+NAME = webserv
 INCLUDE_DIR = include
 SRC_DIR = srcs
 OBJ_DIR = obj

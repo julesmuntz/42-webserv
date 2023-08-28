@@ -1,4 +1,6 @@
-#include "server.h"
+#pragma once
+
+#include "Server.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -12,13 +14,13 @@ private:
 
 	// std::string				_servers[10];
 	// void					(Exodus::*_f[])(t_server *, std::string);
-	
+
 public:
 	Exodus(std::string const);
 	~Exodus();
 
 	t_server				set_server();
-	std::vector<t_server>	get_server() const;
+	//std::vector<t_server>	get_server() const;
 	t_location				set_location();
 	t_location				get_location() const;
 	void					set_parss();
@@ -46,11 +48,11 @@ public:
 	class error_filename : public std::exception
 	{
 		public:
-			virtual const char *what() const throw(); 
+			virtual const char *what() const throw();
 	};
 	class error_open : public std::exception
 	{
 		public:
-			virtual const char *what() const throw(); 
+			virtual const char *what() const throw();
 	};
 };
