@@ -74,6 +74,29 @@ typedef struct s_server
 	std::vector<t_location>	location;
 }		t_server;
 
+typedef struct s1_location
+{
+	/*tout ce qui peut etre dans location*/
+	std::string					uri;
+	std::vector<std::string>	allow_methods;
+	std::string					root;
+	std::string					index;
+	std::string					redir_link;
+	std::string					file_location;
+	std::string					cgi_pass;
+	bool						directory_listing;
+}		t1_location;
+
+typedef struct s1_server
+{
+	/*tout ce qui peut etre dans server*/
+	std::pair<int, std::string>	listen;
+	std::vector<std::string>	server_name;
+	int							client_body_size;
+	std::pair<int, std::string>	error_page;
+	std::vector<t1_location>	locations;
+}		t1_server;
+
 /* Ce que je voudrais conceptuellement parlant : si il y a une erreur dans la config file rien qu'une,
 	elle devient invalide et nous ne prendrons en compte que la config file par defaut,
 	attention certains champs peuvent etre vides ou ne pas exister et
@@ -103,14 +126,16 @@ class Server
 {
 	private:
 		int							epoll_fd;
-		int							sfd;
+		std::vector<int>			sfds;
 		struct epoll_event			events[10];
-		struct addrinfo				*addr_info;
+		//struct addrinfo				*addr_info;
 		std::map<int, std::string>	requests;
+		std::vector<t1_server>		con_servs;
 
-		int			get_a_socket(void);
+		bool		is_listening_socket(int fd);
+		int			get_a_socket(int port);
 		int			set_up_server(void);
-		int			handle_new_connection(void);
+		int			handle_new_connection(int sfd);
 		int			receive_data(int i);
 		int			send_data(int i);
 		static void	sigint_handler(int sig);
@@ -121,4 +146,5 @@ class Server
 		Server();
 		~Server();
 		int	serve_do_your_stuff(void);
+		void	set_con_servs(std::vector<t1_server> const &co_sers);
 };

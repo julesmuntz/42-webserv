@@ -32,8 +32,11 @@ void	Server::shutdown_server(void)
 		if (events[i].data.fd != -1)
 			close(events[i].data.fd);
 	}
-	if (sfd != -1)
-		close(sfd);
+	for (std::vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
+	{
+		if (*it != -1)
+			close(*it);
+	}
 	close(epoll_fd);
 }
 
@@ -45,23 +48,40 @@ void	Server::memset_events(void)
 	}
 }
 
+void	Server::set_con_servs(std::vector<t1_server> const &co_sers)
+{
+	this->con_servs = co_sers;
+}
+
+bool		Server::is_listening_socket(int fd)
+{
+	for (std::vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
+	{
+		if (*it == fd)
+			return (true);
+	}
+	return (false);
+}
+
 //gets the address of the server, creates a socket and binds it
 //to bind means to bind a unique local name to the socket with its file descriptor
 //bind a name to a socket
 //after calling socket(), a descriptor does not have a name associated with it
 //try to understand bind() and sockets further by watching videos maybe, it is a bit obscure
-int	Server::get_a_socket(void)
+int	Server::get_a_socket(int port)
 {
-	struct addrinfo	hints;
-	struct addrinfo	*result, *rp;
-	int				sfd, ret;
+	struct addrinfo		hints;
+	struct addrinfo		*result,	*rp;
+	std::stringstream	port_sstream;
+	int					sfd, ret;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	ret = getaddrinfo(NULL, PORT, &hints, &result);
+	port_sstream << port;
+	ret = getaddrinfo(NULL, port_sstream.str().c_str(), &hints, &result);
 	if (ret)
 	{
 		std::cerr << "getaddrinfo: " << gai_strerror(ret) << std::endl;
@@ -89,13 +109,15 @@ int	Server::get_a_socket(void)
 		std::cerr << "Could not bind" << std::endl;
 		return (BAD_FD);
 	}
-	addr_info = rp;
+	//addr_info = rp;
+	sfds.push_back(sfd);
 	return (sfd);
 }
 
 int	Server::set_up_server(void)
 {
-	struct epoll_event event;
+	struct epoll_event	event;
+	int					sfd;
 
 	signal(SIGINT, Server::sigint_handler);
 	epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
@@ -104,34 +126,39 @@ int	Server::set_up_server(void)
 		std::cerr << "Failed to create epoll file descriptor" << std::endl;
 		return (1);
 	}
-	sfd = this->get_a_socket();
-	if (sfd == BAD_FD)
+	//do this for all the ports
+	//then check the host name if necessary in the response construction
+	for (std::vector<t1_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
 	{
-		close(epoll_fd);
-		return (2);
-	}
-	event.events = EPOLLIN;
-	event.data.fd = sfd; // this is the listening socket,
-	//later we add the connection sockets for exchanging data, that are returned by accept()
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sfd, &event))
-	{
-		std::cout << "Failed to add file descriptor to epoll" << std::endl;
-		close(sfd);
-		close(epoll_fd);
-		return (3);
-	}
-	if (listen(sfd, 10) == -1)
-	{
-		perror("listen");
-		close(sfd);
-		close(epoll_fd);
-		return (4);
+		sfd = this->get_a_socket(it->listen.first);
+		if (sfd == BAD_FD)
+		{
+			close(epoll_fd);
+			return (2);
+		}
+		event.events = EPOLLIN;
+		event.data.fd = sfd; // this is the listening socket,
+		//later we add the connection sockets for exchanging data, that are returned by accept()
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sfd, &event))
+		{
+			std::cout << "Failed to add file descriptor to epoll" << std::endl;
+			close(sfd);
+			close(epoll_fd);
+			return (3);
+		}
+		if (listen(sfd, 10) == -1)
+		{
+			perror("listen");
+			close(sfd);
+			close(epoll_fd);
+			return (4);
+		}
 	}
 	this->memset_events();
 	return (0);
 }
 
-int	Server::handle_new_connection(void)
+int	Server::handle_new_connection(int sfd)
 {
 	struct epoll_event	event;
 	struct sockaddr		sock_addr;
@@ -235,9 +262,9 @@ int	Server::serve_do_your_stuff(void)
 		}
 		for (int i = 0; i < event_count; i++)
 		{
-			if (events[i].data.fd == sfd)
+			if (this->is_listening_socket(events[i].data.fd))
 			{
-				if (int ret = this->handle_new_connection())
+				if (int ret = this->handle_new_connection(events[i].data.fd))
 					return (ret);
 			}
 			else
