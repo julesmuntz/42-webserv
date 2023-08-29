@@ -51,28 +51,30 @@
 
 typedef struct s_location
 {
-	/*tout ce qui peut etre dans location*/
-	std::string				allow_methods;
-	std::string				root;
-	std::string				index;
-	std::string				cgi_pass;
-	std::string				client_body_buffer_size;
-	bool					alias;
-}		t_location;
+    /*tout ce qui peut etre dans location*/
+    std::string                allow_methods;
+    std::string                root;
+    std::string                index;
+    std::string                cgi_pass;
+    std::string                client_body_size;
+    bool                    alias;
+}        t_location;
 
 
 typedef struct s_server
 {
-	/*tout ce qui peut etre dans server*/
-	std::string				listen;
-	std::string				server_name;
-	std::string				client_body_buffer_size;
-	std::string				error_page;
-	std::string				allow_methods;
-	std::string				root;
-	std::string				link_location;
-	std::vector<t_location>	location;
-}		t_server;
+    /*tout ce qui peut etre dans server*/
+    std::string                listen;
+    std::pair<std::string, std::uint32_t>    listens;
+    std::vector<std::string>                server_name;
+    std::uint32_t                            client_body_size;
+    std::string                error_page;
+    std::vector<std::pair<std::uint32_t, std::string> > error_pages;
+    std::string                allow_methods;
+    std::string                root;
+    std::string                link_location;
+    std::vector<t_location>    location;
+}        t_server;
 
 typedef struct s1_location
 {
