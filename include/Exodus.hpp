@@ -32,7 +32,7 @@ public:
 	template<typename T>
 	void					server_name(T *, std::string);
 	template<typename T>
-	void					client_body_buffer_size(T *, std::string);
+	void					client_body_size(T *, std::string);
 	template<typename T>
 	void					error_page(T *, std::string);
 	template<typename T>

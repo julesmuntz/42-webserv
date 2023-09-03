@@ -56,8 +56,8 @@ t_server	Exodus::set_server()
 	std::string	line;
 	t_server	exodus_server;
 	bool		end = false;
-	std::string servers[] = {"listen" ,"server_name" ,"client_body_buffer_size","error_page","allow_methods","root"};
-	void		(Exodus::*f[])(t_server *, std::string) = {&Exodus::listen, &Exodus::server_name, &Exodus::client_body_buffer_size, &Exodus::error_page, &Exodus::allow_methods, &Exodus::root};
+	std::string servers[] = {"listen" ,"server_name" ,"client_body_size","error_page","allow_methods","root"};
+	void		(Exodus::*f[])(t_server *, std::string) = {&Exodus::listen, &Exodus::server_name, &Exodus::client_body_size, &Exodus::error_page, &Exodus::allow_methods, &Exodus::root};
 
 	while (std::getline(this->_ifs, line) && !end)
 	{
@@ -83,8 +83,8 @@ t_location				Exodus::set_location()
 {
 	std::string	line;
 	t_location	exodus_location;
-	std::string	locations[] = {"allow_methods", "root", "index", "cgi_pass", "alias", "client_body_buffer_size"};
-	void		(Exodus::*f[])(t_location *, std::string) = {&Exodus::allow_methods, &Exodus::root, &Exodus::index, &Exodus::cgi_pass, &Exodus::alias, &Exodus::client_body_buffer_size};
+	std::string	locations[] = {"allow_methods", "root", "index", "cgi_pass", "alias", "client_body_size"};
+	void		(Exodus::*f[])(t_location *, std::string) = {&Exodus::allow_methods, &Exodus::root, &Exodus::index, &Exodus::cgi_pass, &Exodus::alias, &Exodus::client_body_size};
 
 	exodus_location.alias = false;
 	while (std::getline(this->_ifs, line))
@@ -120,32 +120,71 @@ void					Exodus::listen(T *t, std::string line)
 {
 	std::string extractedWord = extractmots(line, "listen");
     if (!extractedWord.empty())
-		t->listen = extractedWord;
-	//ne pas oublier le try cacht si tout n'y est pas
+	{
+		if (!recherche(extractedWord, ":"))
+			throw ;
+		size_t delimiterPos = extractedWord.find(":");
+		if (delimiterPos != std::string::npos) {
+        	t->listens.first = extractedWord.substr(0, delimiterPos);
+        	t->listens.second = std::stoi(extractedWord.substr(delimiterPos + 1));
+   		} 
+		else 
+        	throw ;
+	}
+	else
+		throw ;
 }
 
 template<typename T>
 void					Exodus::server_name(T *t, std::string line)
 {
-	std::string extractedWord = extractmots(line, "server_name");
-    if (!extractedWord.empty())
-		t->server_name = extractedWord;
+    if (recherche(line, "server_name"))
+	{
+		std::vector<std::string> tokens = split(line);
+		std::vector<std::string>::iterator it = std::find(tokens.begin(), tokens.end(), "server_name");
+		if (it == tokens.end())
+			throw ;
+		size_t listenIndex = std::distance(tokens.begin(), it) + 1;
+		if (listenIndex >= tokens.size())
+			throw ;
+		while (listenIndex < tokens.size())
+			t->server_name.push_back(tokens[listenIndex++]);
+	}
+	else
+		throw ;
 }
 
 template<typename T>
-void					Exodus::client_body_buffer_size(T *t, std::string line)
+void					Exodus::client_body_size(T *t, std::string line)
 {
-	std::string extractedWord = extractmots(line, "client_body_buffer_size");
+	std::string extractedWord = extractmots(line, "client_body_size");
     if (!extractedWord.empty())
-		t->client_body_buffer_size = extractedWord;
+		t->client_body_size = std::stoi(extractedWord);
 }
 
 template<typename T>
 void					Exodus::error_page(T *t, std::string line)
 {
-	std::string extractedWord = extractmots(line, "error_page");
-    if (!extractedWord.empty())
-		t->error_page = extractedWord;
+    if (recherche(line, "error_page"))
+	{
+		std::vector<std::string> tokens = split(line);
+		std::vector<std::string>::iterator it = std::find(tokens.begin(), tokens.end(), "error_page");
+		if (it == tokens.end())
+			throw ;
+		size_t listenIndex = std::distance(tokens.begin(), it) + 1;
+		if (listenIndex >= tokens.size())
+			throw ;
+		while (listenIndex < tokens.size() && listenIndex + 1< tokens.size())
+		{
+			std::pair <std::uint32_t, std::string >	token;
+			token.first = std::stoi(tokens[listenIndex]);
+			token.second = tokens[listenIndex + 1];
+			t->error_pages.push_back(token);
+			listenIndex += 2;
+		}
+	}
+	else
+		throw ;
 }
 
 template<typename T>
