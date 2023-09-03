@@ -237,7 +237,17 @@ int	Server::receive_data(int i)
 		if (nread == 0)
 		{
 			std::cout << "CLOSE" << nread << std::endl << std::endl;
-			break ;
+			event.events = EPOLLIN | EPOLLET;
+			event.data.fd = events[i].data.fd;
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
+			{
+				perror("epoll_ctl: del did not work");
+				this->shutdown_server();
+				return (9);
+			}
+			close(events[i].data.fd);
+			requests.erase(events[i].data.fd);
+			return (0) ;
 		}
 		buf[nread] = '\0';
 		(requests.find(events[i].data.fd))->second.request += buf;
