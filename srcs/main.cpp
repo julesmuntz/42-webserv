@@ -42,7 +42,7 @@ t1_location	loc_2 = {
 std::vector<t1_location>	locations;
 
 t1_server	con_1 = {
-		.listen = std::make_pair(8080, "localhost"),
+		.listen = std::make_pair(8042, "localhost"),
 		.server_name = names,
 		.client_body_size = 10000,
 		.error_page = std::make_pair(404, "/error/404.html"),
@@ -50,7 +50,7 @@ t1_server	con_1 = {
 };
 
 t1_server	con_2 = {
-		.listen = std::make_pair(8045, "localhost"),
+		.listen = std::make_pair(8043, "localhost"),
 		.server_name = names,
 		.client_body_size = 10000,
 		.error_page = std::make_pair(404, "/error/404.html"),

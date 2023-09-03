@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "requestHandling.hpp"
 
 bool	g_stop_required = 0;
 
@@ -92,9 +93,21 @@ int	Server::get_a_socket(int port)
 		sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (sfd == -1)
 			continue;
-		int optval = 1;
+		int	optval = 1;
 		if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		{
 			close(sfd);
+			this->shutdown_server();
+		}
+		// struct timeval tv;
+		// tv.tv_sec = 0;
+		// tv.tv_usec = 100000;
+		// if (setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)))
+		// {
+		// 	close(sfd);
+		// 	this->shutdown_server();
+		// 	//handle error
+		// }
 		fcntl(sfd, F_SETFL, O_NONBLOCK);
 		std::cout << "sfd = " << sfd << std::endl;
 		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
@@ -173,6 +186,15 @@ int	Server::handle_new_connection(int sfd)
 		return (6);
 	}
 	fcntl(connfd, F_SETFL, O_NONBLOCK);
+	// struct timeval tv;
+	// tv.tv_sec = 0;
+	// tv.tv_usec = 100000;
+	// if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)))
+	// {
+	// 	close(connfd);
+	// 	this->shutdown_server();
+	// 	//handle error
+	// }
 	event.events = EPOLLIN | EPOLLET;
 	event.data.fd = connfd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
@@ -182,7 +204,8 @@ int	Server::handle_new_connection(int sfd)
 		return (7);
 	}
 	std::cout << "NEW fd = " << connfd << " added to epoll" << std::endl;
-	requests.insert(std::pair<int, std::string>(connfd, ""));
+	t_request	req = {NONE, false, ""};
+	requests.insert(std::pair<int, t_request>(connfd, req));
 	return (0);
 }
 
@@ -195,24 +218,43 @@ int	Server::receive_data(int i)
 	nread = 1;
 	// get to the end of the message
 	// the end of the message could be signaled by many things
-	// if GET or DELETE, the first "\n\n" or until we can't read no more
+	// if GET or DELETE, the first "\r\n\r\n" or until we can't read no more
 	// if POST, we expect a body, could be chunked encoding
+
+	//I think I shouldn't have this loop and should check each time I read if this is the end
+	//cause if this is false, we would continue indefinitely in this loop and this is not good cause it would block everything else
+	//not good
+
 	while (nread >= 0)
 	{
+		std::cout << "I am listening and nread value is " << nread << std::endl << std::endl;
 		nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
+		if (nread == -1)
+		{
+			std::cout << "ERROR" << nread << std::endl << std::endl;
+			break ;
+		}
+		if (nread == 0)
+		{
+			std::cout << "CLOSE" << nread << std::endl << std::endl;
+			break ;
+		}
 		buf[nread] = '\0';
-		(requests.find(events[i].data.fd))->second += buf;
+		(requests.find(events[i].data.fd))->second.request += buf;
 	}
 	// parse the message before knowing if we should keep listening or begin sending the response
 	// reading or receiving is over, now let's get to writing or sending
-	std::cout << (requests.find(events[i].data.fd))->second << std::endl;
-	event.events = EPOLLOUT | EPOLLET;
-	event.data.fd = events[i].data.fd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
+	if (request_is_over(requests.find(events[i].data.fd)->second))
 	{
-		perror("epoll_ctl: mod did not work");
-		this->shutdown_server();
-		return (8);
+		std::cout << (requests.find(events[i].data.fd))->second.request << std::endl;
+		event.events = EPOLLOUT | EPOLLET;
+		event.data.fd = events[i].data.fd;
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
+		{
+			perror("epoll_ctl: mod did not work");
+			this->shutdown_server();
+			return (8);
+		}
 	}
 	return (0);
 }

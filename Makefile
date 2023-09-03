@@ -6,7 +6,7 @@ CC = g++
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCLUDE_DIR)
 RM = rm -f
 
-SRC_WEBSERV = main Exodus Server
+SRC_WEBSERV = main Exodus Server requestHandling
 
 SRC_FILES = $(SRC_WEBSERV)
 
