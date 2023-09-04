@@ -225,39 +225,49 @@ int	Server::receive_data(int i)
 	//cause if this is false, we would continue indefinitely in this loop and this is not good cause it would block everything else
 	//not good
 
-	while (nread >= 0)
+	nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
+	if (nread == -1)
 	{
-		std::cout << "I am listening and nread value is " << nread << std::endl << std::endl;
-		nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
-		if (nread == -1)
-		{
-			std::cout << "ERROR" << nread << std::endl << std::endl;
-			break ;
-		}
-		if (nread == 0)
-		{
-			std::cout << "CLOSE" << nread << std::endl << std::endl;
-			event.events = EPOLLIN | EPOLLET;
-			event.data.fd = events[i].data.fd;
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
-			{
-				perror("epoll_ctl: del did not work");
-				this->shutdown_server();
-				return (9);
-			}
-			close(events[i].data.fd);
-			requests.erase(events[i].data.fd);
-			return (0) ;
-		}
-		buf[nread] = '\0';
-		(requests.find(events[i].data.fd))->second.request += buf;
+		std::cout << "ERROR" << nread << std::endl << std::endl;
+		this->shutdown_server();
+		return (10);
+		//handle the error
 	}
+	if (nread == 0)
+	{
+		std::cout << "CLOSE" << nread << std::endl << std::endl;
+		event.events = EPOLLIN | EPOLLET;
+		event.data.fd = events[i].data.fd;
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
+		{
+			perror("epoll_ctl: del did not work");
+			this->shutdown_server();
+			return (9);
+		}
+		close(events[i].data.fd);
+		requests.erase(events[i].data.fd);
+		return (0) ;
+	}
+	buf[nread] = '\0';
+	(requests.find(events[i].data.fd))->second.request += buf;
 	// parse the message before knowing if we should keep listening or begin sending the response
 	// reading or receiving is over, now let's get to writing or sending
+
 	if (request_is_over(requests.find(events[i].data.fd)->second))
 	{
 		std::cout << (requests.find(events[i].data.fd))->second.request << std::endl;
 		event.events = EPOLLOUT | EPOLLET;
+		event.data.fd = events[i].data.fd;
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
+		{
+			perror("epoll_ctl: mod did not work");
+			this->shutdown_server();
+			return (8);
+		}
+	}
+	else
+	{
+		event.events = EPOLLIN | EPOLLET;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
 		{

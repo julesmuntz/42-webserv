@@ -43,18 +43,38 @@ bool	req_is_chunked(t_request &req)
 
 bool	this_is_the_end(t_request &req)
 {
-	if (req.request.find("0\r\n\r\n") != std::string::npos)
-		return (true);
+	if (req.chunked)
+	{
+		if (req.request.find("0\r\n\r\n") != std::string::npos)
+			return (true);
+	}
+	else
+	{
+		if (req.request.find("\r\n\r\n") != std::string::npos)
+			return (true);
+	}
 	return (false);
 }
 
 bool	request_is_over(t_request req)
 {
 	std::cout << std::endl << "Is the request over?" << std::endl << std::endl;
+	std::cout << req.request << std::endl << std::endl;
+
 	if (req.method == NONE)
 	{
 		get_request_method(req);
 		std::cout << "Request method is: " << req.method << std::endl << std::endl;
+	}
+	if (req.method == GET || req.method == DELETE)
+	{
+		if (this_is_the_end(req))
+		{
+			std::cout << "OVER" << std::endl << std::endl;
+			return (true);
+		}
+		std::cout << "POP" << std::endl;
+		return (false);
 	}
 	if (req.method == POST && !req.chunked)
 	{

@@ -40,7 +40,7 @@
 #define BACKLOG 10
 #define BAD_FD  -1
 #define EPOLL_QUEUE_LEN 10
-#define BUF_SIZE 10
+#define BUF_SIZE 100
 #define FILE_CONF ".conf"
 #define ERROR_FILENAME "config file does not end with .conf"
 #define ERROR_OPEN "error open"
@@ -61,21 +61,20 @@ typedef struct s_location
     bool                    alias;
 }        t_location;
 
-
-typedef struct s_server
-{
-    /*tout ce qui peut etre dans server*/
-    std::string                listen;
-    std::pair<std::string, std::uint32_t>    listens;
-    std::vector<std::string>                server_name;
-    std::uint32_t                            client_body_size;
-    std::string                error_page;
-    std::vector<std::pair<std::uint32_t, std::string> > error_pages;
-    std::string                allow_methods;
-    std::string                root;
-    std::string                link_location;
-    std::vector<t_location>    location;
-}        t_server;
+// typedef struct s_server
+// {
+//     /*tout ce qui peut etre dans server*/
+//     std::string                listen;
+//     std::pair<std::string, std::uint32_t>    listens;
+//     std::vector<std::string>                server_name;
+//     std::uint32_t                            client_body_size;
+//     std::string                error_page;
+//     std::vector<std::pair<std::uint32_t, std::string> > error_pages;
+//     std::string                allow_methods;
+//     std::string                root;
+//     std::string                link_location;
+//     std::vector<t_location>    location;
+// }        t_server;
 
 typedef struct s1_location
 {

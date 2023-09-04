@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
-#include "Exodus.hpp"
+// #include "Exodus.hpp"
 
 std::vector<std::string>	allow_methods;
 
@@ -63,7 +63,7 @@ int main()
 {
 	Server	webserver;
 	int		ret;
-	Exodus pp("conf/default.conf");
+	//Exodus pp("conf/default.conf");
 
 	names.push_back("ok");
 	names.push_back("lala");
@@ -77,15 +77,15 @@ int main()
 	context_servers.push_back(con_1);
 	context_servers.push_back(con_2);
 
-	try {
-		pp.get_Exodus();
-	}
-	catch(const std::exception &e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
-	std::cout << "Port is: " << pp.get_parss()[0].listen << std::endl;
-	std::cout << "Server names are: " << pp.get_parss()[0].server_name << std::endl;
+	// try {
+	// 	pp.get_Exodus();
+	// }
+	// catch(const std::exception &e)
+	// {
+	// 	std::cerr << e.what() << std::endl;
+	// }
+	// std::cout << "Port is: " << pp.get_parss()[0].listen << std::endl;
+	// std::cout << "Server names are: " << pp.get_parss()[0].server_name << std::endl;
 	webserver.set_con_servs(context_servers);
 	ret = webserver.serve_do_your_stuff();
 	return (ret);
