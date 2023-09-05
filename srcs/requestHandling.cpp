@@ -12,7 +12,6 @@ void	get_request_method(t_request &req)
 	std::getline(request, first_line);
 	if (*first_line.rbegin() == '\r')
 	{
-		//erase the last character then proceed
 		first_line.erase(first_line.size() - 1);
 		std::istringstream	first_line_stream(first_line);
 		first_line_stream >> method_word;
@@ -27,15 +26,25 @@ void	get_request_method(t_request &req)
 	}
 	else
 	{
-		req.method = ERROR;
+		req.method = NONE;
 	}
 }
 
 bool	req_is_chunked(t_request &req)
 {
-	if (req.request.find("Transfer-Encoding: chunked\r\n") != std::string::npos)
+	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != std::string::npos)
 	{
 		req.chunked = true;
+		return (true);
+	}
+	return (false);
+}
+
+bool	req_has_body(t_request &req)
+{
+	if (req.request.find("\r\n\r\n") != std::string::npos)
+	{
+		req.body = true;
 		return (true);
 	}
 	return (false);
@@ -45,13 +54,22 @@ bool	this_is_the_end(t_request &req)
 {
 	if (req.chunked)
 	{
-		if (req.request.find("0\r\n\r\n") != std::string::npos)
+		if (req.request.find("\r\n0\r\n\r\n") != std::string::npos)
+			return (true);
+	}
+	else if (req.method != POST)
+	{
+		if (req.request.find("\r\n\r\n") != std::string::npos)
 			return (true);
 	}
 	else
 	{
-		if (req.request.find("\r\n\r\n") != std::string::npos)
-			return (true);
+		if (req.body)
+		{
+			size_t	pos = req.request.find("\r\n\r\n");
+			if (req.request.find("\r\n\r\n", pos + 1) != std::string::npos)
+				return (true);
+		}
 	}
 	return (false);
 }
@@ -59,7 +77,6 @@ bool	this_is_the_end(t_request &req)
 bool	request_is_over(t_request req)
 {
 	std::cout << std::endl << "Is the request over?" << std::endl << std::endl;
-	std::cout << req.request << std::endl << std::endl;
 
 	if (req.method == NONE)
 	{
@@ -69,20 +86,31 @@ bool	request_is_over(t_request req)
 	if (req.method == GET || req.method == DELETE)
 	{
 		if (this_is_the_end(req))
-		{
-			std::cout << "OVER" << std::endl << std::endl;
 			return (true);
-		}
-		std::cout << "POP" << std::endl;
 		return (false);
 	}
 	if (req.method == POST && !req.chunked)
 	{
+		if (req.body)
+		{
+			if (this_is_the_end(req))
+				return (true);
+			return (false);
+		}
 		if (req_is_chunked(req))
 		{
 			if (this_is_the_end(req))
 				return (true);
 			return (false);
+		}
+		else
+		{
+			if (req_has_body(req))
+			{
+				if (this_is_the_end(req))
+					return (true);
+				return (false);
+			}
 		}
 	}
 	if (req.chunked)
@@ -91,9 +119,5 @@ bool	request_is_over(t_request req)
 			return (true);
 		return (false);
 	}
-	return (true);
+	return (false);
 }
-
-//if GET, DEL, ok done
-//else if POST, search for the content-length of the encoding-type=chunked
-//then do what is necessary

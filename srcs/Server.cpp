@@ -19,11 +19,15 @@ Server::Server() {}
 
 Server::~Server() {}
 
+/* Handles CTR+C */
+
 void	Server::sigint_handler(int sig)
 {
 	(void)sig;
 	g_stop_required = 1;
 }
+
+/* Shuts down the server, closes and frees everything */
 
 void	Server::shutdown_server(void)
 {
@@ -41,6 +45,8 @@ void	Server::shutdown_server(void)
 	close(epoll_fd);
 }
 
+/* Initializes the events queue */
+
 void	Server::memset_events(void)
 {
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
@@ -49,12 +55,16 @@ void	Server::memset_events(void)
 	}
 }
 
+/* Sets context servers from the config file */
+
 void	Server::set_con_servs(std::vector<t1_server> const &co_sers)
 {
 	this->con_servs = co_sers;
 }
 
-bool		Server::is_listening_socket(int fd)
+/* Returns true if the fd is a listening socket */
+
+bool	Server::is_listening_socket(int fd)
 {
 	for (std::vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
 	{
@@ -64,11 +74,9 @@ bool		Server::is_listening_socket(int fd)
 	return (false);
 }
 
-//gets the address of the server, creates a socket and binds it
-//to bind means to bind a unique local name to the socket with its file descriptor
-//bind a name to a socket
-//after calling socket(), a descriptor does not have a name associated with it
-//try to understand bind() and sockets further by watching videos maybe, it is a bit obscure
+/* Gets the address of the server, creates a socket and binds it to
+   the chosen port */
+
 int	Server::get_a_socket(int port)
 {
 	struct addrinfo		hints;
@@ -94,20 +102,12 @@ int	Server::get_a_socket(int port)
 		if (sfd == -1)
 			continue;
 		int	optval = 1;
-		if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+		if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &optval,
+				sizeof(optval)) == -1)
 		{
 			close(sfd);
 			this->shutdown_server();
 		}
-		// struct timeval tv;
-		// tv.tv_sec = 0;
-		// tv.tv_usec = 100000;
-		// if (setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)))
-		// {
-		// 	close(sfd);
-		// 	this->shutdown_server();
-		// 	//handle error
-		// }
 		fcntl(sfd, F_SETFL, O_NONBLOCK);
 		std::cout << "sfd = " << sfd << std::endl;
 		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
@@ -122,10 +122,13 @@ int	Server::get_a_socket(int port)
 		std::cerr << "Could not bind" << std::endl;
 		return (BAD_FD);
 	}
-	//addr_info = rp;
 	sfds.push_back(sfd);
 	return (sfd);
 }
+
+/* Sets up the server, by creating the listening sockets associated
+   with the chosen ports, by creating an epoll and making the
+   listening sockets listen() to entrant connections */
 
 int	Server::set_up_server(void)
 {
@@ -139,9 +142,8 @@ int	Server::set_up_server(void)
 		std::cerr << "Failed to create epoll file descriptor" << std::endl;
 		return (1);
 	}
-	//do this for all the ports
-	//then check the host name if necessary in the response construction
-	for (std::vector<t1_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
+	for (std::vector<t1_server>::iterator it = con_servs.begin();
+			it != con_servs.end(); it++)
 	{
 		sfd = this->get_a_socket(it->listen.first);
 		if (sfd == BAD_FD)
@@ -150,8 +152,7 @@ int	Server::set_up_server(void)
 			return (2);
 		}
 		event.events = EPOLLIN;
-		event.data.fd = sfd; // this is the listening socket,
-		//later we add the connection sockets for exchanging data, that are returned by accept()
+		event.data.fd = sfd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sfd, &event))
 		{
 			std::cout << "Failed to add file descriptor to epoll" << std::endl;
@@ -171,6 +172,9 @@ int	Server::set_up_server(void)
 	return (0);
 }
 
+/* Handles new entrant connections to the listening sockets.
+   We use accept() to accept the new connections then add them to epoll */
+
 int	Server::handle_new_connection(int sfd)
 {
 	struct epoll_event	event;
@@ -186,15 +190,6 @@ int	Server::handle_new_connection(int sfd)
 		return (6);
 	}
 	fcntl(connfd, F_SETFL, O_NONBLOCK);
-	// struct timeval tv;
-	// tv.tv_sec = 0;
-	// tv.tv_usec = 100000;
-	// if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)))
-	// {
-	// 	close(connfd);
-	// 	this->shutdown_server();
-	// 	//handle error
-	// }
 	event.events = EPOLLIN | EPOLLET;
 	event.data.fd = connfd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
@@ -204,10 +199,12 @@ int	Server::handle_new_connection(int sfd)
 		return (7);
 	}
 	std::cout << "NEW fd = " << connfd << " added to epoll" << std::endl;
-	t_request	req = {NONE, false, ""};
+	t_request	req = {NONE, false, false, ""};
 	requests.insert(std::pair<int, t_request>(connfd, req));
 	return (0);
 }
+
+/* Handles the data sent to connection sockets by the client */
 
 int	Server::receive_data(int i)
 {
@@ -215,23 +212,12 @@ int	Server::receive_data(int i)
 	ssize_t				nread;
 	char				buf[BUF_SIZE + 1];
 
-	nread = 1;
-	// get to the end of the message
-	// the end of the message could be signaled by many things
-	// if GET or DELETE, the first "\r\n\r\n" or until we can't read no more
-	// if POST, we expect a body, could be chunked encoding
-
-	//I think I shouldn't have this loop and should check each time I read if this is the end
-	//cause if this is false, we would continue indefinitely in this loop and this is not good cause it would block everything else
-	//not good
-
 	nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
 	if (nread == -1)
 	{
 		std::cout << "ERROR" << nread << std::endl << std::endl;
 		this->shutdown_server();
 		return (10);
-		//handle the error
 	}
 	if (nread == 0)
 	{
@@ -250,12 +236,10 @@ int	Server::receive_data(int i)
 	}
 	buf[nread] = '\0';
 	(requests.find(events[i].data.fd))->second.request += buf;
-	// parse the message before knowing if we should keep listening or begin sending the response
-	// reading or receiving is over, now let's get to writing or sending
-
 	if (request_is_over(requests.find(events[i].data.fd)->second))
 	{
-		std::cout << (requests.find(events[i].data.fd))->second.request << std::endl;
+		std::cout << (requests.find(events[i].data.fd))->second.request
+				  << std::endl;
 		event.events = EPOLLOUT | EPOLLET;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
@@ -279,6 +263,9 @@ int	Server::receive_data(int i)
 	return (0);
 }
 
+/* Sends data through a connection socket to the client,
+   then closes the connection socket (close the connection) */
+
 int	Server::send_data(int i)
 {
 	struct epoll_event	event;
@@ -300,11 +287,8 @@ int	Server::send_data(int i)
 	return (0);
 }
 
-//for each new connection, we should assign a place on the map
-//when the connection is over, delete it from the map.
+/* Server Work, open sockets, receive requests, send responses */
 
-//each request should be associated with an fd and we should check if we read the end or not each time, if the end, cool, if not, add it to the existing structure
-//create a map of fd-request
 int	Server::serve_do_your_stuff(void)
 {
 	int	event_count;

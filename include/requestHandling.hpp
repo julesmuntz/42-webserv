@@ -11,6 +11,9 @@ typedef enum	e_method{
 typedef struct	s_request{
 	t_method	method;
 	bool		chunked;
+	bool		body;
+	//bool		error_413;
+	//bool		error_431;
 	std::string	request;
 }		t_request;
 

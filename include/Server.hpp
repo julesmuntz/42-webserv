@@ -40,7 +40,7 @@
 #define BACKLOG 10
 #define BAD_FD  -1
 #define EPOLL_QUEUE_LEN 10
-#define BUF_SIZE 100
+#define BUF_SIZE 1
 #define FILE_CONF ".conf"
 #define ERROR_FILENAME "config file does not end with .conf"
 #define ERROR_OPEN "error open"
@@ -123,14 +123,12 @@ typedef struct s1_server
 	}
 */
 
-
 class Server
 {
 	private:
 		int							epoll_fd;
 		std::vector<int>			sfds;
 		struct epoll_event			events[10];
-		//struct addrinfo				*addr_info;
 		std::map<int, t_request>	requests;
 		std::vector<t1_server>		con_servs;
 
