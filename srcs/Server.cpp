@@ -11,11 +11,12 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
-#include "requestHandling.hpp"
 
 bool	g_stop_required = 0;
 
-Server::Server() {}
+Server::Server() : epoll_fd(-1) {
+	this->memset_events();
+}
 
 Server::~Server() {}
 
@@ -27,7 +28,8 @@ void	Server::sigint_handler(int sig)
 	g_stop_required = 1;
 }
 
-/* Shuts down the server, closes and frees everything */
+/* Shuts down the server, closes and frees everything,
+   writes down error message if necessary with the overload */
 
 void	Server::shutdown_server(void)
 {
@@ -42,7 +44,27 @@ void	Server::shutdown_server(void)
 		if (*it != -1)
 			close(*it);
 	}
-	close(epoll_fd);
+	if (epoll_fd != -1)
+		close(epoll_fd);
+}
+
+int	Server::shutdown_server(std::string str_err)
+{
+	perror(str_err.c_str());
+	std::cout << std::endl << "Shutting down" << std::endl;
+	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
+	{
+		if (events[i].data.fd != -1)
+			close(events[i].data.fd);
+	}
+	for (std::vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
+	{
+		if (*it != -1)
+			close(*it);
+	}
+	if (epoll_fd != -1)
+		close(epoll_fd);
+	return (1);
 }
 
 /* Initializes the events queue */
@@ -106,7 +128,7 @@ int	Server::get_a_socket(int port)
 				sizeof(optval)) == -1)
 		{
 			close(sfd);
-			this->shutdown_server();
+			return (this->shutdown_server("setsockopt"));
 		}
 		fcntl(sfd, F_SETFL, O_NONBLOCK);
 		std::cout << "sfd = " << sfd << std::endl;
@@ -148,7 +170,7 @@ int	Server::set_up_server(void)
 		sfd = this->get_a_socket(it->listen.first);
 		if (sfd == BAD_FD)
 		{
-			close(epoll_fd);
+			this->shutdown_server();
 			return (2);
 		}
 		event.events = EPOLLIN;
@@ -156,19 +178,15 @@ int	Server::set_up_server(void)
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sfd, &event))
 		{
 			std::cout << "Failed to add file descriptor to epoll" << std::endl;
-			close(sfd);
-			close(epoll_fd);
+			this->shutdown_server();
 			return (3);
 		}
 		if (listen(sfd, 10) == -1)
 		{
-			perror("listen");
 			close(sfd);
-			close(epoll_fd);
-			return (4);
+			return (this->shutdown_server("listen"));
 		}
 	}
-	this->memset_events();
 	return (0);
 }
 
@@ -184,23 +202,15 @@ int	Server::handle_new_connection(int sfd)
 
 	connfd = accept(sfd, &sock_addr, &sock_len);
 	if (connfd == -1)
-	{
-		perror("accept");
-		this->shutdown_server();
-		return (6);
-	}
+		return (this->shutdown_server("accept"));
 	fcntl(connfd, F_SETFL, O_NONBLOCK);
 	event.events = EPOLLIN | EPOLLET;
 	event.data.fd = connfd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
-	{
-		perror("epoll_ctl: conn_sock");
-		this->shutdown_server();
-		return (7);
-	}
+		return (this->shutdown_server("epoll_ctl: conn_sock"));
 	std::cout << "NEW fd = " << connfd << " added to epoll" << std::endl;
-	t_request	req = {NONE, false, false, ""};
-	requests.insert(std::pair<int, t_request>(connfd, req));
+	RequestHandler	req;
+	requests.insert(std::pair<int, RequestHandler>(connfd, req));
 	return (0);
 }
 
@@ -215,9 +225,7 @@ int	Server::receive_data(int i)
 	nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
 	if (nread == -1)
 	{
-		std::cout << "ERROR" << nread << std::endl << std::endl;
-		this->shutdown_server();
-		return (10);
+		return (this->shutdown_server("recv"));
 	}
 	if (nread == 0)
 	{
@@ -225,40 +233,25 @@ int	Server::receive_data(int i)
 		event.events = EPOLLIN | EPOLLET;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
-		{
-			perror("epoll_ctl: del did not work");
-			this->shutdown_server();
-			return (9);
-		}
+			return (this->shutdown_server("epoll_ctl"));
 		close(events[i].data.fd);
 		requests.erase(events[i].data.fd);
-		return (0) ;
+		return (0);
 	}
 	buf[nread] = '\0';
-	(requests.find(events[i].data.fd))->second.request += buf;
-	if (request_is_over(requests.find(events[i].data.fd)->second))
+	if (!(requests.find(events[i].data.fd))->second.add_data(buf))
 	{
-		std::cout << (requests.find(events[i].data.fd))->second.request
-				  << std::endl;
 		event.events = EPOLLOUT | EPOLLET;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
-		{
-			perror("epoll_ctl: mod did not work");
-			this->shutdown_server();
-			return (8);
-		}
+			return (this->shutdown_server("epoll_ctl"));
 	}
 	else
 	{
 		event.events = EPOLLIN | EPOLLET;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
-		{
-			perror("epoll_ctl: mod did not work");
-			this->shutdown_server();
-			return (8);
-		}
+			return (this->shutdown_server("epoll_ctl"));
 	}
 	return (0);
 }
@@ -277,11 +270,7 @@ int	Server::send_data(int i)
 	event.events = EPOLLIN | EPOLLET;
 	event.data.fd = events[i].data.fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
-	{
-		perror("epoll_ctl: del did not work");
-		this->shutdown_server();
-		return (9);
-	}
+		return (this->shutdown_server("epoll_ctl"));
 	close(events[i].data.fd);
 	requests.erase(events[i].data.fd);
 	return (0);
@@ -294,36 +283,35 @@ int	Server::serve_do_your_stuff(void)
 	int	event_count;
 
 	if (int ret = this->set_up_server())
+	{
+		this->shutdown_server();
 		return (ret);
+	}
 	while (!g_stop_required)
 	{
 		event_count = epoll_wait(epoll_fd, events, EPOLL_QUEUE_LEN, 10000);
 		if (event_count == -1 && errno == EINTR)
 			break ;
 		if (event_count == -1)
-		{
-			perror("epoll_wait");
-			this->shutdown_server();
-			return (5);
-		}
+			return (this->shutdown_server("epoll_wait"));
 		for (int i = 0; i < event_count; i++)
 		{
 			if (this->is_listening_socket(events[i].data.fd))
 			{
-				if (int ret = this->handle_new_connection(events[i].data.fd))
-					return (ret);
+				if (this->handle_new_connection(events[i].data.fd))
+					return (1);
 			}
 			else
 			{
 				if (events[i].events == EPOLLIN)
 				{
-					if (int ret = this->receive_data(i))
-						return (ret);
+					if (this->receive_data(i))
+						return (1);
 				}
 				if (events[i].events == EPOLLOUT)
 				{
-					if (int ret = this->send_data(i))
-						return (ret);
+					if (this->send_data(i))
+						return (1);
 				}
 			}
 		}

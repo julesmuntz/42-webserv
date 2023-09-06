@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
-#include "requestHandling.hpp"
+#include "RequestHandler.hpp"
 
 #define PORT "8000"
 #define BACKLOG 10
@@ -129,7 +129,7 @@ class Server
 		int							epoll_fd;
 		std::vector<int>			sfds;
 		struct epoll_event			events[10];
-		std::map<int, t_request>	requests;
+		std::map<int, RequestHandler>	requests;
 		std::vector<t1_server>		con_servs;
 
 		bool		is_listening_socket(int fd);
@@ -140,11 +140,12 @@ class Server
 		int			send_data(int i);
 		static void	sigint_handler(int sig);
 		void		memset_events(void);
-		void		shutdown_server();
+		void		shutdown_server(void);
+		int			shutdown_server(std::string str_err);
 
 	public:
 		Server();
 		~Server();
-		int	serve_do_your_stuff(void);
+		int		serve_do_your_stuff(void);
 		void	set_con_servs(std::vector<t1_server> const &co_sers);
 };
