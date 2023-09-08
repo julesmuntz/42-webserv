@@ -36,11 +36,11 @@
 #include <errno.h>
 #include "RequestHandler.hpp"
 
-#define PORT "8000"
 #define BACKLOG 10
 #define BAD_FD  -1
-#define EPOLL_QUEUE_LEN 10
-#define BUF_SIZE 1
+#define EPOLL_QUEUE_LEN 100000
+#define BUF_SIZE 1024
+#define TIMEOUT  70
 #define FILE_CONF ".conf"
 #define ERROR_FILENAME "config file does not end with .conf"
 #define ERROR_OPEN "error open"
@@ -128,7 +128,7 @@ class Server
 	private:
 		int							epoll_fd;
 		std::vector<int>			sfds;
-		struct epoll_event			events[10];
+		struct epoll_event			events[EPOLL_QUEUE_LEN];
 		std::map<int, RequestHandler>	requests;
 		std::vector<t1_server>		con_servs;
 
@@ -140,6 +140,7 @@ class Server
 		int			send_data(int i);
 		static void	sigint_handler(int sig);
 		void		memset_events(void);
+		void		update_time(void);
 		void		shutdown_server(void);
 		int			shutdown_server(std::string str_err);
 

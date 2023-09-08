@@ -84,6 +84,24 @@ void	Server::set_con_servs(std::vector<t1_server> const &co_sers)
 	this->con_servs = co_sers;
 }
 
+void	Server::update_time(void)
+{
+	std::map<int, RequestHandler>::iterator	it;
+	struct epoll_event						event;
+
+	for (it = requests.begin(); it != requests.end(); it++)
+	{
+		if (it->second.check_timeout())
+		{
+			it->second.deactivate_timeout();
+			event.events = EPOLLOUT;
+			event.data.fd = it->first;
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, it->first, &event) == -1)
+				this->shutdown_server("epoll_ctl");
+		}
+	}
+}
+
 /* Returns true if the fd is a listening socket */
 
 bool	Server::is_listening_socket(int fd)
@@ -130,7 +148,6 @@ int	Server::get_a_socket(int port)
 			close(sfd);
 			return (this->shutdown_server("setsockopt"));
 		}
-		fcntl(sfd, F_SETFL, O_NONBLOCK);
 		std::cout << "sfd = " << sfd << std::endl;
 		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
 			break;
@@ -203,8 +220,7 @@ int	Server::handle_new_connection(int sfd)
 	connfd = accept(sfd, &sock_addr, &sock_len);
 	if (connfd == -1)
 		return (this->shutdown_server("accept"));
-	fcntl(connfd, F_SETFL, O_NONBLOCK);
-	event.events = EPOLLIN | EPOLLET;
+	event.events = EPOLLIN;
 	event.data.fd = connfd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
 		return (this->shutdown_server("epoll_ctl: conn_sock"));
@@ -230,7 +246,7 @@ int	Server::receive_data(int i)
 	if (nread == 0)
 	{
 		std::cout << "CLOSE" << nread << std::endl << std::endl;
-		event.events = EPOLLIN | EPOLLET;
+		event.events = EPOLLIN;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
 			return (this->shutdown_server("epoll_ctl"));
@@ -241,14 +257,8 @@ int	Server::receive_data(int i)
 	buf[nread] = '\0';
 	if (!(requests.find(events[i].data.fd))->second.add_data(buf))
 	{
-		event.events = EPOLLOUT | EPOLLET;
-		event.data.fd = events[i].data.fd;
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
-			return (this->shutdown_server("epoll_ctl"));
-	}
-	else
-	{
-		event.events = EPOLLIN | EPOLLET;
+		requests.find(events[i].data.fd)->second.deactivate_timeout();
+		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
 			return (this->shutdown_server("epoll_ctl"));
@@ -264,10 +274,11 @@ int	Server::send_data(int i)
 	struct epoll_event	event;
 
 	std::cout << "Sending..." << std::endl;
+	//check return value of send
 	send(events[i].data.fd, "HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n",
 		strlen("HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n"), 0);
 	std::cout << "Send OK" << std::endl;
-	event.events = EPOLLIN | EPOLLET;
+	event.events = EPOLLIN;
 	event.data.fd = events[i].data.fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
 		return (this->shutdown_server("epoll_ctl"));
@@ -289,7 +300,8 @@ int	Server::serve_do_your_stuff(void)
 	}
 	while (!g_stop_required)
 	{
-		event_count = epoll_wait(epoll_fd, events, EPOLL_QUEUE_LEN, 10000);
+		this->update_time();
+		event_count = epoll_wait(epoll_fd, events, EPOLL_QUEUE_LEN, 1000);
 		if (event_count == -1 && errno == EINTR)
 			break ;
 		if (event_count == -1)

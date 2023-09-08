@@ -1,35 +1,11 @@
 #pragma once
 
-typedef enum	e_method{
-	GET,
-	DELETE,
-	POST,
-	NONE,
-	ERROR
-}				t_method;
+#include "RequestEndDeterminator.hpp"
 
-typedef enum	e_error{
-	error_400 = 400,
-	error_404 = 404,
-	error_413 = 413,
-	error_431 = 431
-}				t_error;
-
-typedef struct	s_request{
-	t_method	method;
-	bool		chunked;
-	bool		body;
-	std::string	request;
-}				t_request;
-
-class RequestHandler
+class RequestHandler : virtual public RequestEndDeterminator
 {
-	private:
-		t_request	req;
-		bool		request_is_over(void);
-
 	public:
 		RequestHandler();
-		~RequestHandler();
+		virtual ~RequestHandler();
 		bool	add_data(std::string str);
 };
