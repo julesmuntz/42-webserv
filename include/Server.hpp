@@ -39,6 +39,7 @@
 #define BACKLOG 10
 #define BAD_FD  -1
 #define EPOLL_QUEUE_LEN 100000
+#define HEADER_MAX_SIZE 10000
 #define BUF_SIZE 1024
 #define TIMEOUT  70
 #define FILE_CONF ".conf"

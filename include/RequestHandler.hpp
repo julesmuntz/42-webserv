@@ -4,8 +4,11 @@
 
 class RequestHandler : virtual public RequestEndDeterminator
 {
+	private:
+		int	fd;
+
 	public:
-		RequestHandler();
+		RequestHandler(int fd);
 		virtual ~RequestHandler();
 		bool	add_data(std::string str);
 };

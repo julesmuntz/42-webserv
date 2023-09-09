@@ -1,12 +1,5 @@
 #include "Server.hpp"
 
-//implement timeout of client requests (timeout of connection)
-//implement request too long errors
-//how to implement timeout ?
-
-/* check everytime we enter the loop if the time has gone
-past what is necessary everytime we go through epoll_wait I guess */
-
 RequestEndDeterminator::RequestEndDeterminator()
 {
 	time_t	ref;
@@ -45,7 +38,7 @@ bool	RequestEndDeterminator::check_timeout()
 	return (false);
 }
 
-void	get_request_method(t_request &req)
+void	RequestEndDeterminator::get_request_method(void)
 {
 	std::istringstream	request(req.request);
 	std::string			first_line;
@@ -72,7 +65,7 @@ void	get_request_method(t_request &req)
 	}
 }
 
-bool	req_is_chunked(t_request &req)
+bool	RequestEndDeterminator::req_is_chunked(void)
 {
 	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != std::string::npos)
 	{
@@ -82,7 +75,7 @@ bool	req_is_chunked(t_request &req)
 	return (false);
 }
 
-bool	req_has_body(t_request &req)
+bool	RequestEndDeterminator::req_has_body(void)
 {
 	if (req.request.find("\r\n\r\n") != std::string::npos)
 	{
@@ -92,7 +85,7 @@ bool	req_has_body(t_request &req)
 	return (false);
 }
 
-bool	this_is_the_end(t_request &req)
+bool	RequestEndDeterminator::this_is_the_end(void)
 {
 	if (req.chunked)
 	{
@@ -116,49 +109,35 @@ bool	this_is_the_end(t_request &req)
 	return (false);
 }
 
+// attribute to mark fallthrough
+// link to attributes in GCC: https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html
+
 bool	RequestEndDeterminator::request_is_over(void)
 {
-	std::cout << std::endl << "Is the request over?" << std::endl << std::endl;
-	if (req.method == NONE)
+	switch (req.method)
 	{
-		get_request_method(req);
-		std::cout << "Request method is: " << req.method << std::endl << std::endl;
-	}
-	if (req.method == GET || req.method == DELETE)
-	{
-		if (this_is_the_end(req))
-			return (true);
-		return (false);
-	}
-	if (req.method == POST && !req.chunked)
-	{
-		if (req.body)
-		{
-			if (this_is_the_end(req))
-				return (true);
-			return (false);
-		}
-		if (req_is_chunked(req))
-		{
-			if (this_is_the_end(req))
-				return (true);
-			return (false);
-		}
-		else
-		{
-			if (req_has_body(req))
+		case NONE :
+			get_request_method();
+			__attribute__ ((fallthrough));
+		case GET ... DELETE :
+			return (this_is_the_end());
+		case POST :
+			switch (req.chunked)
 			{
-				if (this_is_the_end(req))
-					return (true);
-				return (false);
+				case false :
+					if (req.body)
+						return (this_is_the_end());
+					if (req_is_chunked())
+						return (this_is_the_end());
+					else if (req_has_body())
+						return (this_is_the_end());
+					__attribute__ ((fallthrough));
+				default :
+					if (req.chunked)
+						return (this_is_the_end());
 			}
-		}
-	}
-	if (req.chunked)
-	{
-		if (this_is_the_end(req))
-			return (true);
-		return (false);
+		default :
+			break ;
 	}
 	return (false);
 }

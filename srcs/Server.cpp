@@ -225,7 +225,7 @@ int	Server::handle_new_connection(int sfd)
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
 		return (this->shutdown_server("epoll_ctl: conn_sock"));
 	std::cout << "NEW fd = " << connfd << " added to epoll" << std::endl;
-	RequestHandler	req;
+	RequestHandler	req(connfd);
 	requests.insert(std::pair<int, RequestHandler>(connfd, req));
 	return (0);
 }
