@@ -5,7 +5,9 @@ RequestHandler::RequestHandler(int fd) : RequestEndDeterminator(), fd(fd) {}
 
 RequestHandler::~RequestHandler() {}
 
-//It will be number of bytes
+//It will be number in bytes not in characters, so unicode will be greater, or should be
+// so we can just calculate the size normally with string::size or string::length
+// and they return the number of bytes
 
 bool	RequestHandler::add_data(std::string str)
 {
