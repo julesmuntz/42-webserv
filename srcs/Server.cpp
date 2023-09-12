@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/08/20 18:11:11 by mbelrhaz         ###   ########.fr       */
+/*   Updated: 2023/09/12 18:32:08 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,7 @@ void	Server::memset_events(void)
 
 /* Sets context servers from the config file */
 
-void	Server::set_con_servs(std::vector<t1_server> const &co_sers)
+void	Server::set_con_servs(std::vector<t_server> const &co_sers)
 {
 	this->con_servs = co_sers;
 }
@@ -181,7 +181,7 @@ int	Server::set_up_server(void)
 		std::cerr << "Failed to create epoll file descriptor" << std::endl;
 		return (1);
 	}
-	for (std::vector<t1_server>::iterator it = con_servs.begin();
+	for (std::vector<t_server>::iterator it = con_servs.begin();
 			it != con_servs.end(); it++)
 	{
 		sfd = this->get_a_socket(it->listen.first);

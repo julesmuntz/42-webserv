@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:26 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/08/20 18:23:56 by mbelrhaz         ###   ########.fr       */
+/*   Updated: 2023/09/12 18:37:12 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@
 #define FILE_CONF ".conf"
 #define ERROR_FILENAME "config file does not end with .conf"
 #define ERROR_OPEN "error open"
+#define ERROR_END "error end"
 
 /*Things a revoir pour le parsing de la config file
 		- pouvoir avoir plusieurs inputs (exemple : il peut y avoir plusieurs server_names, separes par whitespaces)
@@ -53,33 +54,6 @@
 
 typedef struct s_location
 {
-    /*tout ce qui peut etre dans location*/
-    std::string                allow_methods;
-    std::string                root;
-    std::string                index;
-    std::string                cgi_pass;
-    std::string                client_body_size;
-    bool                    alias;
-}        t_location;
-
-// typedef struct s_server
-// {
-//     /*tout ce qui peut etre dans server*/
-//     std::string                listen;
-//     std::pair<std::string, std::uint32_t>    listens;
-//     std::vector<std::string>                server_name;
-//     std::uint32_t                            client_body_size;
-//     std::string                error_page;
-//     std::vector<std::pair<std::uint32_t, std::string> > error_pages;
-//     std::string                allow_methods;
-//     std::string                root;
-//     std::string                link_location;
-//     std::vector<t_location>    location;
-// }        t_server;
-
-typedef struct s1_location
-{
-	/*tout ce qui peut etre dans location*/
 	std::string					uri;
 	std::vector<std::string>	allow_methods;
 	std::string					root;
@@ -88,17 +62,40 @@ typedef struct s1_location
 	std::string					file_location;
 	std::string					cgi_pass;
 	bool						directory_listing;
-}		t1_location;
+}		t_location;
 
-typedef struct s1_server
+typedef struct s_server
 {
-	/*tout ce qui peut etre dans server*/
-	std::pair<int, std::string>	listen;
-	std::vector<std::string>	server_name;
-	int							client_body_size;
-	std::pair<int, std::string>	error_page;
-	std::vector<t1_location>	locations;
-}		t1_server;
+	std::pair<uint32_t, std::string>	listen;
+	std::vector<std::string>			server_name;
+	uint32_t							client_body_size;
+	std::vector<std::pair<uint32_t, std::string> >	error_pages;
+	std::vector<t_location>				location;
+}		t_server;
+
+
+// typedef struct s1_location
+// {
+// 	/*tout ce qui peut etre dans location*/
+// 	std::string					uri;
+// 	std::vector<std::string>	allow_methods;
+// 	std::string					root;
+// 	std::string					index;
+// 	std::string					redir_link;
+// 	std::string					file_location;
+// 	std::string					cgi_pass;
+// 	bool						directory_listing;
+// }		t1_location;
+
+// typedef struct s1_server
+// {
+// 	/*tout ce qui peut etre dans server*/
+// 	std::pair<int, std::string>	listen;
+// 	std::vector<std::string>	server_name;
+// 	int							client_body_size;
+// 	std::pair<int, std::string>	error_page;
+// 	std::vector<t1_location>	locations;
+// }		t1_server;
 
 /* Ce que je voudrais conceptuellement parlant : si il y a une erreur dans la config file rien qu'une,
 	elle devient invalide et nous ne prendrons en compte que la config file par defaut,
@@ -131,7 +128,7 @@ class Server
 		std::vector<int>			sfds;
 		struct epoll_event			events[EPOLL_QUEUE_LEN];
 		std::map<int, RequestHandler>	requests;
-		std::vector<t1_server>		con_servs;
+		std::vector<t_server>		con_servs;
 
 		bool		is_listening_socket(int fd);
 		int			get_a_socket(int port);
@@ -149,5 +146,5 @@ class Server
 		Server();
 		~Server();
 		int		serve_do_your_stuff(void);
-		void	set_con_servs(std::vector<t1_server> const &co_sers);
+		void	set_con_servs(std::vector<t_server> const &co_sers);
 };

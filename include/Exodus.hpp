@@ -5,6 +5,9 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <algorithm>
+#include <iostream>
+
 
 class Exodus
 {
@@ -12,39 +15,35 @@ private:
 	std::ifstream			_ifs;
 	std::vector<t_server>	_server;
 
-	// std::string				_servers[10];
-	// void					(Exodus::*_f[])(t_server *, std::string);
+	void	listen(t_server *, std::string);
+	void	server_name(t_server *, std::string);
+	void	client_body_size(t_server *, std::string);
+	void	error_page(t_server *, std::string);
+
+	void	uri(t_location *, std::string);
+	void	allow_methods(t_location *, std::string);
+	void	root(t_location *, std::string);
+	void	index(t_location *, std::string);
+	void	redir_link(t_location *, std::string);
+	void	file_location(t_location *, std::string);
+	void	cgi_pass(t_location *, std::string);
+	void	directory_listing(t_location *, std::string);
+
+	t_server	set_server();
+	t_location	set_location(std::string);
 
 public:
 	Exodus(std::string const);
 	~Exodus();
 
-	t_server				set_server();
-	//std::vector<t_server>	get_server() const;
-	t_location				set_location();
-	t_location				get_location() const;
-	void					set_parss();
-	std::vector<t_server> 	get_parss() const;
+	std::vector<t_server>	get_server() const;
+	void					setup();
 
-	void					get_Exodus();
-	template<typename T>
-	void					listen(T *, std::string);
-	template<typename T>
-	void					server_name(T *, std::string);
-	template<typename T>
-	void					client_body_size(T *, std::string);
-	template<typename T>
-	void					error_page(T *, std::string);
-	template<typename T>
-	void					allow_methods(T *, std::string);
-	template<typename T>
-	void					root(T *, std::string);
-	template<typename T>
-	void					index(T *, std::string);
-	template<typename T>
-	void					cgi_pass(T *, std::string);
-	template<typename T>
-	void					alias(T *, std::string);
+	class error_end : public std::exception
+	{
+		public:
+			virtual const char *what() const throw();
+	};
 	class error_filename : public std::exception
 	{
 		public:

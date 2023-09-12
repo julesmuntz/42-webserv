@@ -3,10 +3,10 @@ INCLUDE_DIR = include
 SRC_DIR = srcs
 OBJ_DIR = obj
 CC = g++
-CFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCLUDE_DIR)
+CFLAGS = -Wall -Wextra -Werror -std=c++98 -I$(INCLUDE_DIR) -g3
 RM = rm -f
 
-SRC_WEBSERV = main Server RequestHandler RequestEndDeterminator
+SRC_WEBSERV = main Exodus Server RequestHandler RequestEndDeterminator
 
 SRC_FILES = $(SRC_WEBSERV)
 

@@ -1,12 +1,17 @@
 #include "Exodus.hpp"
 
+/**********************************************************************************/
+/* ---------------------------------utils---------------------------------------- */
+/**********************************************************************************/
+
 bool recherche(const std::string& phrase, const std::string& mots)
 {
-	size_t pos = phrase.find(mots);
+	size_t pos = std::string::npos;
+	pos = phrase.find(mots);
 
-	if (pos != std::string::npos)
-		return (phrase.compare(pos, mots.length(), mots) == 0);
-	return false;
+	if (pos == std::string::npos)
+		return false;
+	return (phrase.compare(pos, mots.length(), mots) == 0);
 }
 
 std::vector<std::string> split(const std::string& str) {
@@ -32,6 +37,10 @@ std::string extractmots(std::string line, std::string mots) {
 	return tokens[listenIndex];
 }
 
+/**********************************************************************************/
+/* -------------------------constructeur destructeur----------------------------- */
+/**********************************************************************************/
+
 Exodus::Exodus(std::string const filename)
 {
 	std::string		extantion;
@@ -44,67 +53,25 @@ Exodus::Exodus(std::string const filename)
 		throw Exodus::error_open();
 }
 
-Exodus::~Exodus(){}
+Exodus::~Exodus()
+{
+	this->_ifs.close();
+}
 
-std::vector<t_server>	Exodus::get_parss() const
+/**********************************************************************************/
+/* ------------------------------geteur serveur---------------------------------- */
+/**********************************************************************************/
+
+std::vector<t_server>	Exodus::get_server() const
 {
 	return (this->_server);
 }
 
-t_server	Exodus::set_server()
-{
-	std::string	line;
-	t_server	exodus_server;
-	bool		end = false;
-	std::string servers[] = {"listen" ,"server_name" ,"client_body_size","error_page","allow_methods","root"};
-	void		(Exodus::*f[])(t_server *, std::string) = {&Exodus::listen, &Exodus::server_name, &Exodus::client_body_size, &Exodus::error_page, &Exodus::allow_methods, &Exodus::root};
+/**********************************************************************************/
+/* ----------------------------------setup--------------------------------------- */
+/**********************************************************************************/
 
-	while (std::getline(this->_ifs, line) && !end)
-	{
-		if (recherche(line, "}"))
-			end = true;
-		for(int i = 0; i < static_cast<int>(servers->size()); i++)
-		{
-			if (recherche(line, servers[i]))
-			{
-				(this->*f[i])(&exodus_server, line);
-				break ;
-			}
-		}
-		if (recherche(line, "location") && recherche(line, "{"))
-			exodus_server.location.push_back(set_location());
-	}
-	if (!end)
-		std::cout << "cool" << std::endl;
-	return (exodus_server);
-}
-
-t_location				Exodus::set_location()
-{
-	std::string	line;
-	t_location	exodus_location;
-	std::string	locations[] = {"allow_methods", "root", "index", "cgi_pass", "alias", "client_body_size"};
-	void		(Exodus::*f[])(t_location *, std::string) = {&Exodus::allow_methods, &Exodus::root, &Exodus::index, &Exodus::cgi_pass, &Exodus::alias, &Exodus::client_body_size};
-
-	exodus_location.alias = false;
-	while (std::getline(this->_ifs, line))
-	{
-		if (recherche(line, "}"))
-			break ;
-		for(int i = 0; i < static_cast<int>(locations->size()); i++)
-		{
-			if (recherche(line, locations[i]))
-			{
-				(this->*f[i])(&exodus_location, line);
-				break ;
-			}
-		}
-	}
-	//if (/*fin de fichier { n'est pas alors try chact*/)
-	return (exodus_location);
-}
-
-void	Exodus::get_Exodus()
+void	Exodus::setup()
 {
 	std::string line;
 
@@ -115,115 +82,217 @@ void	Exodus::get_Exodus()
 	}
 }
 
-template<typename T>
-void					Exodus::listen(T *t, std::string line)
+/**********************************************************************************/
+/* -------------------------seteur server location------------------------------- */
+/**********************************************************************************/
+
+t_server	Exodus::set_server()
 {
-	std::string extractedWord = extractmots(line, "listen");
-    if (!extractedWord.empty())
+	std::string	line;
+	t_server	exodus_server;
+	std::string servers[4] = {"listen" ,"server_name" ,"client_body_size","error_page"};
+	void		(Exodus::*f[4])(t_server *, std::string) = {&Exodus::listen, &Exodus::server_name, &Exodus::client_body_size, &Exodus::error_page};
+	bool		end = false;
+
+	while (!end && std::getline(this->_ifs, line))
 	{
-		if (!recherche(extractedWord, ":"))
-			throw ;
-		size_t delimiterPos = extractedWord.find(":");
-		if (delimiterPos != std::string::npos) {
-        	t->listens.first = extractedWord.substr(0, delimiterPos);
-        	t->listens.second = std::stoi(extractedWord.substr(delimiterPos + 1));
-   		} 
-		else 
-        	throw ;
+		if (recherche(line, "location") && recherche(line, "{"))
+			exodus_server.location.push_back(set_location(line));
+		else if (recherche(line, "}"))
+			end = true;
+		for(long unsigned int i = 0; i < 4; i++)
+		{
+			if (recherche(line, servers[i]))
+			{
+				(this->*f[i])(&exodus_server, line);
+				break ;
+			}
+		}
+
 	}
-	else
-		throw ;
+	if (!end)
+		throw Exodus::error_end();
+	return (exodus_server);
 }
 
-template<typename T>
-void					Exodus::server_name(T *t, std::string line)
+t_location				Exodus::set_location(std::string line)
 {
-    if (recherche(line, "server_name"))
+	bool		end = false;
+	t_location	exodus_location;
+	std::string	locations[8] = {"uri", "allow_methods", "root", "redir_link", "index", "directory_listing", "file_location", "cgi_pass"};
+	void		(Exodus::*f[8])(t_location *, std::string) = {&Exodus::uri, &Exodus::allow_methods, &Exodus::root, &Exodus::redir_link, &Exodus::index, &Exodus::directory_listing, &Exodus::file_location, &Exodus::cgi_pass};
+
+	exodus_location.directory_listing = false;
+
+	uri(&exodus_location, line);
+	while (!end && std::getline(this->_ifs, line) )
+	{
+		for(long unsigned int i = 0; i < 8; i++)
+		{
+
+			if (recherche(line, locations[i]))
+			{
+				(this->*f[i])(&exodus_location, line);
+				break ;
+			}
+		}
+		if (recherche(line, "}"))
+			end = true;
+	}
+	if (!end)
+		throw Exodus::error_end();
+	return (exodus_location);
+}
+
+/**********************************************************************************/
+/* -------------------------------server----------------------------------------- */
+/**********************************************************************************/
+
+void					Exodus::listen(t_server *t, std::string line)
+{
+	std::string extractedWord = extractmots(line, "listen");
+	if (!extractedWord.empty())
+	{
+		if (!recherche(extractedWord, ":"))
+			throw std::logic_error("listen");
+		size_t delimiterPos = extractedWord.find(":");
+		if (delimiterPos != std::string::npos) {
+			t->listen.second = extractedWord.substr(0, delimiterPos);
+			t->listen.first = std::strtol(extractedWord.substr(delimiterPos + 1).c_str(), NULL, 10);
+		}
+		else
+			throw std::logic_error("listen");
+	}
+	else
+		throw std::logic_error("listen");
+}
+
+void					Exodus::server_name(t_server *t, std::string line)
+{
+	if (recherche(line, "server_name"))
 	{
 		std::vector<std::string> tokens = split(line);
 		std::vector<std::string>::iterator it = std::find(tokens.begin(), tokens.end(), "server_name");
 		if (it == tokens.end())
-			throw ;
+			throw std::logic_error("server name");
 		size_t listenIndex = std::distance(tokens.begin(), it) + 1;
 		if (listenIndex >= tokens.size())
-			throw ;
+			throw std::logic_error("server name");
 		while (listenIndex < tokens.size())
 			t->server_name.push_back(tokens[listenIndex++]);
 	}
 	else
-		throw ;
+		throw std::logic_error("server name");
 }
 
-template<typename T>
-void					Exodus::client_body_size(T *t, std::string line)
+void					Exodus::client_body_size(t_server *t, std::string line)
 {
 	std::string extractedWord = extractmots(line, "client_body_size");
-    if (!extractedWord.empty())
-		t->client_body_size = std::stoi(extractedWord);
+	if (!extractedWord.empty())
+		t->client_body_size = std::strtol(extractedWord.c_str(), NULL, 10);
 }
 
-template<typename T>
-void					Exodus::error_page(T *t, std::string line)
+void					Exodus::error_page(t_server *t, std::string line)
 {
-    if (recherche(line, "error_page"))
+	if (recherche(line, "error_page"))
 	{
 		std::vector<std::string> tokens = split(line);
 		std::vector<std::string>::iterator it = std::find(tokens.begin(), tokens.end(), "error_page");
 		if (it == tokens.end())
-			throw ;
+			throw std::logic_error("error_page");
 		size_t listenIndex = std::distance(tokens.begin(), it) + 1;
 		if (listenIndex >= tokens.size())
-			throw ;
+			throw std::logic_error("error_page") ;
 		while (listenIndex < tokens.size() && listenIndex + 1< tokens.size())
 		{
-			std::pair <std::uint32_t, std::string >	token;
-			token.first = std::stoi(tokens[listenIndex]);
+			std::pair <uint32_t, std::string >	token;
+			token.first = std::strtol(tokens[listenIndex].c_str(), NULL, 10);
 			token.second = tokens[listenIndex + 1];
 			t->error_pages.push_back(token);
 			listenIndex += 2;
 		}
 	}
 	else
-		throw ;
+		throw std::logic_error("error_page") ;
 }
 
-template<typename T>
-void					Exodus::allow_methods(T *t, std::string line)
+/**********************************************************************************/
+/* -----------------------------------location----------------------------------- */
+/**********************************************************************************/
+
+void	Exodus::uri(t_location *t, std::string line)
 {
-	std::string extractedWord = extractmots(line, "allow_methods");
+	std::string extractedWord = extractmots(line, "location");
     if (!extractedWord.empty())
-		t->allow_methods = extractedWord;
+		t->uri = extractedWord;
 }
 
-template<typename T>
-void					Exodus::root(T *t, std::string line)
+void					Exodus::allow_methods(t_location *t, std::string line)
+{
+
+if (recherche(line, "allow_methods"))
+	{
+		std::vector<std::string> tokens = split(line);
+		std::vector<std::string>::iterator it = std::find(tokens.begin(), tokens.end(), "allow_methods");
+		if (it == tokens.end())
+			throw std::logic_error("allow_methods");
+		size_t listenIndex = std::distance(tokens.begin(), it) + 1;
+		if (listenIndex >= tokens.size())
+			throw std::logic_error("allow_methods");
+		while (listenIndex < tokens.size())
+			t->allow_methods.push_back(tokens[listenIndex++]);
+	}
+	else
+		throw std::logic_error("allow_methods");
+
+}
+
+void					Exodus::root(t_location *t, std::string line)
 {
 	std::string extractedWord = extractmots(line, "root");
     if (!extractedWord.empty())
 		t->root = extractedWord;
 }
 
-template<typename T>
-void					Exodus::index(T *t, std::string line)
+void					Exodus::index(t_location *t, std::string line)
 {
 	std::string extractedWord = extractmots(line, "index");
     if (!extractedWord.empty())
 		t->index = extractedWord;
 }
-template<typename T>
-void					Exodus::cgi_pass(T *t, std::string line)
+
+void	Exodus::redir_link(t_location *t, std::string line)
+{
+	std::string extractedWord = extractmots(line, "redir_link");
+    if (!extractedWord.empty())
+		t->redir_link = extractedWord;
+}
+
+void	Exodus::file_location(t_location *t, std::string line)
+{
+	std::string extractedWord = extractmots(line, "file_location");
+    if (!extractedWord.empty())
+		t->file_location = extractedWord;
+}
+
+void					Exodus::cgi_pass(t_location *t, std::string line)
 {
 	std::string extractedWord = extractmots(line, "cgi_pass");
     if (!extractedWord.empty())
 		t->cgi_pass = extractedWord;
 }
 
-template<typename T>
-void					Exodus::alias(T *t, std::string line)
+void					Exodus::directory_listing(t_location *t, std::string line)
 {
-	(void)line;
-	t->alias = true;
+	std::string extractedWord = extractmots(line, "directory_listing");
+	if (!extractedWord.empty())
+		if (extractedWord == "true")
+			t->directory_listing = true;
 }
+
+/**********************************************************************************/
+/* -----------------------------------exeptions---------------------------------- */
+/**********************************************************************************/
 
 const char *Exodus::error_filename::what() const throw()
 {
@@ -233,4 +302,9 @@ const char *Exodus::error_filename::what() const throw()
 const char *Exodus::error_open::what() const throw()
 {
 	return (ERROR_OPEN);
+}
+
+const char *Exodus::error_end::what() const throw()
+{
+ 	return (ERROR_END);
 }
