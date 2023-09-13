@@ -65,6 +65,9 @@ void	RequestEndDeterminator::get_request_method(void)
 	}
 }
 
+
+
+// edouard
 bool	RequestEndDeterminator::req_is_chunked(void)
 {
 	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != std::string::npos)
