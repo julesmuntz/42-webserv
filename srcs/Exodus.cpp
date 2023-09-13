@@ -230,7 +230,7 @@ void	Exodus::uri(t_location *t, std::string line)
 void					Exodus::allow_methods(t_location *t, std::string line)
 {
 
-if (recherche(line, "allow_methods"))
+	if (recherche(line, "allow_methods"))
 	{
 		std::vector<std::string> tokens = split(line);
 		std::vector<std::string>::iterator it = std::find(tokens.begin(), tokens.end(), "allow_methods");
@@ -256,9 +256,20 @@ void					Exodus::root(t_location *t, std::string line)
 
 void					Exodus::index(t_location *t, std::string line)
 {
-	std::string extractedWord = extractmots(line, "index");
-    if (!extractedWord.empty())
-		t->index = extractedWord;
+	if (recherche(line, "index"))
+	{
+		std::vector<std::string> tokens = split(line);
+		std::vector<std::string>::iterator it = std::find(tokens.begin(), tokens.end(), "index");
+		if (it == tokens.end())
+			throw std::logic_error("index");
+		size_t listenIndex = std::distance(tokens.begin(), it) + 1;
+		if (listenIndex >= tokens.size())
+			throw std::logic_error("index");
+		while (listenIndex < tokens.size())
+			t->index.push_back(tokens[listenIndex++]);
+	}
+	else
+		throw std::logic_error("index");
 }
 
 void	Exodus::redir_link(t_location *t, std::string line)

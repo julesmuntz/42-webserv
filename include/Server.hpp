@@ -6,7 +6,7 @@
 /*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:26 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/12 18:37:12 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/09/13 16:59:31 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,27 +41,22 @@
 #define EPOLL_QUEUE_LEN 100000
 #define HEADER_MAX_SIZE 10000
 #define BUF_SIZE 1024
-#define TIMEOUT  70
+#define TIMEOUT  1000
 #define FILE_CONF ".conf"
 #define ERROR_FILENAME "config file does not end with .conf"
 #define ERROR_OPEN "error open"
 #define ERROR_END "error end"
-
-/*Things a revoir pour le parsing de la config file
-		- pouvoir avoir plusieurs inputs (exemple : il peut y avoir plusieurs server_names, separes par whitespaces)
-		- accepter les ; a la fin des lignes (maybe)
-*/
 
 typedef struct s_location
 {
 	std::string					uri;
 	std::vector<std::string>	allow_methods;
 	std::string					root;
-	std::string					index;
-	std::string					redir_link;
+	std::vector<std::string>	index; // metre un vecte
+	std::string					redir_link; // pas obligatoire file conf si il y est les autre sont pas obligatoire
 	std::string					file_location;
-	std::string					cgi_pass;
-	bool						directory_listing;
+	std::string					cgi_pass; // pas obligatoire file conf
+	bool						directory_listing; // pas obligatoire file conf
 }		t_location;
 
 typedef struct s_server
@@ -73,53 +68,6 @@ typedef struct s_server
 	std::vector<t_location>				location;
 }		t_server;
 
-
-// typedef struct s1_location
-// {
-// 	/*tout ce qui peut etre dans location*/
-// 	std::string					uri;
-// 	std::vector<std::string>	allow_methods;
-// 	std::string					root;
-// 	std::string					index;
-// 	std::string					redir_link;
-// 	std::string					file_location;
-// 	std::string					cgi_pass;
-// 	bool						directory_listing;
-// }		t1_location;
-
-// typedef struct s1_server
-// {
-// 	/*tout ce qui peut etre dans server*/
-// 	std::pair<int, std::string>	listen;
-// 	std::vector<std::string>	server_name;
-// 	int							client_body_size;
-// 	std::pair<int, std::string>	error_page;
-// 	std::vector<t1_location>	locations;
-// }		t1_server;
-
-/* Ce que je voudrais conceptuellement parlant : si il y a une erreur dans la config file rien qu'une,
-	elle devient invalide et nous ne prendrons en compte que la config file par defaut,
-	attention certains champs peuvent etre vides ou ne pas exister et
-	la config file peut rester valide (voir le sujet de webserv) */
-
-/* Ce que je voudrais pour la structure server */
-/*  LISTEN = port + adresse | adresse + port = integer pour le port, string pour l'adresse
-	SERVER_NAME = vector de string (il peut y en avoir plusieurs, separes par des white spaces)
-	CLIENT_BODY_SIZE = integer // ca devrait pas etre buffer mais juste body size
-	ERROR_PAGE = numero d'error page + chemin = integer + string
-	LOCATION STRUCTS faite de strings principalement
-	{
-		URI = ce qu'il y a apres le mot cle location
-		allow_methods = POST | GET | DELETE = vector de string
-		root = un chemin a prendre dans un cas precis, devrait etre associe a un bloc location
-		link_location = je ne comprends pas ce champ, tu voulais dire redir link peut-etre ?
-		index = chemin par defaut a prendre si c'est le directory
-		(NEW / a rajouter) file_location = chemin ou stocker les fichier envoyes par post via cette URI
-		directory_listing = accepter que les fichiers soient affiches comme page ou pas = bool (yes or no)
-		cgi_pass = le chemin pour executer les cgi (devrait y etre uniquement pour une certaine extension
-					sinon, c'est une erreur) => on devrait voir comment le mettre en place ensemble
-	}
-*/
 
 class Server
 {
