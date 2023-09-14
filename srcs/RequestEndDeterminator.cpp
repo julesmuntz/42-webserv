@@ -12,6 +12,7 @@ RequestEndDeterminator::RequestEndDeterminator()
 	this->req.time.timeout = false;
 	this->req.time.start_time = ref;
 	this->req.time.time_passed_since = 0;
+	this->req.msg_too_long = false;
 	this->req.request = "";
 }
 
@@ -122,25 +123,32 @@ bool	RequestEndDeterminator::request_is_over(void)
 		case NONE :
 			get_request_method();
 			__attribute__ ((fallthrough));
-		case GET ... DELETE :
-			return (this_is_the_end());
-		case POST :
-			switch (req.chunked)
-			{
-				case false :
-					if (req.body)
-						return (this_is_the_end());
-					if (req_is_chunked())
-						return (this_is_the_end());
-					else if (req_has_body())
-						return (this_is_the_end());
-					__attribute__ ((fallthrough));
-				default :
-					if (req.chunked)
-						return (this_is_the_end());
-			}
 		default :
-			break ;
+			switch (req.method)
+			{
+				case GET ... DELETE :
+					return (this_is_the_end());
+				case POST :
+					switch (req.chunked)
+					{
+						case false :
+							if (req.body)
+								return (this_is_the_end());
+							if (req_is_chunked())
+								return (this_is_the_end());
+							else if (req_has_body())
+								return (this_is_the_end());
+							__attribute__ ((fallthrough));
+						default :
+							if (req.chunked)
+								return (this_is_the_end());
+							__attribute__ ((fallthrough));
+					}
+				case ERROR :
+					return (this_is_the_end());
+				case NONE :
+					break ;
+			}
 	}
 	return (false);
 }

@@ -245,7 +245,7 @@ int	Server::receive_data(int i)
 	}
 	if (nread == 0)
 	{
-		std::cout << "CLOSE" << nread << std::endl << std::endl;
+		std::cout << "CLOSE" << std::endl << std::endl;
 		event.events = EPOLLIN;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
@@ -274,6 +274,7 @@ int	Server::send_data(int i)
 	struct epoll_event	event;
 
 	std::cout << "Sending..." << std::endl;
+	//parse the request and construct the response
 	//check return value of send
 	send(events[i].data.fd, "HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n",
 		strlen("HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n"), 0);

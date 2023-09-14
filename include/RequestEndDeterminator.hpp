@@ -9,14 +9,6 @@ typedef enum	e_method {
 	ERROR
 }				t_method;
 
-typedef enum	e_error {
-	error_400 = 400, // bad request
-	error_404 = 404, // not found
-	error_408 = 408, // timeout
-	error_413 = 413, // request header too long
-	error_431 = 431  // request body too long
-}				t_error;
-
 typedef struct	s_time {
 	bool	active;
 	bool	timeout;
@@ -31,10 +23,9 @@ typedef struct	s_time {
 typedef struct	s_request {
 	t_method	method;
 	bool		chunked;
-	size_t		header_size;
-	size_t		body_size;
 	bool		body;
 	t_time		time;
+	bool		msg_too_long;
 	std::string	request;
 }				t_request;
 
