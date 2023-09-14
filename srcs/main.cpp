@@ -6,7 +6,7 @@
 /*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:16 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/14 13:13:32 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/09/14 15:30:18 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,56 +14,10 @@
 #include "Exodus.hpp"
 #include "RequestParser.hpp"
 
-	// std::vector<std::string>	allow_methods;
-
-// std::vector<std::string>	names;
-
-// t1_location	loc_1 = {
-// 	.uri = "/",
-// 	.allow_methods = allow_methods,
-// 	.root = "/html",
-// 	.index = "index.html",
-// 	.redir_link = "",
-// 	.file_location = "/static",
-// 	.cgi_pass = "",
-// 	.directory_listing = true
-// };
-
-// t1_location	loc_2 = {
-// 	.uri = "/color",
-// 	.allow_methods = allow_methods,
-// 	.root = "/color",
-// 	.index = "coco.html",
-// 	.redir_link = "https://google.com",
-// 	.file_location = "/static",
-// 	.cgi_pass = "",
-// 	.directory_listing = false
-// };
-
-// std::vector<t1_location>	locations;
-
-// t1_server	con_1 = {
-// 		.listen = std::make_pair(8042, "localhost"),
-// 		.server_name = names,
-// 		.client_body_size = 10000,
-// 		.error_page = std::make_pair(404, "/error/404.html"),
-// 		.locations = locations
-// };
-
-// t1_server	con_2 = {
-// 		.listen = std::make_pair(8043, "localhost"),
-// 		.server_name = names,
-// 		.client_body_size = 10000,
-// 		.error_page = std::make_pair(404, "/error/404.html"),
-// 		.locations = locations
-// };
-
-// std::vector<t1_server>	context_servers;
-
 int main()
 {
-		std::string request;
-		request = "\r\nTransfer-Encoding: chunked\r\n\r\n27\r\nVoici les données du premier morceau\r\n\r\n1C\r\net voici un second morceau\r\n\r\n20\r\net voici deux derniers morceaux \r\n12\r\nsans saut de ligne\r\n0\r\n\r\n";
+	std::string request;
+	request = "\r\nTransfer-Encoding: chunked\r\n\r\n27\r\nVoici les données du premier morceau\r\n\r\n1C\r\net voici un second morceau\r\n\r\n20\r\net voici deux derniers morceaux \r\n12\r\nsans saut de ligne\r\n0\r\n\r\n";
 	Server	webserver;
 	int		ret;
 	//Exodus pp("conf/default.conf");

@@ -1,12 +1,8 @@
 #pragma once
 
-# include "Server.hpp"
-# include <iostream>
-# include <fstream>
-# include <string>
-# include <sstream>
-# include <algorithm>
-
+#include "Server.hpp"
+#include <fstream>
+#include <iostream>
 
 class Exodus
 {
