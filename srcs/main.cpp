@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/08/20 18:09:16 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/14 15:30:18 by eflaquet         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Server.hpp"
 #include "Exodus.hpp"
 #include "RequestParser.hpp"
@@ -18,7 +6,9 @@ int main()
 {
 	std::string request;
 	request = "\r\nTransfer-Encoding: chunked\r\n\r\n27\r\nVoici les données du premier morceau\r\n\r\n1C\r\net voici un second morceau\r\n\r\n20\r\net voici deux derniers morceaux \r\n12\r\nsans saut de ligne\r\n0\r\n\r\n";
+
 	Server	webserver;
+
 	int		ret;
 	//Exodus pp("conf/default.conf");
 	std::vector<t_server> context_servers;
@@ -31,39 +21,62 @@ int main()
 	// locations.push_back(loc_1);
 	// locations.push_back(loc_2)
 
-	std::string tec;
 	size_t pos = std::string::npos;
-	pos = request.find("\r\nTransfer-Encoding: chunked\r\n");
+	pos = request.find("\r\n\r\n");
 	size_t posf = std::string::npos;
 	posf = request.find("\r\n0\r\n\r\n");
-	std::string l;
+	std::string body;
 	if (pos != std::string::npos)
 		if (posf != std::string::npos)
-			l = request.substr(pos + 32, posf);
-	std::cout << l ;
+			body = request.substr(pos + 4, posf);
+	// std::cout << body;
+	pos = 0;
+	std::string unchunked_body = "";
+	std::string hexa_str;
+	size_t 		hexa;
+	std::string data_str;
+
 	while (true)
 	{
-		size_t p = std::string::npos;
-		p = request.find("\r\n", 1);
-		unsigned int i = 0;
-		std::cout << p << std::endl;
-		std::istringstream iss(l.substr(0, p));
-		iss >> std::hex >> i;
-		if (i == 0)
-			break ;
-
-		l.erase(0, p + 4);
-		tec += l.substr(0, i);
-		l.erase(0, i);
-		if (!l[1] && !l[2] && !l[3] && l[4] &&
-		l[1] == '\r' && l[2] == '\n' && l[3] == '\r' && l[4] == '\n')
+		size_t end_pos = body.find("\r\n");
+		if (end_pos != std::string::npos)
 		{
-			tec += "\r\n";
-			l.erase(0, 2);
+			hexa_str = body.substr(0, end_pos);
+			body.erase(0, end_pos + 2);
+			std::istringstream iss(hexa_str);
+			iss >> std::hex >> hexa;
+			data_str = body.substr(0, hexa);
+			unchunked_body += data_str;
+			if (hexa + 2 != std::string::npos)
+				body.erase(0, hexa + 2);
 		}
-		l.erase(0, 2);
-
+		else
+			break;
 	}
+	std::cout << "NEW BODY\n" << unchunked_body << std::endl;
+	// while (true)
+	// {
+	// 	size_t p = std::string::npos;
+	// 	p = request.find("\r\n", 1);
+	// 	unsigned int i = 0;
+	// 	std::cout << p << std::endl;
+	// 	std::istringstream iss(l.substr(0, p));
+	// 	iss >> std::hex >> i;
+	// 	if (i == 0)
+	// 		break ;
+
+	// 	l.erase(0, p + 4);
+	// 	tec += l.substr(0, i);
+	// 	l.erase(0, i);
+	// 	if (!l[1] && !l[2] && !l[3] && l[4] &&
+	// 	l[1] == '\r' && l[2] == '\n' && l[3] == '\r' && l[4] == '\n')
+	// 	{
+	// 		tec += "\r\n";
+	// 		l.erase(0, 2);
+	// 	}
+	// 	l.erase(0, 2);
+
+	// }
 	// while (!l.empty())
 	// {
 	// 	size_t p = std::string::npos;
