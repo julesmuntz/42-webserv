@@ -6,7 +6,7 @@
 /*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:16 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/13 17:00:25 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/09/14 13:13:32 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@
 int main()
 {
 		std::string request;
-		request = "GET /favicon.ico HTTP/1.1\nHost: localhost:8042\nUser-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0\nAccept: image/avif,image/webp,*/*\nAccept-Language: en-US,en;q=0.5\nAccept-Encoding: gzip, deflate, br\nConnection: keep-alive\nReferer: http://localhost:8042/\nSec-Fetch-Dest: image\nSec-Fetch-Mode: no-cors\nSec-Fetch-Site: same-origin\n";
+		request = "\r\nTransfer-Encoding: chunked\r\n\r\n27\r\nVoici les données du premier morceau\r\n\r\n1C\r\net voici un second morceau\r\n\r\n20\r\net voici deux derniers morceaux \r\n12\r\nsans saut de ligne\r\n0\r\n\r\n";
 	Server	webserver;
 	int		ret;
 	//Exodus pp("conf/default.conf");
@@ -75,12 +75,61 @@ int main()
 	// allow_methods.push_back("DELETE");
 
 	// locations.push_back(loc_1);
-	// locations.push_back(loc_2);
-	requestParser rep(request);
-	std::cout << rep.get_methods() << " " << rep.get_uri() << " " << rep.get_version() << std::endl;
-	std::cout << rep.get_req_head().host << std::endl;
+	// locations.push_back(loc_2)
+
+	std::string tec;
+	size_t pos = std::string::npos;
+	pos = request.find("\r\nTransfer-Encoding: chunked\r\n");
+	size_t posf = std::string::npos;
+	posf = request.find("\r\n0\r\n\r\n");
+	std::string l;
+	if (pos != std::string::npos)
+		if (posf != std::string::npos)
+			l = request.substr(pos + 32, posf);
+	std::cout << l ;
+	while (true)
+	{
+		size_t p = std::string::npos;
+		p = request.find("\r\n", 1);
+		unsigned int i = 0;
+		std::cout << p << std::endl;
+		std::istringstream iss(l.substr(0, p));
+		iss >> std::hex >> i;
+		if (i == 0)
+			break ;
+
+		l.erase(0, p + 4);
+		tec += l.substr(0, i);
+		l.erase(0, i);
+		if (!l[1] && !l[2] && !l[3] && l[4] &&
+		l[1] == '\r' && l[2] == '\n' && l[3] == '\r' && l[4] == '\n')
+		{
+			tec += "\r\n";
+			l.erase(0, 2);
+		}
+		l.erase(0, 2);
+
+	}
+	// while (!l.empty())
+	// {
+	// 	size_t p = std::string::npos;
+	// 	p = request.find("\r\n");
+	// 	unsigned int i = 0;
+	// 	std::istringstream iss(l.substr(0, p));
+	// 	iss >> std::hex >> i;
+	// 	l.erase(0, p + 4);
+	// 	p = request.find("\r\n");
+
+	// 	std::cout << l.substr(0, ) ;
+	// 	l = "";
+	// }
+
+
+
+	// requestParser rep(request);
+	// std::cout << rep.get_methods() << " " << rep.get_uri() << " " << rep.get_version() << std::endl;
+	// std::cout << rep.get_req_head().host << std::endl;
 	// context_servers.push_back(con_2);
-	(void)rep;
 	try {
 		Exodus pp("conf/conf1.conf");
 		pp.setup();

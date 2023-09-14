@@ -80,6 +80,27 @@ void	Exodus::setup()
 		if (recherche(line, "server") && recherche(line, "{"))
 			this->_server.push_back(set_server());
 	}
+	for(long unsigned int i = 0; i < this->_server.size(); i++)
+	{
+		if (this->_server[i].listen.first == 0 || this->_server[i].listen.second.empty() || this->_server[i].server_name.empty() || this->_server[i].client_body_size == 0)
+		{
+			std::cout << "config de defautl" << std::endl;
+			Exodus def(FILE_DEFAULT);
+			this->_server = def._server;
+			return ;
+		}
+		for(long unsigned int y = 0; y < this->_server[i].location.size(); y++)
+		{
+			if (this->_server[i].location[y].redir_link.empty())
+				if (this->_server[i].location[y].uri.empty() || this->_server[i].location[y].allow_methods.empty() || this->_server[i].location[y].root.empty() || this->_server[i].location[y].index.empty() || this->_server[i].location[y].file_location.empty())
+				{
+					std::cout << "config de defautl" << std::endl;
+					Exodus def(FILE_DEFAULT);
+					this->_server = def._server;
+					return ;
+				}
+		}
+	}
 }
 
 /**********************************************************************************/
