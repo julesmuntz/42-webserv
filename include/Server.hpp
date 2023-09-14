@@ -1,19 +1,6 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/08/20 18:09:26 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/14 14:22:32 by eflaquet         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #pragma once
 
-#include <iostream>
-#include <string>
+#include "RequestHandler.hpp"
 #include <iterator>
 #include <cstring>
 #include <exception>
@@ -34,12 +21,17 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
-#include "RequestHandler.hpp"
+
+#include <iostream>
+
+#include <limits.h>
+
 
 #define BACKLOG 10
 #define BAD_FD  -1
 #define EPOLL_QUEUE_LEN 100000
 #define HEADER_MAX_SIZE 10000
+#define MSG_MAX_SIZE INT_MAX
 #define BUF_SIZE 1024
 #define TIMEOUT  1000
 #define FILE_CONF ".conf"

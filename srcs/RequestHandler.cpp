@@ -1,17 +1,39 @@
 #include "Server.hpp"
-#include <sys/stat.h>
 
-RequestHandler::RequestHandler(int fd) : RequestEndDeterminator(), fd(fd) {}
+RequestHandler::RequestHandler(int fd) : RequestEndDeterminator(), fd(fd), msg_len(0), error(no_error) {}
 
 RequestHandler::~RequestHandler() {}
 
-//It will be number in bytes not in characters, so unicode will be greater, or should be
-// so we can just calculate the size normally with string::size or string::length
-// and they return the number of bytes
+bool	RequestHandler::check_preparsing_errors(void)
+{
+	if (req.time.timeout == true) // check timeout
+		error = error_408;
+	else if (req.msg_too_long) // check message size
+		error = error_413;
+	else // check header size
+	{
+		std::string	msg;
+		std::string	header;
+		msg = req.request;
+		size_t	pos = msg.find_first_of("\r\n\r\n");
+		header = msg.substr(0, pos);
+		if (header.size() + 2 > HEADER_MAX_SIZE)
+			error = error_431;
+	}
+	if (error)
+		return (true);
+	return (false);
+}
 
 bool	RequestHandler::add_data(std::string str)
 {
 	req.request += str;
+	msg_len += str.size();
+	if (msg_len > MSG_MAX_SIZE)
+	{
+		req.msg_too_long = true;
+		return (false);
+	}
 	std::cout << "Request is: " << req.request << std::endl;
 	return (!this->request_is_over());
 }
