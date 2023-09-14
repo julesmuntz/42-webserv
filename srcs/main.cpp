@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:16 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/14 13:13:32 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/09/14 14:45:12 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@
 // 		.client_body_size = 10000,
 // 		.error_page = std::make_pair(404, "/error/404.html"),
 // 		.locations = locations
-// };
+// }
 
 // t1_server	con_2 = {
 // 		.listen = std::make_pair(8043, "localhost"),
