@@ -6,7 +6,7 @@
 # include <string>
 # include <sstream>
 # include <algorithm>
-# include <iostream>
+
 
 class Exodus
 {
@@ -34,7 +34,6 @@ private:
 public:
 	Exodus(std::string const);
 	~Exodus();
-
 	std::vector<t_server>	get_server() const;
 	void					setup();
 

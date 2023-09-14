@@ -6,7 +6,7 @@
 /*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:26 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/13 16:59:31 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/09/14 14:22:32 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@
 #define BUF_SIZE 1024
 #define TIMEOUT  1000
 #define FILE_CONF ".conf"
+#define FILE_DEFAULT "conf/default.conf"
 #define ERROR_FILENAME "config file does not end with .conf"
 #define ERROR_OPEN "error open"
 #define ERROR_END "error end"
@@ -54,11 +55,11 @@ typedef struct s_location
 	std::string					uri;
 	std::vector<std::string>	allow_methods;
 	std::string					root;
-	std::vector<std::string>	index; // metre un vecte
-	std::string					redir_link; // pas obligatoire file conf si il y est les autre sont pas obligatoire
+	std::vector<std::string>	index;
+	std::string					redir_link;
 	std::string					file_location;
-	std::string					cgi_pass; // pas obligatoire file conf
-	bool						directory_listing; // pas obligatoire file conf
+	std::string					cgi_pass;
+	bool						directory_listing;
 }		t_location;
 
 typedef struct s_server
