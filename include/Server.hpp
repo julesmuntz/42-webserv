@@ -21,12 +21,17 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
+
 #include <iostream>
+
+#include <limits.h>
+
 
 #define BACKLOG 10
 #define BAD_FD  -1
 #define EPOLL_QUEUE_LEN 100000
 #define HEADER_MAX_SIZE 10000
+#define MSG_MAX_SIZE INT_MAX
 #define BUF_SIZE 1024
 #define TIMEOUT  1000
 #define FILE_CONF ".conf"
