@@ -13,6 +13,8 @@ RequestEndDeterminator::RequestEndDeterminator()
 	this->req.time.start_time = ref;
 	this->req.time.time_passed_since = 0;
 	this->req.msg_too_long = false;
+	this->req.content_length = 0;
+	this->req.body_size = 0;
 	this->req.request = "";
 }
 
@@ -79,10 +81,47 @@ bool	RequestEndDeterminator::req_is_chunked(void)
 	return (false);
 }
 
+// bool	RequestEndDeterminator::req_content_length(void)
+// {
+// 	std::string	length;
+// 	size_t		npos;
+
+// 	size_t	pos = req.request.find("\r\nContent-Length: ");
+// 	if (pos != std::string::npos)
+// 	{
+// 		npos = req.request.find("\r\n", pos + 1);
+// 		if (npos == std::string::npos)
+// 			return (false);
+// 		length = req.request.substr(pos + strlen("\r\nContent-Length: "), npos);
+// 		std::stringstream sstream(length);
+// 		sstream >> req.content_length;
+// 		//check error
+// 	}
+// 	else
+// 		return (false);
+// 	return (true);
+// }
+
+// size_t	get_body_size(std::string request)
+// {
+// 	//work to do
+// 	//do not forget not to use += when dealing with body append because of zeros
+// }
+
+
 bool	RequestEndDeterminator::req_has_body(void)
 {
-	if (req.request.find("\r\n\r\n") != std::string::npos)
+	size_t		pos;
+	// std::string	body;
+
+	pos = req.request.find("\r\n\r\n");
+	if (pos != std::string::npos)
 	{
+		// if (this->req_content_length())
+		// {
+		// }
+		// body = req.request.substr(pos + 4, req.request.size());
+		// req.body_size = body.size();
 		req.body = true;
 		return (true);
 	}
@@ -105,6 +144,7 @@ bool	RequestEndDeterminator::this_is_the_end(void)
 	{
 		if (req.body)
 		{
+			// req.body_size += 
 			size_t	pos = req.request.find("\r\n\r\n");
 			if (req.request.find("\r\n\r\n", pos + 1) != std::string::npos)
 				return (true);

@@ -26,7 +26,9 @@ typedef struct	s_request {
 	bool		chunked;
 	bool		body;
 	t_time		time;
+	size_t		content_length;
 	bool		msg_too_long;
+	size_t		body_size;
 	std::string	request;
 }				t_request;
 
@@ -34,6 +36,7 @@ class RequestEndDeterminator
 {
 	protected:
 		t_request	req;
+		// bool		req_content_length(void);
 		void		get_request_method(void);
 		bool		req_is_chunked(void);
 		bool		req_has_body(void);
