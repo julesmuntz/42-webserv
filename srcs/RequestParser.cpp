@@ -30,7 +30,9 @@ std::vector<std::string> splite(const std::string& str) {
 /* -------------------------constructeur destructeur----------------------------- */
 /**********************************************************************************/
 
-requestParser::requestParser(std::string request) : _request(request)
+RequestParser::RequestParser() {}
+
+RequestParser::RequestParser(std::string request) : _request(request)
 {
 	std::string line;
 	std::istringstream iss(this->_request);
@@ -38,48 +40,60 @@ requestParser::requestParser(std::string request) : _request(request)
 	while (std::getline(iss, line))
 		this->_lines.push_back(line);
 
-	requestParser::set_muv();
-	requestParser::set_request_header();
-	requestParser::set_represent_header();
+	RequestParser::set_muv();
+	RequestParser::set_request_header();
+	RequestParser::set_represent_header();
 }
 
-requestParser::~requestParser() {}
+RequestParser	&RequestParser::operator=(const RequestParser &ref)
+{
+	this->_methods = ref._methods;
+	this->_uri = ref._uri;
+	this->_version = ref._version;
+	this->_gen_head = ref._gen_head;
+	this->_req_head = ref._req_head;
+	this->_rep_head = ref._rep_head;
+
+	return (*this);
+}
+
+RequestParser::~RequestParser() {}
 
 /**********************************************************************************/
 /* ------------------------------geteur serveur---------------------------------- */
 /**********************************************************************************/
 
-std::string	requestParser::get_methods() const
+std::string	RequestParser::get_methods() const
 {
 	return (this->_methods);
 }
 
-std::string	requestParser::get_uri() const
+std::string	RequestParser::get_uri() const
 {
 	return (this->_uri);
 }
 
-std::string	requestParser::get_version() const
+std::string	RequestParser::get_version() const
 {
 	return (this->_version);
 }
 
-t_Request_headers	requestParser::get_req_head() const
+t_Request_headers	RequestParser::get_req_head() const
 {
 	return (this->_req_head);
 }
 
-t_General_headers	requestParser::get_gen_head() const
+t_General_headers	RequestParser::get_gen_head() const
 {
 	return (this->_gen_head);
 }
 
-t_Represent_headers	requestParser::get_rep_head() const
+t_Represent_headers	RequestParser::get_rep_head() const
 {
 	return (this->_rep_head);
 }
 
-void	requestParser::set_muv()
+void	RequestParser::set_muv()
 {
 	std::vector<std::string> list = splite(this->_lines[0]);
 	this->_methods = list[0];
@@ -87,10 +101,10 @@ void	requestParser::set_muv()
 	this->_version = list[2];
 }
 
-void	requestParser::set_request_header()
+void	RequestParser::set_request_header()
 {
 	std::string	lists[5] = {"Host:", "User-Agent:", "Accept:", "Accept-Language:", "Accept-Encoding:"};
-	void (requestParser::*f[5])(std::string, std::string) = {&requestParser::set_host, &requestParser::set_user_agent,&requestParser::set_accept,&requestParser::set_accept_language,&requestParser::set_accept_encoding};
+	void (RequestParser::*f[5])(std::string, std::string) = {&RequestParser::set_host, &RequestParser::set_user_agent,&RequestParser::set_accept,&RequestParser::set_accept_language,&RequestParser::set_accept_encoding};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
@@ -103,10 +117,10 @@ void	requestParser::set_request_header()
 	}
 }
 
-void	requestParser::set_general_header()
+void	RequestParser::set_general_header()
 {
 	std::string	lists[2] = {"Connection:", "Upgrade-Insecure-Requests:"};
-	void (requestParser::*f[2])(std::string, std::string) = {&requestParser::set_connection, &requestParser::set_upgrade_insecure_requests};
+	void (RequestParser::*f[2])(std::string, std::string) = {&RequestParser::set_connection, &RequestParser::set_upgrade_insecure_requests};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
@@ -119,10 +133,10 @@ void	requestParser::set_general_header()
 	}
 }
 
-void	requestParser::set_represent_header()
+void	RequestParser::set_represent_header()
 {
 	std::string	lists[2] = {"Content-Type:", "Content-Length:"};
-	void (requestParser::*f[2])(std::string, std::string) = {&requestParser::set_content_type, &requestParser::set_content_length};
+	void (RequestParser::*f[2])(std::string, std::string) = {&RequestParser::set_content_type, &RequestParser::set_content_length};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
@@ -135,48 +149,48 @@ void	requestParser::set_represent_header()
 	}
 }
 
-void	requestParser::set_host(std::string line, std::string mots)
+void	RequestParser::set_host(std::string line, std::string mots)
 {
 	this->_req_head.host = line.erase(0, mots.size() + 1);
 }
 
-void	requestParser::set_user_agent(std::string line, std::string mots)
+void	RequestParser::set_user_agent(std::string line, std::string mots)
 {
 	this->_req_head.user_agent = line.erase(0, mots.size() + 1);
 }
 
-void	requestParser::set_accept(std::string line, std::string mots)
+void	RequestParser::set_accept(std::string line, std::string mots)
 {
 	this->_req_head.accept = line.erase(0, mots.size() + 1);
 }
 
-void	requestParser::set_accept_language(std::string line, std::string mots)
+void	RequestParser::set_accept_language(std::string line, std::string mots)
 {
 	this->_req_head.accept_language = line.erase(0, mots.size() + 1);
 }
 
-void	requestParser::set_accept_encoding(std::string line, std::string mots)
+void	RequestParser::set_accept_encoding(std::string line, std::string mots)
 {
 	this->_req_head.accept_encoding = line.erase(0, mots.size() + 1);
 }
 
 
-void	requestParser::set_connection(std::string line, std::string mots)
+void	RequestParser::set_connection(std::string line, std::string mots)
 {
 	this->_gen_head.connection = line.erase(0, mots.size() + 1);
 }
 
-void	requestParser::set_upgrade_insecure_requests(std::string line, std::string mots)
+void	RequestParser::set_upgrade_insecure_requests(std::string line, std::string mots)
 {
 	this->_gen_head.upgrade_insecure_requests = line.erase(0, mots.size() + 1);
 }
 
-void	requestParser::set_content_type(std::string line, std::string mots)
+void	RequestParser::set_content_type(std::string line, std::string mots)
 {
 	this->_rep_head.content_type = line.erase(0, mots.size() + 1);
 }
 
-void	requestParser::set_content_length(std::string line, std::string mots)
+void	RequestParser::set_content_length(std::string line, std::string mots)
 {
 	this->_rep_head.content_length = line.erase(0, mots.size() + 1);
 }

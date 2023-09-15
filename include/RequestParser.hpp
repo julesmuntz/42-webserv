@@ -30,14 +30,14 @@ typedef struct s_Represent_headers
 	std::string	content_length;
 }				t_Represent_headers;
 
-class requestParser
+class RequestParser
 {
 	private:
 
 		std::vector<std::string> _lines;
 
 		std::string	_request;
-		
+
 		std::string	_methods;
 		std::string	_uri;
 		std::string	_version;
@@ -63,8 +63,11 @@ class requestParser
 		void	set_content_length(std::string, std::string);
 
 	public:
-		requestParser(std::string);
-		~requestParser();
+		RequestParser();
+		RequestParser(std::string);
+		~RequestParser();
+
+		RequestParser	&operator=(const RequestParser &);
 
 		std::string	get_methods() const;
 		std::string	get_uri() const;
