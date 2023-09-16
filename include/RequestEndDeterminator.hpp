@@ -3,6 +3,8 @@
 #include <string>
 #include <limits>
 
+using namespace std;
+
 typedef enum	e_method {
 	ERROR,
 	GET,

@@ -12,8 +12,8 @@ bool	RequestHandler::check_preparsing_errors(void)
 		error = error_413;
 	else // check header size
 	{
-		std::string	msg;
-		std::string	header;
+		string	msg;
+		string	header;
 		msg = req.request;
 		size_t	pos = msg.find_first_of("\r\n\r\n");
 		header = msg.substr(0, pos);
@@ -37,6 +37,6 @@ bool	RequestHandler::add_data(char *str, size_t nread)
 		req.msg_too_long = true;
 		return (false);
 	}
-	std::cout << "Request is: " << req.request << std::endl;
+	cout << "Request is: " << req.request << endl;
 	return (!this->request_is_over());
 }

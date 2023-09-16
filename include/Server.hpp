@@ -26,6 +26,7 @@
 
 #include <limits.h>
 
+using namespace std;
 
 #define BACKLOG 10
 #define BAD_FD  -1
@@ -40,25 +41,26 @@
 #define ERROR_OPEN "error open"
 #define ERROR_END "error end"
 
+
 typedef struct s_location
 {
-	std::string					uri;
-	std::vector<std::string>	allow_methods;
-	std::string					root;
-	std::vector<std::string>	index;
-	std::string					redir_link;
-	std::string					file_location;
-	std::string					cgi_pass;
+	string					uri;
+	vector<string>	allow_methods;
+	string					root;
+	vector<string>	index;
+	string					redir_link;
+	string					file_location;
+	string					cgi_pass;
 	bool						directory_listing;
 }		t_location;
 
 typedef struct s_server
 {
-	std::pair<uint32_t, std::string>	listen;
-	std::vector<std::string>			server_name;
+	pair<uint32_t, string>	listen;
+	vector<string>			server_name;
 	uint32_t							client_body_size;
-	std::vector<std::pair<uint32_t, std::string> >	error_pages;
-	std::vector<t_location>				location;
+	vector<pair<uint32_t, string> >	error_pages;
+	vector<t_location>				location;
 }		t_server;
 
 
@@ -66,10 +68,10 @@ class Server
 {
 	private:
 		int							epoll_fd;
-		std::vector<int>			sfds;
+		vector<int>			sfds;
 		struct epoll_event			events[EPOLL_QUEUE_LEN];
-		std::map<int, RequestHandler>	requests;
-		std::vector<t_server>		con_servs;
+		map<int, RequestHandler>	requests;
+		vector<t_server>		con_servs;
 
 		bool		is_listening_socket(int fd);
 		int			get_a_socket(int port);
@@ -81,11 +83,11 @@ class Server
 		void		memset_events(void);
 		void		update_time(void);
 		void		shutdown_server(void);
-		int			shutdown_server(std::string str_err);
+		int			shutdown_server(string str_err);
 
 	public:
 		Server();
 		~Server();
 		int		serve_do_your_stuff(void);
-		void	set_con_servs(std::vector<t_server> const &co_sers);
+		void	set_con_servs(vector<t_server> const &co_sers);
 };

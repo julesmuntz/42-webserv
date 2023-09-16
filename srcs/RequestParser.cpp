@@ -5,20 +5,20 @@
 /* ---------------------------------utils---------------------------------------- */
 /**********************************************************************************/
 
-bool recherches(const std::string& phrase, const std::string& mots)
+bool recherches(const string& phrase, const string& mots)
 {
-	size_t pos = std::string::npos;
+	size_t pos = string::npos;
 	pos = phrase.find(mots);
 
-	if (pos == std::string::npos)
+	if (pos == string::npos)
 		return false;
 	return (phrase.compare(pos, mots.length(), mots) == 0);
 }
 
-std::vector<std::string> splite(const std::string& str) {
-	std::vector<std::string> result;
-	std::istringstream iss(str);
-	std::string token;
+vector<string> splite(const string& str) {
+	vector<string> result;
+	istringstream iss(str);
+	string token;
 
 	while (iss >> token) {
 		result.push_back(token);
@@ -32,12 +32,12 @@ std::vector<std::string> splite(const std::string& str) {
 
 RequestParser::RequestParser() {}
 
-RequestParser::RequestParser(std::string request) : _request(request)
+RequestParser::RequestParser(string request) : _request(request)
 {
-	std::string line;
-	std::istringstream iss(this->_request);
+	string line;
+	istringstream iss(this->_request);
 
-	while (std::getline(iss, line))
+	while (getline(iss, line))
 		this->_lines.push_back(line);
 
 	RequestParser::set_muv();
@@ -63,17 +63,17 @@ RequestParser::~RequestParser() {}
 /* ------------------------------geteur serveur---------------------------------- */
 /**********************************************************************************/
 
-std::string	RequestParser::get_methods() const
+string	RequestParser::get_methods() const
 {
 	return (this->_methods);
 }
 
-std::string	RequestParser::get_uri() const
+string	RequestParser::get_uri() const
 {
 	return (this->_uri);
 }
 
-std::string	RequestParser::get_version() const
+string	RequestParser::get_version() const
 {
 	return (this->_version);
 }
@@ -95,7 +95,7 @@ t_Represent_headers	RequestParser::get_rep_head() const
 
 void	RequestParser::set_muv()
 {
-	std::vector<std::string> list = splite(this->_lines[0]);
+	vector<string> list = splite(this->_lines[0]);
 	this->_methods = list[0];
 	this->_uri = list[1];
 	this->_version = list[2];
@@ -103,8 +103,8 @@ void	RequestParser::set_muv()
 
 void	RequestParser::set_request_header()
 {
-	std::string	lists[5] = {"Host:", "User-Agent:", "Accept:", "Accept-Language:", "Accept-Encoding:"};
-	void (RequestParser::*f[5])(std::string, std::string) = {&RequestParser::set_host, &RequestParser::set_user_agent,&RequestParser::set_accept,&RequestParser::set_accept_language,&RequestParser::set_accept_encoding};
+	string	lists[5] = {"Host:", "User-Agent:", "Accept:", "Accept-Language:", "Accept-Encoding:"};
+	void (RequestParser::*f[5])(string, string) = {&RequestParser::set_host, &RequestParser::set_user_agent,&RequestParser::set_accept,&RequestParser::set_accept_language,&RequestParser::set_accept_encoding};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
@@ -119,8 +119,8 @@ void	RequestParser::set_request_header()
 
 void	RequestParser::set_general_header()
 {
-	std::string	lists[2] = {"Connection:", "Upgrade-Insecure-Requests:"};
-	void (RequestParser::*f[2])(std::string, std::string) = {&RequestParser::set_connection, &RequestParser::set_upgrade_insecure_requests};
+	string	lists[2] = {"Connection:", "Upgrade-Insecure-Requests:"};
+	void (RequestParser::*f[2])(string, string) = {&RequestParser::set_connection, &RequestParser::set_upgrade_insecure_requests};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
@@ -135,8 +135,8 @@ void	RequestParser::set_general_header()
 
 void	RequestParser::set_represent_header()
 {
-	std::string	lists[2] = {"Content-Type:", "Content-Length:"};
-	void (RequestParser::*f[2])(std::string, std::string) = {&RequestParser::set_content_type, &RequestParser::set_content_length};
+	string	lists[2] = {"Content-Type:", "Content-Length:"};
+	void (RequestParser::*f[2])(string, string) = {&RequestParser::set_content_type, &RequestParser::set_content_length};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
@@ -149,48 +149,53 @@ void	RequestParser::set_represent_header()
 	}
 }
 
-void	RequestParser::set_host(std::string line, std::string mots)
+void	RequestParser::set_host(string line, string mots)
 {
-	this->_req_head.host = line.erase(0, mots.size() + 1);
+
+	line = line.erase(0, mots.size() + 1);
+	if (line.find(":") != string::npos)
+	{
+		this->_req_head.hosts = pair<string, uint32_t>(line.erase(0, line.find(":")), atoi(line.erase(1, line.size()).c_str()));
+	}
 }
 
-void	RequestParser::set_user_agent(std::string line, std::string mots)
+void	RequestParser::set_user_agent(string line, string mots)
 {
 	this->_req_head.user_agent = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_accept(std::string line, std::string mots)
+void	RequestParser::set_accept(string line, string mots)
 {
 	this->_req_head.accept = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_accept_language(std::string line, std::string mots)
+void	RequestParser::set_accept_language(string line, string mots)
 {
 	this->_req_head.accept_language = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_accept_encoding(std::string line, std::string mots)
+void	RequestParser::set_accept_encoding(string line, string mots)
 {
 	this->_req_head.accept_encoding = line.erase(0, mots.size() + 1);
 }
 
 
-void	RequestParser::set_connection(std::string line, std::string mots)
+void	RequestParser::set_connection(string line, string mots)
 {
 	this->_gen_head.connection = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_upgrade_insecure_requests(std::string line, std::string mots)
+void	RequestParser::set_upgrade_insecure_requests(string line, string mots)
 {
 	this->_gen_head.upgrade_insecure_requests = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_content_type(std::string line, std::string mots)
+void	RequestParser::set_content_type(string line, string mots)
 {
 	this->_rep_head.content_type = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_content_length(std::string line, std::string mots)
+void	RequestParser::set_content_length(string line, string mots)
 {
 	this->_rep_head.content_length = line.erase(0, mots.size() + 1);
 }

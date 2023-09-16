@@ -43,15 +43,15 @@ bool	RequestEndDeterminator::check_timeout()
 
 void	RequestEndDeterminator::get_request_method(void)
 {
-	std::istringstream	request(req.request);
-	std::string			first_line;
-	std::string			method_word;
+	istringstream	request(req.request);
+	string			first_line;
+	string			method_word;
 
-	std::getline(request, first_line);
+	getline(request, first_line);
 	if (*first_line.rbegin() == '\r')
 	{
 		first_line.erase(first_line.size() - 1);
-		std::istringstream	first_line_stream(first_line);
+		istringstream	first_line_stream(first_line);
 		first_line_stream >> method_word;
 		if (method_word == "GET")
 			req.method = GET;
@@ -70,7 +70,7 @@ void	RequestEndDeterminator::get_request_method(void)
 
 bool	RequestEndDeterminator::req_is_chunked(void)
 {
-	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != std::string::npos)
+	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != string::npos)
 	{
 		req.chunked = true;
 		return (true);
@@ -148,6 +148,7 @@ bool	RequestEndDeterminator::check_chunked_end(void)
 		{
 			if (chunked_data_read == "\r\n")
 				return (true);
+			//check no good
 		}
 		if (chunked_data_read.size() >= (size_t) chunked_nb_chars + 2)
 		{

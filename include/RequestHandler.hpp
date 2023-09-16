@@ -1,5 +1,7 @@
 #pragma once
 
+using namespace std;
+
 typedef enum	e_error {
 	error_400 = 400, // bad request
 	error_404 = 404, // not found

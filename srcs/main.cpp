@@ -2,16 +2,31 @@
 #include "Exodus.hpp"
 #include "RequestParser.hpp"
 
+vector<t_server> serv;
+RequestParser rep("eee");
+
+t_server	choice_server()
+{
+	t_server tmp;
+
+	for (vector<t_server>::iterator it = serv.begin(); it != serv.end(); it++)
+	{
+		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
+			tmp = *it;
+	}
+	return (tmp);
+}
+
 int main()
 {
-	std::string request;
+	string request;
 	request = "\r\nTransfer-Encoding: chunked\r\n\r\n27\r\nVoici les données du premier morceau\r\n\r\n1C\r\net voici un second morceau\r\n\r\n20\r\net voici deux derniers morceaux \r\n12\r\nsans saut de ligne\r\n0\r\n\r\n";
 
 	Server	webserver;
 
 	int		ret;
 	//Exodus pp("conf/default.conf");
-	std::vector<t_server> context_servers;
+	vector<t_server> context_servers;
 	// names.push_back("ok");
 	// names.push_back("lala");
 
@@ -20,6 +35,7 @@ int main()
 
 	// locations.push_back(loc_1);
 	// locations.push_back(loc_2)
+
 
 	size_t pos = std::string::npos;
 	pos = request.find("\r\n\r\n");
@@ -79,68 +95,68 @@ int main()
 	// }
 	// while (!l.empty())
 	// {
-	// 	size_t p = std::string::npos;
+	// 	size_t p = string::npos;
 	// 	p = request.find("\r\n");
 	// 	unsigned int i = 0;
-	// 	std::istringstream iss(l.substr(0, p));
-	// 	iss >> std::hex >> i;
+	// 	istringstream iss(l.substr(0, p));
+	// 	iss >> hex >> i;
 	// 	l.erase(0, p + 4);
 	// 	p = request.find("\r\n");
 
-	// 	std::cout << l.substr(0, ) ;
+	// 	cout << l.substr(0, ) ;
 	// 	l = "";
 	// }
 
 
 
 	// requestParser rep(request);
-	// std::cout << rep.get_methods() << " " << rep.get_uri() << " " << rep.get_version() << std::endl;
-	// std::cout << rep.get_req_head().host << std::endl;
+	// cout << rep.get_methods() << " " << rep.get_uri() << " " << rep.get_version() << endl;
+	// cout << rep.get_req_head().host << endl;
 	// context_servers.push_back(con_2);
 	try {
 		Exodus pp("conf/conf1.conf");
 		pp.setup();
 		context_servers = pp.get_server();
 	}
-	catch(const std::exception &e)
+	catch(const exception &e)
 	{
-		std::cerr << e.what() << std::endl;
+		cerr << e.what() << endl;
 	}
 
 	// for (long unsigned int i = 0; i < context_servers.size(); i++)
 	// {
-	// 	std::cout << "server {" << std::endl;
-	// 	std::cout << "listen " << context_servers[i].listen.first << ":" << context_servers[i].listen.second << std::endl;
-	// 	std::cout << "server_name";
+	// 	cout << "server {" << endl;
+	// 	cout << "listen " << context_servers[i].listen.first << ":" << context_servers[i].listen.second << endl;
+	// 	cout << "server_name";
 	// 	for (int y = 0; y < 2; y++)
-	// 		std::cout << " " << context_servers[i].server_name[y];
-	// 	std::cout << std::endl;
-	// 	std::cout << "client_body_size " << context_servers[i].client_body_size << std::endl;
-	// 	std::cout << "error_page";
+	// 		cout << " " << context_servers[i].server_name[y];
+	// 	cout << endl;
+	// 	cout << "client_body_size " << context_servers[i].client_body_size << endl;
+	// 	cout << "error_page";
 	// 	for (int y = 0; y < 1; y++)
-	// 		std::cout << " " << context_servers[i].error_pages[y].first << " " << context_servers[i].error_pages[y].second;
-	// 	std::cout << std::endl;
+	// 		cout << " " << context_servers[i].error_pages[y].first << " " << context_servers[i].error_pages[y].second;
+	// 	cout << endl;
 
 	// 	for(long unsigned int l = 0; l < context_servers[i].location.size(); l++)
 	// 	{
-	// 		std::cout << "	location " << context_servers[i].location[l].uri <<  "{" << std::endl;
-	// 		std::cout << "		allow_methods";
+	// 		cout << "	location " << context_servers[i].location[l].uri <<  "{" << endl;
+	// 		cout << "		allow_methods";
 	// 		for (int y = 0; y < 2; y++)
-	// 			std::cout << " " << context_servers[i].location[l].allow_methods[y];
-	// 		std::cout << std::endl;
-	// 		std::cout << "		root " << context_servers[i].location[l].root << std::endl;
-	// 		std::cout << "		index " << context_servers[i].location[l].index[0] << std::endl;
-	// 		std::cout << "		redir_link " << context_servers[i].location[l].redir_link << std::endl;
-	// 		std::cout << "		file_location " << context_servers[i].location[l].file_location << std::endl;
-	// 		std::cout << "		cgi_pass " << context_servers[i].location[l].cgi_pass << std::endl;
+	// 			cout << " " << context_servers[i].location[l].allow_methods[y];
+	// 		cout << endl;
+	// 		cout << "		root " << context_servers[i].location[l].root << endl;
+	// 		cout << "		index " << context_servers[i].location[l].index[0] << endl;
+	// 		cout << "		redir_link " << context_servers[i].location[l].redir_link << endl;
+	// 		cout << "		file_location " << context_servers[i].location[l].file_location << endl;
+	// 		cout << "		cgi_pass " << context_servers[i].location[l].cgi_pass << endl;
 	// 		if (context_servers[i].location[l].directory_listing)
-	// 			std::cout << "		directory_listing true" << std::endl;
+	// 			cout << "		directory_listing true" << endl;
 	// 		else
-	// 			std::cout << "		directory_listing true" << std::endl;
-	// 		std::cout << "	}" << std::endl;
+	// 			cout << "		directory_listing true" << endl;
+	// 		cout << "	}" << endl;
 	// 	}
 
-	// 	std::cout << "}" << std::endl;
+	// 	cout << "}" << endl;
 	// }
 	webserver.set_con_servs(context_servers);
 	ret = webserver.serve_do_your_stuff();
