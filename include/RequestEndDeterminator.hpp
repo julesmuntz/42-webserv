@@ -2,6 +2,8 @@
 #include <ctime>
 #include <string>
 
+using namespace std;
+
 typedef enum	e_method {
 	GET,
 	DELETE,
@@ -29,7 +31,7 @@ typedef struct	s_request {
 	size_t		content_length;
 	bool		msg_too_long;
 	size_t		body_size;
-	std::string	request;
+	string	request;
 }				t_request;
 
 class RequestEndDeterminator

@@ -6,7 +6,7 @@
 /*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/14 16:41:37 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/09/16 16:03:56 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,13 +33,13 @@ void	Server::sigint_handler(int sig)
 
 void	Server::shutdown_server(void)
 {
-	std::cout << std::endl << "Shutting down" << std::endl;
+	cout << endl << "Shutting down" << endl;
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
 		if (events[i].data.fd != -1)
 			close(events[i].data.fd);
 	}
-	for (std::vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
+	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
 	{
 		if (*it != -1)
 			close(*it);
@@ -48,16 +48,16 @@ void	Server::shutdown_server(void)
 		close(epoll_fd);
 }
 
-int	Server::shutdown_server(std::string str_err)
+int	Server::shutdown_server(string str_err)
 {
 	perror(str_err.c_str());
-	std::cout << std::endl << "Shutting down" << std::endl;
+	cout << endl << "Shutting down" << endl;
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
 		if (events[i].data.fd != -1)
 			close(events[i].data.fd);
 	}
-	for (std::vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
+	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
 	{
 		if (*it != -1)
 			close(*it);
@@ -79,14 +79,14 @@ void	Server::memset_events(void)
 
 /* Sets context servers from the config file */
 
-void	Server::set_con_servs(std::vector<t_server> const &co_sers)
+void	Server::set_con_servs(vector<t_server> const &co_sers)
 {
 	this->con_servs = co_sers;
 }
 
 void	Server::update_time(void)
 {
-	std::map<int, RequestHandler>::iterator	it;
+	map<int, RequestHandler>::iterator	it;
 	struct epoll_event						event;
 
 	for (it = requests.begin(); it != requests.end(); it++)
@@ -106,7 +106,7 @@ void	Server::update_time(void)
 
 bool	Server::is_listening_socket(int fd)
 {
-	for (std::vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
+	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
 	{
 		if (*it == fd)
 			return (true);
@@ -121,7 +121,7 @@ int	Server::get_a_socket(int port)
 {
 	struct addrinfo		hints;
 	struct addrinfo		*result,	*rp;
-	std::stringstream	port_sstream;
+	stringstream	port_sstream;
 	int					sfd, ret;
 
 	memset(&hints, 0, sizeof(hints));
@@ -133,7 +133,7 @@ int	Server::get_a_socket(int port)
 	ret = getaddrinfo(NULL, port_sstream.str().c_str(), &hints, &result);
 	if (ret)
 	{
-		std::cerr << "getaddrinfo: " << gai_strerror(ret) << std::endl;
+		cerr << "getaddrinfo: " << gai_strerror(ret) << endl;
 		return (BAD_FD);
 	}
 	for (rp = result; rp != NULL; rp = rp->ai_next)
@@ -148,7 +148,7 @@ int	Server::get_a_socket(int port)
 			close(sfd);
 			return (this->shutdown_server("setsockopt"));
 		}
-		std::cout << "sfd = " << sfd << std::endl;
+		cout << "sfd = " << sfd << endl;
 		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
 			break;
 		close(sfd);
@@ -158,7 +158,7 @@ int	Server::get_a_socket(int port)
 
 	if (rp == NULL)
 	{
-		std::cerr << "Could not bind" << std::endl;
+		cerr << "Could not bind" << endl;
 		return (BAD_FD);
 	}
 	sfds.push_back(sfd);
@@ -178,10 +178,10 @@ int	Server::set_up_server(void)
 	epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
 	if (epoll_fd == -1)
 	{
-		std::cerr << "Failed to create epoll file descriptor" << std::endl;
+		cerr << "Failed to create epoll file descriptor" << endl;
 		return (1);
 	}
-	for (std::vector<t_server>::iterator it = con_servs.begin();
+	for (vector<t_server>::iterator it = con_servs.begin();
 			it != con_servs.end(); it++)
 	{
 		sfd = this->get_a_socket(it->listen.first);
@@ -194,7 +194,7 @@ int	Server::set_up_server(void)
 		event.data.fd = sfd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sfd, &event))
 		{
-			std::cout << "Failed to add file descriptor to epoll" << std::endl;
+			cout << "Failed to add file descriptor to epoll" << endl;
 			this->shutdown_server();
 			return (3);
 		}
@@ -224,9 +224,9 @@ int	Server::handle_new_connection(int sfd)
 	event.data.fd = connfd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
 		return (this->shutdown_server("epoll_ctl: conn_sock"));
-	std::cout << "NEW fd = " << connfd << " added to epoll" << std::endl;
+	cout << "NEW fd = " << connfd << " added to epoll" << endl;
 	RequestHandler	req(connfd);
-	requests.insert(std::pair<int, RequestHandler>(connfd, req));
+	requests.insert(pair<int, RequestHandler>(connfd, req));
 	return (0);
 }
 
@@ -245,7 +245,7 @@ int	Server::receive_data(int i)
 	}
 	if (nread == 0)
 	{
-		std::cout << "CLOSE" << std::endl << std::endl;
+		cout << "CLOSE" << endl << endl;
 		event.events = EPOLLIN;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
@@ -273,12 +273,12 @@ int	Server::send_data(int i)
 {
 	struct epoll_event	event;
 
-	std::cout << "Sending..." << std::endl;
+	cout << "Sending..." << endl;
 	//parse the request and construct the response
 	//check return value of send
 	send(events[i].data.fd, "HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n",
 		strlen("HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n"), 0);
-	std::cout << "Send OK" << std::endl;
+	cout << "Send OK" << endl;
 	event.events = EPOLLIN;
 	event.data.fd = events[i].data.fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
