@@ -1,5 +1,7 @@
 #pragma once
 
+using namespace std;
+
 typedef enum	e_error {
 	error_400 = 400, // bad request
 	error_404 = 404, // not found
@@ -21,6 +23,6 @@ class RequestHandler : virtual public RequestEndDeterminator
 	public:
 		RequestHandler(int fd);
 		virtual ~RequestHandler();
-		bool	add_data(std::string str);
+		bool	add_data(string str);
 		bool	check_preparsing_errors(void); //timeout, request header too long, and msg too long (request body too long)
 };

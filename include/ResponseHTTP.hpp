@@ -8,38 +8,44 @@
 #include <stdint.h>
 // typedef struct s_responce
 // {
-// 	std::string	status;
-// 	std::string	header;
-// 	std::string	body;
+// 	string	status;
+// 	string	header;
+// 	string	body;
 // }		t_responce;
+
+using namespace std;
 
 class ResponseHTTP
 {
 	private:
-		std::map<uint32_t, std::string> _static_code;
+		map<uint32_t, string> _static_code;
 
-		std::string	_responce;
-		std::string	_header;
-		std::string	_body;
+		string	_responce;
+		string	_header;
+		string	_body;
 
 		RequestParser _request;
-		std::vector<t_server> _server_config;
+		t_server _server_config;
 		//t_responce	_responce;
-		bool		_location;
-		void		set_location()
+		bool		_no_location;
+		bool		set_location()
 		{
 			if (!_request.get_uri().empty())
-				_location = true;
+				return (true);
+			for (vector<t_location>::iterator it = _server_config.location.begin(); it != _server_config.location.end(); it++)
+			{
+				if (it->file_location == _request.get_uri())
+					return (false);
+			}
+			return (true);
 		}
 	public:
-		ResponseHTTP(RequestParser &, std::vector<t_server> &);
+		ResponseHTTP(RequestParser &, t_server &);
 		~ResponseHTTP();
 		//choisir quel function on vas utiliser pour cree la reponce
 			void	setup()
 			{
-				if (_location)
-					return (get());
-				else
+				if (_no_location)
 					return (generate_400_error());
 			}
 		//creation des error

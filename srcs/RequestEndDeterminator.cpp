@@ -41,15 +41,15 @@ bool	RequestEndDeterminator::check_timeout()
 
 void	RequestEndDeterminator::get_request_method(void)
 {
-	std::istringstream	request(req.request);
-	std::string			first_line;
-	std::string			method_word;
+	istringstream	request(req.request);
+	string			first_line;
+	string			method_word;
 
-	std::getline(request, first_line);
+	getline(request, first_line);
 	if (*first_line.rbegin() == '\r')
 	{
 		first_line.erase(first_line.size() - 1);
-		std::istringstream	first_line_stream(first_line);
+		istringstream	first_line_stream(first_line);
 		first_line_stream >> method_word;
 		if (method_word == "GET")
 			req.method = GET;
@@ -71,7 +71,7 @@ void	RequestEndDeterminator::get_request_method(void)
 // edouard
 bool	RequestEndDeterminator::req_is_chunked(void)
 {
-	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != std::string::npos)
+	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != string::npos)
 	{
 		req.chunked = true;
 		return (true);
@@ -81,7 +81,7 @@ bool	RequestEndDeterminator::req_is_chunked(void)
 
 bool	RequestEndDeterminator::req_has_body(void)
 {
-	if (req.request.find("\r\n\r\n") != std::string::npos)
+	if (req.request.find("\r\n\r\n") != string::npos)
 	{
 		req.body = true;
 		return (true);
@@ -93,12 +93,12 @@ bool	RequestEndDeterminator::this_is_the_end(void)
 {
 	if (req.chunked)
 	{
-		if (req.request.find("\r\n0\r\n\r\n") != std::string::npos)
+		if (req.request.find("\r\n0\r\n\r\n") != string::npos)
 			return (true);
 	}
 	else if (req.method != POST)
 	{
-		if (req.request.find("\r\n\r\n") != std::string::npos)
+		if (req.request.find("\r\n\r\n") != string::npos)
 			return (true);
 	}
 	else
@@ -106,7 +106,7 @@ bool	RequestEndDeterminator::this_is_the_end(void)
 		if (req.body)
 		{
 			size_t	pos = req.request.find("\r\n\r\n");
-			if (req.request.find("\r\n\r\n", pos + 1) != std::string::npos)
+			if (req.request.find("\r\n\r\n", pos + 1) != string::npos)
 				return (true);
 		}
 	}
