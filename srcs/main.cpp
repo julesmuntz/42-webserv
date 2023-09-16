@@ -28,7 +28,7 @@ int main()
 	std::string body;
 	if (pos != std::string::npos)
 		if (posf != std::string::npos)
-			body = request.substr(pos + 4, posf);
+			body = request.substr(pos + 4, posf - (pos + 4));
 	// std::cout << body;
 	pos = 0;
 	std::string unchunked_body = "";

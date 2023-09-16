@@ -15,12 +15,11 @@ class RequestHandler : virtual public RequestEndDeterminator
 {
 	private:
 		int		fd;
-		size_t	msg_len;
 		t_error	error;
 
 	public:
 		RequestHandler(int fd);
 		virtual ~RequestHandler();
-		bool	add_data(std::string str);
+		bool	add_data(char *str, size_t nread);
 		bool	check_preparsing_errors(void); //timeout, request header too long, and msg too long (request body too long)
 };

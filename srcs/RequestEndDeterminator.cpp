@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-RequestEndDeterminator::RequestEndDeterminator()
+RequestEndDeterminator::RequestEndDeterminator() : msg_len(0), chunked_nb_chars(-1), chunked_data_read(""), chunked_pos_in_req(0)
 {
 	time_t	ref;
 
@@ -14,7 +14,7 @@ RequestEndDeterminator::RequestEndDeterminator()
 	this->req.time.time_passed_since = 0;
 	this->req.msg_too_long = false;
 	this->req.content_length = 0;
-	this->req.body_size = 0;
+	this->req.header_size = 0;
 	this->req.request = "";
 }
 
@@ -68,9 +68,6 @@ void	RequestEndDeterminator::get_request_method(void)
 	}
 }
 
-
-
-// edouard
 bool	RequestEndDeterminator::req_is_chunked(void)
 {
 	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != std::string::npos)
@@ -81,76 +78,112 @@ bool	RequestEndDeterminator::req_is_chunked(void)
 	return (false);
 }
 
-// bool	RequestEndDeterminator::req_content_length(void)
-// {
-// 	std::string	length;
-// 	size_t		npos;
-
-// 	size_t	pos = req.request.find("\r\nContent-Length: ");
-// 	if (pos != std::string::npos)
-// 	{
-// 		npos = req.request.find("\r\n", pos + 1);
-// 		if (npos == std::string::npos)
-// 			return (false);
-// 		length = req.request.substr(pos + strlen("\r\nContent-Length: "), npos);
-// 		std::stringstream sstream(length);
-// 		sstream >> req.content_length;
-// 		//check error
-// 	}
-// 	else
-// 		return (false);
-// 	return (true);
-// }
-
-// size_t	get_body_size(std::string request)
-// {
-// 	//work to do
-// 	//do not forget not to use += when dealing with body append because of zeros
-// }
-
-
-bool	RequestEndDeterminator::req_has_body(void)
+bool	RequestEndDeterminator::req_content_length(void)
 {
-	size_t		pos;
-	// std::string	body;
+	std::string	length;
+	size_t		npos;
 
-	pos = req.request.find("\r\n\r\n");
+	size_t	pos = req.request.find("\r\nContent-Length: ");
 	if (pos != std::string::npos)
 	{
-		// if (this->req_content_length())
-		// {
-		// }
-		// body = req.request.substr(pos + 4, req.request.size());
-		// req.body_size = body.size();
-		req.body = true;
+		npos = req.request.find("\r\n", pos + 1);
+		if (npos == std::string::npos)
+			return (false);
+		length = req.request.substr(pos + strlen("\r\nContent-Length: "), npos - (pos + strlen("\r\nContent-Length: ")));
+		std::stringstream sstream(length);
+		sstream >> req.content_length;
+		//check error // not a number etc // bad request
+	}
+	else
+		return (false);
+	return (true);
+}
+
+bool	RequestEndDeterminator::check_no_body_end(void)
+{
+	if (req.request.find("\r\n\r\n") != std::string::npos)
 		return (true);
+	return (false);
+}
+
+bool	RequestEndDeterminator::check_content_end(void)
+{
+	std::cout << "content length is: " << req.content_length << std::endl;
+	std::cout << "msg_len is: " << msg_len << std::endl;
+	if (msg_len - req.header_size >= req.content_length)
+		return (true);
+	return (false);
+}
+
+bool	RequestEndDeterminator::check_chunked_end(void)
+{
+	size_t		end_size;
+	std::string	data_read;
+
+	while (chunked_pos_in_req != std::string::npos)
+	{
+		if (chunked_nb_chars == -1)
+		{
+			std::string hexa_str;
+
+			end_size = req.request.find("\r\n", chunked_pos_in_req);
+			if (end_size == std::string::npos)
+			{
+				return (false);
+			}
+			hexa_str = req.request.substr(chunked_pos_in_req, end_size - chunked_pos_in_req);
+			std::istringstream iss(hexa_str);
+			iss >> std::hex >> chunked_nb_chars;
+			//handle error in hex form
+			//handle error if no good form, no good end
+			std::cout << "nb is: " << chunked_nb_chars << std::endl;
+			chunked_pos_in_req = end_size + 2;
+			chunked_data_read = "";
+		}
+		data_read = req.request.substr(chunked_pos_in_req);
+		chunked_data_read += data_read;
+		std::cout << "chunked data is: " << chunked_data_read << std::endl;
+		std::cout << "its size is: " << chunked_data_read.size() << std::endl;
+		if (chunked_nb_chars == 0)
+		{
+			if (chunked_data_read == "\r\n")
+				return (true);
+		}
+		if (chunked_data_read.size() >= (size_t) chunked_nb_chars + 2)
+		{
+			chunked_pos_in_req = chunked_pos_in_req + data_read.size() - chunked_data_read.size() + chunked_nb_chars + 2;
+			// check if last two are really \r\n
+			chunked_nb_chars = -1;
+		}
+		else
+		{
+			chunked_pos_in_req += data_read.size();
+			return (false);
+		}
 	}
 	return (false);
 }
 
-bool	RequestEndDeterminator::this_is_the_end(void)
+void	RequestEndDeterminator::check_body(void)
 {
-	if (req.chunked)
+	size_t		pos;
+	std::string	header;
+
+	pos = req.request.find("\r\n\r\n");
+	if (pos != std::string::npos)
 	{
-		if (req.request.find("\r\n0\r\n\r\n") != std::string::npos)
-			return (true);
-	}
-	else if (req.method != POST)
-	{
-		if (req.request.find("\r\n\r\n") != std::string::npos)
-			return (true);
-	}
-	else
-	{
-		if (req.body)
+		if (!req_is_chunked())
 		{
-			// req.body_size += 
-			size_t	pos = req.request.find("\r\n\r\n");
-			if (req.request.find("\r\n\r\n", pos + 1) != std::string::npos)
-				return (true);
+			if (!req_content_length())
+			{
+				//error to handle
+				//bad request
+			}
 		}
+		req.header_size = pos + 4;
+		chunked_pos_in_req = req.header_size;
+		req.body = true;
 	}
-	return (false);
 }
 
 // attribute to mark fallthrough
@@ -166,26 +199,22 @@ bool	RequestEndDeterminator::request_is_over(void)
 		default :
 			switch (req.method)
 			{
-				case GET ... DELETE :
-					return (this_is_the_end());
+				case ERROR ... DELETE : // ERROR, GET and DELETE
+					return (check_no_body_end());
 				case POST :
-					switch (req.chunked)
+					switch (req.body)
 					{
 						case false :
-							if (req.body)
-								return (this_is_the_end());
-							if (req_is_chunked())
-								return (this_is_the_end());
-							else if (req_has_body())
-								return (this_is_the_end());
+							check_body();
+							if (!req.body)
+								return (false);
 							__attribute__ ((fallthrough));
-						default :
+						case true :
 							if (req.chunked)
-								return (this_is_the_end());
-							__attribute__ ((fallthrough));
+								return (check_chunked_end());
+							else
+								return (check_content_end());
 					}
-				case ERROR :
-					return (this_is_the_end());
 				case NONE :
 					break ;
 			}

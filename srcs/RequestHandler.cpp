@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-RequestHandler::RequestHandler(int fd) : RequestEndDeterminator(), fd(fd), msg_len(0), error(no_error) {}
+RequestHandler::RequestHandler(int fd) : RequestEndDeterminator(), fd(fd), error(no_error) {}
 
 RequestHandler::~RequestHandler() {}
 
@@ -25,10 +25,13 @@ bool	RequestHandler::check_preparsing_errors(void)
 	return (false);
 }
 
-bool	RequestHandler::add_data(std::string str)
+bool	RequestHandler::add_data(char *str, size_t nread)
 {
-	req.request += str;
-	msg_len += str.size();
+	std::string	addon;
+
+	addon.assign(str, nread);
+	req.request += addon;
+	msg_len += nread;
 	if (msg_len > MSG_MAX_SIZE)
 	{
 		req.msg_too_long = true;

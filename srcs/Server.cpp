@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/14 16:41:37 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/09/15 18:53:19 by mbelrhaz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,7 +255,7 @@ int	Server::receive_data(int i)
 		return (0);
 	}
 	buf[nread] = '\0';
-	if (!(requests.find(events[i].data.fd))->second.add_data(buf))
+	if (!(requests.find(events[i].data.fd))->second.add_data(buf, nread))
 	{
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
 		event.events = EPOLLOUT;
