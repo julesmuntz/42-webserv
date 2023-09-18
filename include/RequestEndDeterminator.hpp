@@ -15,7 +15,7 @@ typedef enum	e_method {
 
 typedef struct	s_time {
 	bool	active;
-	bool	timeout;
+	bool	timeout; 
 	time_t	start_time;
 	time_t	time_passed_since;
 }				t_time;
