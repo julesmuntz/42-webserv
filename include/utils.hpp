@@ -8,6 +8,9 @@
 
 using namespace std;
 
-bool recherche(const string& phrase, const string& mots);
-vector<string> split(const string& str);
-string extractmots(string line, string mots);
+bool			is_positive_hexa(std::string &str);
+bool			is_positive_deci(std::string &str);
+bool			check_overflow(std::string &str);
+bool			recherche(const string& phrase, const string& mots);
+vector<string>	split(const string& str);
+string			extractmots(string line, string mots);

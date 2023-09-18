@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ResponseError.hpp"
 #include "RequestParser.hpp"
 #include "Server.hpp"
 #include <iostream>
@@ -20,15 +21,15 @@ class ResponseHTTP
 	private:
 		map<uint32_t, string> _static_code;
 
-		string	_responce;
+		string	_response;
+		int		_status;
 		string	_header;
 		string	_body;
 
-		RequestParser _request;
-		t_server _server_config;
-		//t_responce	_responce;
-		bool		_no_location;
-		bool		set_location()
+		RequestParser	_request;
+		t_server		_server_config;
+		bool			_no_location;
+		bool			set_location()
 		{
 			if (!_request.get_uri().empty())
 				return (true);

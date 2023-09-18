@@ -1,6 +1,7 @@
 #include "Server.hpp"
+#include "utils.hpp"
 
-RequestEndDeterminator::RequestEndDeterminator() : msg_len(0), chunked_nb_chars(-1), chunked_data_read(""), chunked_pos_in_req(0)
+RequestEndDeterminator::RequestEndDeterminator() : msg_len(0), chunked_nb_chars(-1), chunked_data_read(""), chunked_pos_in_req(0), bad_request(false)
 {
 	time_t	ref;
 
@@ -80,7 +81,7 @@ bool	RequestEndDeterminator::req_is_chunked(void)
 
 bool	RequestEndDeterminator::req_content_length(void)
 {
-	std::string	length;
+	std::string	content_size;
 	size_t		npos;
 
 	size_t	pos = req.request.find("\r\nContent-Length: ");
@@ -89,10 +90,13 @@ bool	RequestEndDeterminator::req_content_length(void)
 		npos = req.request.find("\r\n", pos + 1);
 		if (npos == std::string::npos)
 			return (false);
-		length = req.request.substr(pos + strlen("\r\nContent-Length: "), npos - (pos + strlen("\r\nContent-Length: ")));
-		std::stringstream sstream(length);
+		content_size = req.request.substr(pos + strlen("\r\nContent-Length: "), npos - (pos + strlen("\r\nContent-Length: ")));
+		std::stringstream sstream(content_size);
+		if (!is_positive_deci(content_size) || check_overflow(content_size))
+		{
+			return (false);
+		}
 		sstream >> req.content_length;
-		//check error // not a number etc // bad request
 	}
 	else
 		return (false);
@@ -108,8 +112,6 @@ bool	RequestEndDeterminator::check_no_body_end(void)
 
 bool	RequestEndDeterminator::check_content_end(void)
 {
-	std::cout << "content length is: " << req.content_length << std::endl;
-	std::cout << "msg_len is: " << msg_len << std::endl;
 	if (msg_len - req.header_size >= req.content_length)
 		return (true);
 	return (false);
@@ -119,41 +121,48 @@ bool	RequestEndDeterminator::check_chunked_end(void)
 {
 	size_t		end_size;
 	std::string	data_read;
+	std::string	hexa_str;
 
 	while (chunked_pos_in_req != std::string::npos)
 	{
 		if (chunked_nb_chars == -1)
 		{
-			std::string hexa_str;
-
 			end_size = req.request.find("\r\n", chunked_pos_in_req);
 			if (end_size == std::string::npos)
 			{
 				return (false);
 			}
 			hexa_str = req.request.substr(chunked_pos_in_req, end_size - chunked_pos_in_req);
+			if (!is_positive_hexa(hexa_str))
+			{
+				bad_request = true;
+				return (true);
+			}
 			std::istringstream iss(hexa_str);
 			iss >> std::hex >> chunked_nb_chars;
-			//handle error in hex form
-			//handle error if no good form, no good end
-			std::cout << "nb is: " << chunked_nb_chars << std::endl;
 			chunked_pos_in_req = end_size + 2;
 			chunked_data_read = "";
 		}
 		data_read = req.request.substr(chunked_pos_in_req);
 		chunked_data_read += data_read;
-		std::cout << "chunked data is: " << chunked_data_read << std::endl;
-		std::cout << "its size is: " << chunked_data_read.size() << std::endl;
 		if (chunked_nb_chars == 0)
 		{
-			if (chunked_data_read == "\r\n")
+			if (chunked_data_read.size() >= 2 && chunked_data_read[0] == '\r' && chunked_data_read[1] == '\n')
 				return (true);
-			//check no good
+			else if (chunked_data_read.size() >= 2)
+			{
+				bad_request = true;
+				return (true);
+			}
 		}
 		if (chunked_data_read.size() >= (size_t) chunked_nb_chars + 2)
 		{
 			chunked_pos_in_req = chunked_pos_in_req + data_read.size() - chunked_data_read.size() + chunked_nb_chars + 2;
-			// check if last two are really \r\n
+			if (req.request[chunked_pos_in_req - 2] != '\r' || req.request[chunked_pos_in_req - 1] != '\n')
+			{
+				bad_request = true;
+				return (true);
+			}
 			chunked_nb_chars = -1;
 		}
 		else
@@ -177,8 +186,7 @@ void	RequestEndDeterminator::check_body(void)
 		{
 			if (!req_content_length())
 			{
-				//error to handle
-				//bad request
+				bad_request = true;
 			}
 		}
 		req.header_size = pos + 4;
@@ -192,6 +200,9 @@ void	RequestEndDeterminator::check_body(void)
 
 bool	RequestEndDeterminator::request_is_over(void)
 {
+	if (bad_request)
+		return (true);
+
 	switch (req.method)
 	{
 		case NONE :
@@ -208,7 +219,11 @@ bool	RequestEndDeterminator::request_is_over(void)
 						case false :
 							check_body();
 							if (!req.body)
+							{
+								if (bad_request)
+									return (true);
 								return (false);
+							}
 							__attribute__ ((fallthrough));
 						case true :
 							if (req.chunked)

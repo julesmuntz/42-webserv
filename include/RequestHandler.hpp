@@ -1,17 +1,21 @@
 #pragma once
 
+#include "RequestEndDeterminator.hpp"
+#include <climits>
+
 using namespace std;
+
+#define HEADER_MAX_SIZE	10000
+#define MSG_MAX_SIZE	INT_MAX
 
 typedef enum	e_error {
 	error_400 = 400, // bad request
 	error_404 = 404, // not found
 	error_408 = 408, // timeout
 	error_413 = 413, // request header too long
-	error_431 = 431,  // request body too long
+	error_431 = 431, // request body too long
 	no_error = 0
 }				t_error;
-
-#include "RequestEndDeterminator.hpp"
 
 class RequestHandler : virtual public RequestEndDeterminator
 {

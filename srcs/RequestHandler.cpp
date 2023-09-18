@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "RequestHandler.hpp"
 
 RequestHandler::RequestHandler(int fd) : RequestEndDeterminator(), fd(fd), error(no_error) {}
 

@@ -1,4 +1,16 @@
 #pragma once
+
+#include <iterator>
+#include <cstring>
+#include <exception>
+#include <stdlib.h>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <sstream>
+#include <unistd.h>
+#include <stdio.h>
+#include <iostream>
 #include <ctime>
 #include <string>
 #include <limits>
@@ -15,7 +27,7 @@ typedef enum	e_method {
 
 typedef struct	s_time {
 	bool	active;
-	bool	timeout; 
+	bool	timeout;
 	time_t	start_time;
 	time_t	time_passed_since;
 }				t_time;
@@ -39,6 +51,7 @@ class RequestEndDeterminator
 		long long	chunked_nb_chars;
 		std::string	chunked_data_read;
 		size_t		chunked_pos_in_req;
+		bool		bad_request;
 		bool		req_content_length(void);
 		void		get_request_method(void);
 		bool		req_is_chunked(void);
@@ -46,8 +59,6 @@ class RequestEndDeterminator
 		bool		check_content_end(void);
 		bool		check_chunked_end(void);
 		void		check_body(void);
-		// bool		req_has_body(void);
-		// bool		this_is_the_end(void);
 		bool		request_is_over(void);
 
 	public:

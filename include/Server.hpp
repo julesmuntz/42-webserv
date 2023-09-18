@@ -1,38 +1,20 @@
 #pragma once
 
 #include "RequestHandler.hpp"
-#include <iterator>
-#include <cstring>
-#include <exception>
-#include <stdlib.h>
-#include <vector>
 #include <map>
-#include <algorithm>
-#include <list>
-#include <deque>
 #include <sys/epoll.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <sstream>
 #include <sys/select.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <signal.h>
 #include <errno.h>
-
-#include <iostream>
-
-#include <limits.h>
+#include <signal.h>
 
 using namespace std;
 
 #define BACKLOG 10
-#define BAD_FD  -1
 #define EPOLL_QUEUE_LEN 100000
-#define HEADER_MAX_SIZE 10000
-#define MSG_MAX_SIZE INT_MAX
 #define BUF_SIZE 1024
 #define TIMEOUT  1000
 #define FILE_CONF ".conf"
@@ -44,21 +26,21 @@ using namespace std;
 
 typedef struct s_location
 {
-	string					uri;
+	string			uri;
 	vector<string>	allow_methods;
-	string					root;
+	string			root;
 	vector<string>	index;
-	string					redir_link;
-	string					file_location;
-	string					cgi_pass;
-	bool						directory_listing;
+	string			redir_link;
+	string			file_location;
+	string			cgi_pass;
+	bool			directory_listing;
 }		t_location;
 
 typedef struct s_server
 {
-	pair<uint32_t, string>	listen;
-	vector<string>			server_name;
-	uint32_t							client_body_size;
+	pair<uint32_t, string>			listen;
+	vector<string>					server_name;
+	uint32_t						client_body_size;
 	vector<pair<uint32_t, string> >	error_pages;
 	vector<t_location>				location;
 }		t_server;
@@ -68,10 +50,10 @@ class Server
 {
 	private:
 		int							epoll_fd;
-		vector<int>			sfds;
+		vector<int>					sfds;
 		struct epoll_event			events[EPOLL_QUEUE_LEN];
 		map<int, RequestHandler>	requests;
-		vector<t_server>		con_servs;
+		vector<t_server>			con_servs;
 
 		bool		is_listening_socket(int fd);
 		int			get_a_socket(int port);

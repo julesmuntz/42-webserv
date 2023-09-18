@@ -87,7 +87,7 @@ void	Server::set_con_servs(vector<t_server> const &co_sers)
 void	Server::update_time(void)
 {
 	map<int, RequestHandler>::iterator	it;
-	struct epoll_event						event;
+	struct epoll_event					event;
 
 	for (it = requests.begin(); it != requests.end(); it++)
 	{
@@ -120,8 +120,8 @@ bool	Server::is_listening_socket(int fd)
 int	Server::get_a_socket(int port)
 {
 	struct addrinfo		hints;
-	struct addrinfo		*result,	*rp;
-	stringstream	port_sstream;
+	struct addrinfo		*result, *rp;
+	stringstream		port_sstream;
 	int					sfd, ret;
 
 	memset(&hints, 0, sizeof(hints));
@@ -134,7 +134,7 @@ int	Server::get_a_socket(int port)
 	if (ret)
 	{
 		cerr << "getaddrinfo: " << gai_strerror(ret) << endl;
-		return (BAD_FD);
+		return (1);
 	}
 	for (rp = result; rp != NULL; rp = rp->ai_next)
 	{
@@ -146,6 +146,7 @@ int	Server::get_a_socket(int port)
 				sizeof(optval)) == -1)
 		{
 			close(sfd);
+			freeaddrinfo(result);
 			return (this->shutdown_server("setsockopt"));
 		}
 		cout << "sfd = " << sfd << endl;
@@ -159,7 +160,7 @@ int	Server::get_a_socket(int port)
 	if (rp == NULL)
 	{
 		cerr << "Could not bind" << endl;
-		return (BAD_FD);
+		return (1);
 	}
 	sfds.push_back(sfd);
 	return (sfd);
@@ -175,32 +176,29 @@ int	Server::set_up_server(void)
 	int					sfd;
 
 	signal(SIGINT, Server::sigint_handler);
+	signal(SIGQUIT, Server::sigint_handler);
 	epoll_fd = epoll_create(EPOLL_QUEUE_LEN);
 	if (epoll_fd == -1)
 	{
-		cerr << "Failed to create epoll file descriptor" << endl;
-		return (1);
+		return (this->shutdown_server("epoll_create"));
 	}
 	for (vector<t_server>::iterator it = con_servs.begin();
 			it != con_servs.end(); it++)
 	{
 		sfd = this->get_a_socket(it->listen.first);
-		if (sfd == BAD_FD)
+		if (sfd == 1)
 		{
 			this->shutdown_server();
-			return (2);
+			return (1);
 		}
 		event.events = EPOLLIN;
 		event.data.fd = sfd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sfd, &event))
 		{
-			cout << "Failed to add file descriptor to epoll" << endl;
-			this->shutdown_server();
-			return (3);
+			return (this->shutdown_server("epoll_ctl"));
 		}
 		if (listen(sfd, 10) == -1)
 		{
-			close(sfd);
 			return (this->shutdown_server("listen"));
 		}
 	}
@@ -245,10 +243,8 @@ int	Server::receive_data(int i)
 	}
 	if (nread == 0)
 	{
-		cout << "CLOSE" << endl << endl;
-		event.events = EPOLLIN;
-		event.data.fd = events[i].data.fd;
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
+		cerr << "CONNEXION CLOSED BY CLIENT" << endl << endl;
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
 			return (this->shutdown_server("epoll_ctl"));
 		close(events[i].data.fd);
 		requests.erase(events[i].data.fd);
@@ -271,17 +267,17 @@ int	Server::receive_data(int i)
 
 int	Server::send_data(int i)
 {
-	struct epoll_event	event;
-
-	cout << "Sending..." << endl;
-	//parse the request and construct the response
+	//check preparsing errors
+	//parse the request
+	//determine which context server to use
+	//construct the response
+	//get response_string
 	//check return value of send
+	cout << "Sending..." << endl;
 	send(events[i].data.fd, "HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n",
 		strlen("HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n"), 0);
 	cout << "Send OK" << endl;
-	event.events = EPOLLIN;
-	event.data.fd = events[i].data.fd;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &event) == -1)
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
 		return (this->shutdown_server("epoll_ctl"));
 	close(events[i].data.fd);
 	requests.erase(events[i].data.fd);
@@ -294,10 +290,9 @@ int	Server::serve_do_your_stuff(void)
 {
 	int	event_count;
 
-	if (int ret = this->set_up_server())
+	if (this->set_up_server())
 	{
-		this->shutdown_server();
-		return (ret);
+		return (1);
 	}
 	while (!g_stop_required)
 	{
