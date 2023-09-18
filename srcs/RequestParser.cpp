@@ -1,31 +1,5 @@
 # include "RequestParser.hpp"
 
-
-/**********************************************************************************/
-/* ---------------------------------utils---------------------------------------- */
-/**********************************************************************************/
-
-bool recherches(const string& phrase, const string& mots)
-{
-	size_t pos = string::npos;
-	pos = phrase.find(mots);
-
-	if (pos == string::npos)
-		return false;
-	return (phrase.compare(pos, mots.length(), mots) == 0);
-}
-
-vector<string> splite(const string& str) {
-	vector<string> result;
-	istringstream iss(str);
-	string token;
-
-	while (iss >> token) {
-		result.push_back(token);
-	}
-	return result;
-}
-
 /**********************************************************************************/
 /* -------------------------constructeur destructeur----------------------------- */
 /**********************************************************************************/
@@ -95,7 +69,7 @@ t_Represent_headers	RequestParser::get_rep_head() const
 
 void	RequestParser::set_muv()
 {
-	vector<string> list = splite(this->_lines[0]);
+	vector<string> list = split(this->_lines[0]);
 	this->_methods = list[0];
 	this->_uri = list[1];
 	this->_version = list[2];
@@ -110,7 +84,7 @@ void	RequestParser::set_request_header()
 	{
 		for(int y = 0; y < 5; y++)
 		{
-			if (recherches(this->_lines[i], lists[y]))
+			if (recherche(this->_lines[i], lists[y]))
 				(this->*f[y])(this->_lines[i], lists[y]);
 		}
 		i++;
@@ -126,7 +100,7 @@ void	RequestParser::set_general_header()
 	{
 		for(int y = 0; y < 2; y++)
 		{
-			if (recherches(this->_lines[i], lists[y]))
+			if (recherche(this->_lines[i], lists[y]))
 				(this->*f[y])(this->_lines[i], lists[y]);
 		}
 		i++;
@@ -142,7 +116,7 @@ void	RequestParser::set_represent_header()
 	{
 		for(int y = 0; y < 2; y++)
 		{
-			if (recherches(this->_lines[i], lists[y]))
+			if (recherche(this->_lines[i], lists[y]))
 				(this->*f[y])(this->_lines[i], lists[y]);
 		}
 		i++;
