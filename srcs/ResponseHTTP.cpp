@@ -1,5 +1,9 @@
 #include "ResponseHTTP.hpp"
 
+/**********************************************************************************/
+/* -------------------------constructeur destructeur----------------------------- */
+/**********************************************************************************/
+
 static map<uint32_t, string> generate_static_code()
 {
 	map<uint32_t, string> result;
@@ -78,3 +82,49 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server &server_config)
 }
 
 ResponseHTTP::~ResponseHTTP(){}
+
+bool	ResponseHTTP::set_location()
+{
+
+	if (!_request.get_uri().empty())
+		return (true);
+	for (vector<t_location>::iterator it = _server_config.location.begin(); it != _server_config.location.end(); it++)
+	{
+		if (it->file_location == _request.get_uri())
+			return (false);
+	}
+	return (true);
+}
+
+/**********************************************************************************/
+/* ---------------------------genertate response--------------------------------- */
+/**********************************************************************************/
+
+void	ResponseHTTP::generate_400_error(int code)
+{
+	map<uint32_t, string>::iterator it = _static_code.find(code);
+
+	if (it != _static_code.end())
+	{
+		_header = ERRORHEAD();
+		_body = ERRORBODY(it->first, it->second);
+		_html = _header + _body;
+		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
+		_response << "Content-Type: text/html\r\n";
+		_response << "Content-Length: " << _html.length() << "\r\n";
+		_response << "\r\n";
+	}
+}
+
+/**********************************************************************************/
+/* ----------------------------------setup--------------------------------------- */
+/**********************************************************************************/
+
+void	ResponseHTTP::setup()
+{
+	if (_no_location)
+		return (generate_400_error(404));
+	//faire un if pour too long .. etc
+	if (_request.get_methods() == "GET")
+		return ;
+}

@@ -50,15 +50,16 @@
 	// }
 	// std::cout << "NEW BODY\n" << unchunked_body << std::endl;
 
-int main()
+int main(int argc, char ** argv)
 {
-
+	if (argc < 2 || argc > 2)
+		return (cerr << "./webserv [configuration file]" << endl, 0);
 	Server				webserver;
 	int					ret;
 	vector<t_server>	context_servers;
 
 	try {
-		Exodus pp("conf/conf1.conf");
+		Exodus pp(argv[1]);
 		pp.setup();
 		context_servers = pp.get_server();
 	}
