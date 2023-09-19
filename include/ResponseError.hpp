@@ -1,9 +1,9 @@
-#define ERROR(status, status_description) ('<!DOCTYPE html> \
-<html lang="en"> \
+#define ERRORHEAD() ("<!DOCTYPE html> \
+<html lang='en'> \
 <head> \
-    <meta charset="UTF-8"> \
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"> \
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> \
+    <meta charset='UTF-8'> \
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'> \
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'> \
     <title>Error</title> \
     <style> \
         body { \
@@ -27,10 +27,11 @@
             max-width: 40%; \
         } \
     </style> \
-</head> \
-<body> \
+</head>")
+
+#define ERRORBODY(status, status_description)("<body> \
     <h1>Error ' status ' - ' status_description ' :(</h1> \
-    <div class="tenor-gif-embed" data-postid="22693394" data-share-method="host" data-aspect-ratio="0.87" data-width="100%"> \
-        </div> <script type="text/javascript" async src="https://tenor.com/embed.js"></script> \
+    <div class='tenor-gif-embed' data-postid='22693394' data-share-method='host' data-aspect-ratio='0.87' data-width='100%'> \
+        </div> <script type='text/javascript' async src='https://tenor.com/embed.js'></script> \
 </body> \
-</html>')
+</html>")

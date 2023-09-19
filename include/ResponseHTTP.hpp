@@ -3,56 +3,30 @@
 #include "ResponseError.hpp"
 #include "RequestParser.hpp"
 #include "Server.hpp"
-#include <iostream>
-#include <string>
-#include <map>
-#include <stdint.h>
-// typedef struct s_responce
-// {
-// 	string	status;
-// 	string	header;
-// 	string	body;
-// }		t_responce;
-
-using namespace std;
 
 class ResponseHTTP
 {
 	private:
 		map<uint32_t, string> _static_code;
-
-		string	_response;
-		int		_status;
+		stringstream	_response;
+		// int		_status;
+		string	_html;
 		string	_header;
 		string	_body;
-
 		RequestParser	_request;
 		t_server		_server_config;
 		bool			_no_location;
-		bool			set_location()
-		{
-			if (!_request.get_uri().empty())
-				return (true);
-			for (vector<t_location>::iterator it = _server_config.location.begin(); it != _server_config.location.end(); it++)
-			{
-				if (it->file_location == _request.get_uri())
-					return (false);
-			}
-			return (true);
-		}
+		bool			set_location();
 	public:
 		ResponseHTTP(RequestParser &, t_server &);
 		~ResponseHTTP();
 		//choisir quel function on vas utiliser pour cree la reponce
-			void	setup()
-			{
-				if (_no_location)
-					return (generate_400_error());
-			}
+		void	setup();
 		//creation des error
-			void	generate_400_error();
-			void	error_400();
+		void	generate_400_error(int code);
 		//creation des methods post get delete
-			void	get();
-			void	post();
+		void	get_methods();
+		void	post_methods();
+		//faire les check d'ereur posible too long ...
+
 };
