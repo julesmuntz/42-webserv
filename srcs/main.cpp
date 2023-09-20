@@ -1,21 +1,6 @@
 #include "Server.hpp"
 #include "Exodus.hpp"
 
-// vector<t_server> serv;
-// RequestParser rep("eee");
-
-// t_server	choice_server()
-// {
-// 	t_server tmp;
-
-// 	for (vector<t_server>::iterator it = serv.begin(); it != serv.end(); it++)
-// 	{
-// 		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
-// 			tmp = *it;
-// 	}
-// 	return (tmp);
-// }
-
 // size_t pos = std::string::npos;
 	// pos = request.find("\r\n\r\n");
 	// size_t posf = std::string::npos;

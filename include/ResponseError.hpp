@@ -1,4 +1,4 @@
-#define ERRORHEAD() ("<!DOCTYPE html> \
+#define ERRORHEAD "<!DOCTYPE html> \
 <html lang='en'> \
 <head> \
     <meta charset='UTF-8'> \
@@ -27,11 +27,15 @@
             max-width: 40%; \
         } \
     </style> \
-</head>")
+</head>"
 
-#define ERRORBODY(status, status_description)("<body> \
-    <h1>Error ' status ' - ' status_description ' :(</h1> \
+#define ERRORBODY_PART_1 "<body> \
+    <h1>Error "
+#define ERRORBODY_PART_2 " - "
+
+#define ERRORBODY_PART_3 "' :(</h1> \
     <div class='tenor-gif-embed' data-postid='22693394' data-share-method='host' data-aspect-ratio='0.87' data-width='100%'> \
         </div> <script type='text/javascript' async src='https://tenor.com/embed.js'></script> \
 </body> \
-</html>")
+</html>"
+

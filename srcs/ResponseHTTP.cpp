@@ -73,12 +73,18 @@ static map<uint32_t, string> generate_static_code()
 	return (result);
 }
 
-ResponseHTTP::ResponseHTTP(RequestParser &request, t_server &server_config)
+// ResponseHTTP::ResponseHTTP(t_server, t_server server_config)
+// {
+// 	this->_static_code = generate_static_code();
+// }
+
+ResponseHTTP::ResponseHTTP(RequestParser &request, t_server server_config)
 {
 	this->_static_code = generate_static_code();
 	this->_request = request;
 	this->_server_config = server_config;
 	this->_no_location = this->set_location();
+	this->_response_string = DUMMY_RESPONSE;
 }
 
 ResponseHTTP::~ResponseHTTP(){}
@@ -106,8 +112,13 @@ void	ResponseHTTP::generate_400_error(int code)
 
 	if (it != _static_code.end())
 	{
-		_header = ERRORHEAD();
-		_body = ERRORBODY(it->first, it->second);
+		_header = ERRORHEAD;
+		//_body = ERRORBODY((it->first), (it->second));
+		_body = ERRORBODY_PART_1;
+		_body += it->first;
+		_body += ERRORBODY_PART_2;
+		_body += it->second;
+		_body += ERRORBODY_PART_3;
 		_html = _header + _body;
 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
 		_response << "Content-Type: text/html\r\n";
@@ -127,4 +138,10 @@ void	ResponseHTTP::setup()
 	//faire un if pour too long .. etc
 	if (_request.get_methods() == "GET")
 		return ;
+}
+
+
+string	ResponseHTTP::get_response_string(void) const
+{
+	return (_response_string);
 }

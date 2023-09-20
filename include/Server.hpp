@@ -1,6 +1,8 @@
 #pragma once
 
 #include "RequestHandler.hpp"
+#include "RequestParser.hpp"
+#include "ResponseSender.hpp"
 #include <map>
 #include <sys/epoll.h>
 #include <fcntl.h>
@@ -53,8 +55,10 @@ class Server
 		vector<int>					sfds;
 		struct epoll_event			events[EPOLL_QUEUE_LEN];
 		map<int, RequestHandler>	requests;
+		map<int, ResponseSender>	responses;
 		vector<t_server>			con_servs;
 
+		t_server	choose_server(RequestParser rep);
 		bool		is_listening_socket(int fd);
 		int			get_a_socket(int port);
 		int			set_up_server(void);

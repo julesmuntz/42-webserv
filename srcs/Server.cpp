@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "ResponseHTTP.hpp"
 
 bool	g_stop_required = 0;
 
@@ -100,6 +101,18 @@ void	Server::update_time(void)
 				this->shutdown_server("epoll_ctl");
 		}
 	}
+}
+
+t_server	Server::choose_server(RequestParser rep)
+{
+	t_server tmp;
+
+	for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
+	{
+		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
+			tmp = *it;
+	}
+	return (tmp);
 }
 
 /* Returns true if the fd is a listening socket */
@@ -254,6 +267,11 @@ int	Server::receive_data(int i)
 	if (!(requests.find(events[i].data.fd))->second.add_data(buf, nread))
 	{
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
+		requests.find(events[i].data.fd)->second.check_preparsing_errors();
+		RequestParser	parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
+		ResponseHTTP	responseHTTP(parsedRequest, choose_server(parsedRequest));
+		ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
+		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
 		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
@@ -267,20 +285,14 @@ int	Server::receive_data(int i)
 
 int	Server::send_data(int i)
 {
-	//check preparsing errors
-	//parse the request
-	//determine which context server to use
-	//construct the response
-	//get response_string
 	//check return value of send
-	cout << "Sending..." << endl;
-	send(events[i].data.fd, "HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n",
-		strlen("HTTP/1.1 200 OK\n\n<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>houhou</body></html>\n\n"), 0);
-	cout << "Send OK" << endl;
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-		return (this->shutdown_server("epoll_ctl"));
-	close(events[i].data.fd);
-	requests.erase(events[i].data.fd);
+	if (responses.find(events[i].data.fd)->second.send_response())
+	{
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
+			return (this->shutdown_server("epoll_ctl"));
+		close(events[i].data.fd);
+		requests.erase(events[i].data.fd);
+	}
 	return (0);
 }
 
