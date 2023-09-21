@@ -14,12 +14,12 @@ int main(int argc, char ** argv)
 		Exodus pp(argv[1]);
 		pp.setup();
 		context_servers = pp.get_server();
+		webserver.set_con_servs(context_servers);
+		ret = webserver.serve_do_your_stuff();
 	}
 	catch(const exception &e)
 	{
 		cerr << e.what() << endl;
 	}
-	webserver.set_con_servs(context_servers);
-	ret = webserver.serve_do_your_stuff();
 	return (ret);
 }

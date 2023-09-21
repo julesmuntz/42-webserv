@@ -1,9 +1,9 @@
 [ ] Exodus: si default conf corrupted, prendre variable globale
-			check la taille du fichier avec stat et si renvoie 0 (dev rand) ou superieur a 10K pas ouvrir
+		ok	check la taille du fichier avec stat et si renvoie 0 (dev rand) ou superieur a 10K pas ouvrir
 
 [ ] Response: CGI, GET, POST, DELETE, check errors
 
-[ ] Tester RequestParser : separer le header du body et chercher les headers dans le header
+[ ] Tester RequestParser : ok separer le header du body et chercher les headers dans le header
 
 [ ] Tests
 

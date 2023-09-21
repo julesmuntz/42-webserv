@@ -12,6 +12,7 @@
 #include <sys/select.h>
 #include <errno.h>
 #include <signal.h>
+#include <map>
 
 using namespace std;
 
@@ -43,7 +44,7 @@ typedef struct s_server
 	pair<uint32_t, string>			listen;
 	vector<string>					server_name;
 	uint32_t						client_body_size;
-	vector<pair<uint32_t, string> >	error_pages;
+	map<uint32_t, string>	error_pages;
 	vector<t_location>				location;
 }		t_server;
 
