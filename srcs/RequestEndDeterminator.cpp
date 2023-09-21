@@ -71,7 +71,7 @@ void	RequestEndDeterminator::get_request_method(void)
 
 bool	RequestEndDeterminator::req_is_chunked(void)
 {
-	if (req.request.find("\r\nTransfer-Encoding: chunked\r\n") != string::npos)
+	if (req.header.find("\r\nTransfer-Encoding: chunked\r\n") != string::npos)
 	{
 		req.chunked = true;
 		return (true);
@@ -84,7 +84,7 @@ bool	RequestEndDeterminator::req_content_length(void)
 	std::string	content_size;
 	size_t		npos;
 
-	size_t	pos = req.request.find("\r\nContent-Length: ");
+	size_t	pos = req.header.find("\r\nContent-Length: ");
 	if (pos != std::string::npos)
 	{
 		npos = req.request.find("\r\n", pos + 1);
@@ -176,12 +176,12 @@ bool	RequestEndDeterminator::check_chunked_end(void)
 
 void	RequestEndDeterminator::check_body(void)
 {
-	size_t		pos;
-	std::string	header;
+	size_t	pos;
 
 	pos = req.request.find("\r\n\r\n");
 	if (pos != std::string::npos)
 	{
+		req.header = req.request.substr(0, pos);
 		if (!req_is_chunked())
 		{
 			if (!req_content_length())

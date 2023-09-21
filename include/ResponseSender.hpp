@@ -6,7 +6,7 @@ class ResponseSender
 {
 	private:
 		int		fd;
-		int		whereweare;
+		size_t	whereweare;
 		string	response;
 
 	public:

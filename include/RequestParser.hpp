@@ -25,6 +25,7 @@ typedef struct s_Represent_headers
 {
 	string	content_type;
 	string	content_length;
+	string	transfer_encoding;
 }				t_Represent_headers;
 
 class RequestParser
@@ -35,9 +36,10 @@ class RequestParser
 
 		string	_request;
 
-		string	_methods;
+		string	_method;
 		string	_uri;
 		string	_version;
+		string	_body;
 		t_Request_headers	_req_head;
 		t_General_headers	_gen_head;
 		t_Represent_headers	_rep_head;
@@ -58,6 +60,11 @@ class RequestParser
 
 		void	set_content_type(string, string);
 		void	set_content_length(string, string);
+		void	set_transfer_encoding(string, string);
+
+		void	set_body();
+
+		void	dechunk_body();
 
 	public:
 		RequestParser();
@@ -66,9 +73,10 @@ class RequestParser
 
 		RequestParser	&operator=(const RequestParser &);
 
-		string	get_methods() const;
+		string	get_method() const;
 		string	get_uri() const;
 		string	get_version() const;
+		string	get_body() const;
 		t_Request_headers	get_req_head() const;
 		t_General_headers	get_gen_head() const;
 		t_Represent_headers	get_rep_head() const;

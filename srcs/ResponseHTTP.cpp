@@ -78,6 +78,16 @@ static map<uint32_t, string> generate_static_code()
 // 	this->_static_code = generate_static_code();
 // }
 
+/*
+	Make a factory for the different methods we handle?
+		GET
+		POST
+		DELETE
+	They have common fonctionalities, but different methods
+	Do we really need this?
+	Try and see...
+*/
+
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server server_config)
 {
 	this->_static_code = generate_static_code();
@@ -103,7 +113,7 @@ bool	ResponseHTTP::set_location()
 }
 
 /**********************************************************************************/
-/* ---------------------------genertate response--------------------------------- */
+/* ----------------------------generate response--------------------------------- */
 /**********************************************************************************/
 
 void	ResponseHTTP::generate_400_error(int code)
@@ -113,7 +123,6 @@ void	ResponseHTTP::generate_400_error(int code)
 	if (it != _static_code.end())
 	{
 		_header = ERRORHEAD;
-		//_body = ERRORBODY((it->first), (it->second));
 		_body = ERRORBODY_PART_1;
 		_body += it->first;
 		_body += ERRORBODY_PART_2;
@@ -124,6 +133,7 @@ void	ResponseHTTP::generate_400_error(int code)
 		_response << "Content-Type: text/html\r\n";
 		_response << "Content-Length: " << _html.length() << "\r\n";
 		_response << "\r\n";
+		_response_string = _response.str();
 	}
 }
 
@@ -136,12 +146,16 @@ void	ResponseHTTP::setup()
 	if (_no_location)
 		return (generate_400_error(404));
 	//faire un if pour too long .. etc
-	if (_request.get_methods() == "GET")
+	if (_request.get_method() == "GET")
 		return ;
 }
-
 
 string	ResponseHTTP::get_response_string(void) const
 {
 	return (_response_string);
 }
+
+// check error general
+
+// fill structure error, si erreur, alors
+// page generee

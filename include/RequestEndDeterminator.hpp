@@ -39,6 +39,7 @@ typedef struct	s_request {
 	t_time		time;
 	size_t		content_length;
 	bool		msg_too_long;
+	std::string	header;
 	size_t		header_size;
 	std::string	request;
 }				t_request;

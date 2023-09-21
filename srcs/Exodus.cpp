@@ -207,7 +207,7 @@ void					Exodus::error_page(t_server *t, string line)
 void	Exodus::uri(t_location *t, string line)
 {
 	string extractedWord = extractmots(line, "location");
-    if (!extractedWord.empty())
+	if (!extractedWord.empty())
 		t->uri = extractedWord;
 }
 
@@ -234,7 +234,7 @@ void					Exodus::allow_methods(t_location *t, string line)
 void					Exodus::root(t_location *t, string line)
 {
 	string extractedWord = extractmots(line, "root");
-    if (!extractedWord.empty())
+	if (!extractedWord.empty())
 		t->root = extractedWord;
 }
 
@@ -259,21 +259,21 @@ void					Exodus::index(t_location *t, string line)
 void	Exodus::redir_link(t_location *t, string line)
 {
 	string extractedWord = extractmots(line, "redir_link");
-    if (!extractedWord.empty())
+	if (!extractedWord.empty())
 		t->redir_link = extractedWord;
 }
 
 void	Exodus::file_location(t_location *t, string line)
 {
 	string extractedWord = extractmots(line, "file_location");
-    if (!extractedWord.empty())
+	if (!extractedWord.empty())
 		t->file_location = extractedWord;
 }
 
 void					Exodus::cgi_pass(t_location *t, string line)
 {
 	string extractedWord = extractmots(line, "cgi_pass");
-    if (!extractedWord.empty())
+	if (!extractedWord.empty())
 		t->cgi_pass = extractedWord;
 }
 

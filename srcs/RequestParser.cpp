@@ -9,19 +9,24 @@ RequestParser::RequestParser() {}
 RequestParser::RequestParser(string request) : _request(request)
 {
 	string line;
+
+	//determine header
 	istringstream iss(this->_request);
 
 	while (getline(iss, line))
 		this->_lines.push_back(line);
 
+	// pay attention to only check in header for header stuff
 	RequestParser::set_muv();
 	RequestParser::set_request_header();
 	RequestParser::set_represent_header();
+
+	RequestParser::set_body();
 }
 
 RequestParser	&RequestParser::operator=(const RequestParser &ref)
 {
-	this->_methods = ref._methods;
+	this->_method = ref._method;
 	this->_uri = ref._uri;
 	this->_version = ref._version;
 	this->_gen_head = ref._gen_head;
@@ -37,9 +42,9 @@ RequestParser::~RequestParser() {}
 /* ------------------------------geteur serveur---------------------------------- */
 /**********************************************************************************/
 
-string	RequestParser::get_methods() const
+string	RequestParser::get_method() const
 {
-	return (this->_methods);
+	return (this->_method);
 }
 
 string	RequestParser::get_uri() const
@@ -50,6 +55,11 @@ string	RequestParser::get_uri() const
 string	RequestParser::get_version() const
 {
 	return (this->_version);
+}
+
+string	RequestParser::get_body() const
+{
+	return (this->_body);
 }
 
 t_Request_headers	RequestParser::get_req_head() const
@@ -70,7 +80,7 @@ t_Represent_headers	RequestParser::get_rep_head() const
 void	RequestParser::set_muv()
 {
 	vector<string> list = split(this->_lines[0]);
-	this->_methods = list[0];
+	this->_method = list[0];
 	this->_uri = list[1];
 	this->_version = list[2];
 }
@@ -109,12 +119,12 @@ void	RequestParser::set_general_header()
 
 void	RequestParser::set_represent_header()
 {
-	string	lists[2] = {"Content-Type:", "Content-Length:"};
-	void (RequestParser::*f[2])(string, string) = {&RequestParser::set_content_type, &RequestParser::set_content_length};
+	string	lists[3] = {"Content-Type:", "Content-Length:", "Transfer-Encoding:"};
+	void (RequestParser::*f[3])(string, string) = {&RequestParser::set_content_type, &RequestParser::set_content_length, &RequestParser::set_transfer_encoding};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
-		for(int y = 0; y < 2; y++)
+		for(int y = 0; y < 3; y++)
 		{
 			if (recherche(this->_lines[i], lists[y]))
 				(this->*f[y])(this->_lines[i], lists[y]);
@@ -172,4 +182,54 @@ void	RequestParser::set_content_type(string line, string mots)
 void	RequestParser::set_content_length(string line, string mots)
 {
 	this->_rep_head.content_length = line.erase(0, mots.size() + 1);
+}
+
+void	RequestParser::set_transfer_encoding(string line, string mots)
+{
+	this->_rep_head.transfer_encoding = line.erase(0, mots.size() + 1);
+}
+
+void	RequestParser::set_body()
+{
+	size_t	pos;
+
+	this->_body = "";
+
+	pos = this->_request.find("\r\n\r\n");
+	if (pos != std::string::npos)
+	{
+		this->_body = this->_request.substr(pos + 4);
+		if (_rep_head.transfer_encoding == "chunked")
+		{
+			this->dechunk_body();
+		}
+	}
+}
+
+void	RequestParser::dechunk_body()
+{
+	string	unchunked_body = "";
+	string	hexa_str;
+	size_t	hexa;
+	string	data_str;
+	string	body = this->_body;
+
+	while (true)
+	{
+		size_t end_pos = body.find("\r\n");
+		if (end_pos != string::npos)
+		{
+			hexa_str = body.substr(0, end_pos);
+			body.erase(0, end_pos + 2);
+			istringstream iss(hexa_str);
+			iss >> hex >> hexa;
+			data_str = body.substr(0, hexa);
+			unchunked_body += data_str;
+			if (hexa + 2 != string::npos)
+				body.erase(0, hexa + 2);
+		}
+		else
+			break;
+	}
+	this->_body = unchunked_body;
 }
