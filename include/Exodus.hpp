@@ -3,6 +3,7 @@
 #include "Server.hpp"
 #include "utils.hpp"
 #include <fstream>
+#include <sys/stat.h>
 
 using namespace std;
 
