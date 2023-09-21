@@ -26,13 +26,15 @@ class ResponseHTTP
 		bool			check_errors();
 		//choisir quel function on vas utiliser pour cree la reponse
 		void			construct_response();
+		void			construct_error_no_config();
 
 	public:
+		ResponseHTTP(RequestParser &request, t_error error);
 		ResponseHTTP(RequestParser &, t_server , t_error );
 		~ResponseHTTP();
 		string	get_response_string(void) const;
 		//creation des error
-		void	generate_400_error(int code);
+		void	generate_400_error();
 		//creation des methods post get delete
 		void	get_methods();
 		void	post_methods();

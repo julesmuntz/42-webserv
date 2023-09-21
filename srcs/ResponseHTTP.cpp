@@ -1,4 +1,5 @@
 #include "ResponseHTTP.hpp"
+#include <fstream>
 
 /**********************************************************************************/
 /* -------------------------constructeur destructeur----------------------------- */
@@ -88,6 +89,15 @@ static map<uint32_t, string> generate_static_code()
 	Try and see...
 */
 
+ResponseHTTP::ResponseHTTP(RequestParser &request, t_error error)
+{
+	this->_static_code = generate_static_code();
+	this->_request = request;
+	this->_no_location = this->set_location();
+	this->_error = error;
+	this->construct_error_no_config();
+}
+
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server server_config, t_error error)
 {
 	this->_static_code = generate_static_code();
@@ -116,28 +126,37 @@ bool	ResponseHTTP::set_location()
 /* ----------------------------generate response--------------------------------- */
 /**********************************************************************************/
 
-void	ResponseHTTP::generate_400_error(int code)
+// check this function again cause not sure
+void	ResponseHTTP::generate_400_error()
 {
-	map<uint32_t, string>::iterator it = _static_code.find(code);
+	map<uint32_t, string>::iterator it = _static_code.find(_error);
 
 	if (it != _static_code.end())
 	{
-		if (_server_config.error_pages.find(code) != _server_config.error_pages.end())
-		{
-			//test open
-			//html = open
-		}
 		_header = ERRORHEAD;
 		_body = ERRORBODY_PART_1;
-		_body += it->first;
+		stringstream num;
+		num << it->first;
+		_body += num.str();
 		_body += ERRORBODY_PART_2;
 		_body += it->second;
 		_body += ERRORBODY_PART_3;
 		_html = _header + _body;
+		if (_server_config.error_pages.find(_error) != _server_config.error_pages.end())
+		{
+			ifstream	file;
+			string		filename = "." + _server_config.error_pages.find(_error)->second;
+			file.open(filename.c_str());
+			if (!file.fail())
+			{
+				file >> _html;
+			}
+		}
 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
 		_response << "Content-Type: text/html\r\n";
 		_response << "Content-Length: " << _html.length() << "\r\n";
 		_response << "\r\n";
+		_response << _html;
 		_response_string = _response.str();
 	}
 }
@@ -146,12 +165,55 @@ void	ResponseHTTP::generate_400_error(int code)
 /* ---------------------------------check_errors--------------------------------- */
 /**********************************************************************************/
 
+//more errors to add
 bool	ResponseHTTP::check_errors()
 {
+	if (_error)
+		return (true);
+	//errors revealed by parsing
+	if (_request.get_req_head().hosts.first.empty())
+	{
+		_error = error_400;
+	}
+	if (!_request.get_rep_head().transfer_encoding.empty()
+			&& _request.get_rep_head().transfer_encoding != "chunked")
+	{
+		_error = error_400;
+	}
+	//error body too long
+	if (_request.get_body().size() > _server_config.client_body_size)
+	{
+		_error = error_431;
+	}
+	if (_error)
+		return (true);
 	return (false);
-	//all errors
-	//body too long error
-	//check errors that the parsing revealed
+}
+
+void	ResponseHTTP::construct_error_no_config()
+{
+	if (!_error)
+		_error = error_400;
+	map<uint32_t, string>::iterator it = _static_code.find(_error);
+
+	if (it != _static_code.end())
+	{
+		_header = ERRORHEAD;
+		_body = ERRORBODY_PART_1;
+		stringstream	num;
+		num << it->first;
+		_body += num.str();
+		_body += ERRORBODY_PART_2;
+		_body += it->second;
+		_body += ERRORBODY_PART_3;
+		_html = _header + _body;
+		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
+		_response << "Content-Type: text/html\r\n";
+		_response << "Content-Length: " << _html.length() << "\r\n";
+		_response << "\r\n";
+		_response << _html;
+		_response_string = _response.str();
+	}
 }
 
 /**********************************************************************************/
@@ -162,11 +224,12 @@ void	ResponseHTTP::construct_response()
 {
 	if (!check_errors())
 	{
-		//different function or class depending on the request method, could be cgi
-		//[GET] // a map of functions ?
-		//for now, dummy response
+		// different function or class depending on the request method, could be cgi
+		// [GET] // a map of functions ?
+		// for now, dummy response
 		this->_response_string = DUMMY_RESPONSE;
 	}
+	generate_400_error();
 }
 
 string	ResponseHTTP::get_response_string(void) const

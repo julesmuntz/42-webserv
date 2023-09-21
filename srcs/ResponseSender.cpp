@@ -4,7 +4,8 @@
 
 ResponseSender::ResponseSender(int fd) : fd(fd) {}
 
-ResponseSender::ResponseSender(int fd, string response) : fd(fd), response(response) {}
+ResponseSender::ResponseSender(int fd, string response) : fd(fd), response(response) {
+}
 
 ResponseSender::~ResponseSender() {}
 

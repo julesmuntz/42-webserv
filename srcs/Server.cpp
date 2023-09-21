@@ -103,7 +103,7 @@ void	Server::update_time(void)
 	}
 }
 
-t_server	Server::choose_server(RequestParser rep)
+t_server	Server::choose_server(RequestParser rep, bool &no_server)
 {
 	t_server tmp;
 
@@ -112,8 +112,10 @@ t_server	Server::choose_server(RequestParser rep)
 		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
 		{
 			tmp = *it;
+			return (tmp);
 		}
 	}
+	no_server = true;
 	return (tmp);
 }
 
@@ -271,9 +273,20 @@ int	Server::receive_data(int i)
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
 		requests.find(events[i].data.fd)->second.check_preparsing_errors();
 		RequestParser	parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
-		ResponseHTTP	responseHTTP(parsedRequest, choose_server(parsedRequest), requests.find(events[i].data.fd)->second.get_error());
-		ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
-		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
+		bool	no_server = false;
+		t_server serv = choose_server(parsedRequest, no_server);
+		if (no_server == false)
+		{
+			ResponseHTTP	responseHTTP(parsedRequest, serv, requests.find(events[i].data.fd)->second.get_error());
+			ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
+			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
+		}
+		else
+		{
+			ResponseHTTP	responseHTTP(parsedRequest, requests.find(events[i].data.fd)->second.get_error());
+			ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
+			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
+		}
 		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
@@ -294,6 +307,7 @@ int	Server::send_data(int i)
 			return (this->shutdown_server("epoll_ctl"));
 		close(events[i].data.fd);
 		requests.erase(events[i].data.fd);
+		responses.erase(events[i].data.fd);
 	}
 	return (0);
 }

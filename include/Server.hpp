@@ -44,7 +44,7 @@ typedef struct s_server
 	pair<uint32_t, string>			listen;
 	vector<string>					server_name;
 	uint32_t						client_body_size;
-	map<uint32_t, string>	error_pages;
+	map<uint32_t, string>			error_pages;
 	vector<t_location>				location;
 }		t_server;
 
@@ -59,7 +59,7 @@ class Server
 		map<int, ResponseSender>	responses;
 		vector<t_server>			con_servs;
 
-		t_server	choose_server(RequestParser rep);
+		t_server	choose_server(RequestParser rep, bool &no_server);
 		bool		is_listening_socket(int fd);
 		int			get_a_socket(int port);
 		int			set_up_server(void);
