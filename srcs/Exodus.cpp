@@ -4,6 +4,14 @@
 /* -------------------------constructeur destructeur----------------------------- */
 /**********************************************************************************/
 
+size_t getFilesize(const std::string& filename) {
+	struct stat st;
+	if(stat(filename.c_str(), &st) != 0) {
+		return 0;
+	}
+	return st.st_size;
+}
+
 Exodus::Exodus(string const filename)
 {
 	string		extantion;
@@ -11,6 +19,8 @@ Exodus::Exodus(string const filename)
 	extantion = FILE_CONF;
 	if (filename.size() >= extantion.size() && filename.compare(filename.size() - extantion.size(), extantion.size(), extantion))
 		throw Exodus::error_filename();
+	if (getFilesize(filename) == 0 || getFilesize(filename) > 10000)
+		throw Exodus::error_open();
 	this->_ifs.open(filename.c_str(), ifstream::in);
 	if (!this->_ifs.is_open())
 		throw Exodus::error_open();
@@ -187,12 +197,9 @@ void					Exodus::error_page(t_server *t, string line)
 		size_t listenIndex = distance(tokens.begin(), it) + 1;
 		if (listenIndex >= tokens.size())
 			throw logic_error("error_page") ;
-		while (listenIndex < tokens.size() && listenIndex + 1< tokens.size())
+		while (listenIndex < tokens.size() && listenIndex + 1 < tokens.size())
 		{
-			pair <uint32_t, string >	token;
-			token.first = strtol(tokens[listenIndex].c_str(), NULL, 10);
-			token.second = tokens[listenIndex + 1];
-			t->error_pages.push_back(token);
+			t->error_pages.insert(pair<uint32_t, std::string>(strtol(tokens[listenIndex].c_str(), NULL, 10), tokens[listenIndex + 1]));
 			listenIndex += 2;
 		}
 	}

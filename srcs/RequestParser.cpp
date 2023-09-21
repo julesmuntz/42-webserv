@@ -8,17 +8,29 @@ RequestParser::RequestParser() {}
 
 RequestParser::RequestParser(string request) : _request(request)
 {
-	string line;
-
+	string	line;
+	size_t	pos;
+	string	header;
 	//determine header
-	istringstream iss(this->_request);
+
+	pos = this->_request.find("\r\n\r\n");
+	if (pos != string::npos)
+		header = _request.substr(0, pos);
+	else
+		header = _request;
+
+	istringstream iss(header);
+
 	while (getline(iss, line))
 		this->_lines.push_back(line);
 
 	// pay attention to only check in header for header stuff
-	RequestParser::set_muv();
-	RequestParser::set_request_header();
-	RequestParser::set_represent_header();
+	if (!this->_lines.empty())
+	{
+		RequestParser::set_muv();
+		RequestParser::set_request_header();
+		RequestParser::set_represent_header();
+	}
 	RequestParser::set_body();
 }
 
