@@ -12,7 +12,6 @@ RequestParser::RequestParser(string request) : _request(request)
 
 	//determine header
 	istringstream iss(this->_request);
-
 	while (getline(iss, line))
 		this->_lines.push_back(line);
 
@@ -20,7 +19,6 @@ RequestParser::RequestParser(string request) : _request(request)
 	RequestParser::set_muv();
 	RequestParser::set_request_header();
 	RequestParser::set_represent_header();
-
 	RequestParser::set_body();
 }
 
@@ -139,7 +137,10 @@ void	RequestParser::set_host(string line, string mots)
 	line = line.erase(0, mots.size() + 1);
 	if (line.find(":") != string::npos)
 	{
-		this->_req_head.hosts = pair<string, uint32_t>(line.erase(0, line.find(":")), atoi(line.erase(1, line.size()).c_str()));
+		pair<string, uint32_t> tests;
+		tests.first = line.substr(0, line.find(":"));
+		tests.second = atoi(line.substr(line.find(":") + 1, line.size()).c_str());
+		this->_req_head.hosts = tests;
 	}
 }
 
@@ -162,7 +163,6 @@ void	RequestParser::set_accept_encoding(string line, string mots)
 {
 	this->_req_head.accept_encoding = line.erase(0, mots.size() + 1);
 }
-
 
 void	RequestParser::set_connection(string line, string mots)
 {

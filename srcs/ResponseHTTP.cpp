@@ -88,20 +88,20 @@ static map<uint32_t, string> generate_static_code()
 	Try and see...
 */
 
-ResponseHTTP::ResponseHTTP(RequestParser &request, t_server server_config)
+ResponseHTTP::ResponseHTTP(RequestParser &request, t_server server_config, t_error error)
 {
 	this->_static_code = generate_static_code();
 	this->_request = request;
 	this->_server_config = server_config;
 	this->_no_location = this->set_location();
-	this->_response_string = DUMMY_RESPONSE;
+	this->_error = error;
+	this->construct_response();
 }
 
 ResponseHTTP::~ResponseHTTP(){}
 
 bool	ResponseHTTP::set_location()
 {
-
 	if (!_request.get_uri().empty())
 		return (true);
 	for (vector<t_location>::iterator it = _server_config.location.begin(); it != _server_config.location.end(); it++)
@@ -122,6 +122,11 @@ void	ResponseHTTP::generate_400_error(int code)
 
 	if (it != _static_code.end())
 	{
+		if (_server_config.error_pages.find(code) != _server_config.error_pages.end())
+		{
+			//test open
+			//html = open
+		}
 		_header = ERRORHEAD;
 		_body = ERRORBODY_PART_1;
 		_body += it->first;
@@ -138,16 +143,30 @@ void	ResponseHTTP::generate_400_error(int code)
 }
 
 /**********************************************************************************/
+/* ---------------------------------check_errors--------------------------------- */
+/**********************************************************************************/
+
+bool	ResponseHTTP::check_errors()
+{
+	return (false);
+	//all errors
+	//body too long error
+	//check errors that the parsing revealed
+}
+
+/**********************************************************************************/
 /* ----------------------------------setup--------------------------------------- */
 /**********************************************************************************/
 
-void	ResponseHTTP::setup()
+void	ResponseHTTP::construct_response()
 {
-	if (_no_location)
-		return (generate_400_error(404));
-	//faire un if pour too long .. etc
-	if (_request.get_method() == "GET")
-		return ;
+	if (!check_errors())
+	{
+		//different function or class depending on the request method, could be cgi
+		//[GET] // a map of functions ?
+		//for now, dummy response
+		this->_response_string = DUMMY_RESPONSE;
+	}
 }
 
 string	ResponseHTTP::get_response_string(void) const

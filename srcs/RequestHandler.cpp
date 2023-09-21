@@ -9,6 +9,11 @@ string	RequestHandler::get_request_string(void) const
 	return (req.request);
 }
 
+t_error	RequestHandler::get_error(void) const
+{
+	return (error);
+}
+
 void	RequestHandler::check_preparsing_errors(void)
 {
 	if (req.time.timeout) // check timeout

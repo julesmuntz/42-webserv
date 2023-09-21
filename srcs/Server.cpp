@@ -110,7 +110,9 @@ t_server	Server::choose_server(RequestParser rep)
 	for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
 	{
 		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
+		{
 			tmp = *it;
+		}
 	}
 	return (tmp);
 }
@@ -269,7 +271,7 @@ int	Server::receive_data(int i)
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
 		requests.find(events[i].data.fd)->second.check_preparsing_errors();
 		RequestParser	parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
-		ResponseHTTP	responseHTTP(parsedRequest, choose_server(parsedRequest));
+		ResponseHTTP	responseHTTP(parsedRequest, choose_server(parsedRequest), requests.find(events[i].data.fd)->second.get_error());
 		ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
 		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
 		event.events = EPOLLOUT;

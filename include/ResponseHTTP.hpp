@@ -11,9 +11,10 @@
 class ResponseHTTP
 {
 	private:
-		map<uint32_t, string> _static_code;
+		map<uint32_t, string>	_static_code;
 		string			_response_string;
 		stringstream	_response;
+		t_error			_error;
 		// int		_status;
 		string	_html;
 		string	_header;
@@ -22,17 +23,18 @@ class ResponseHTTP
 		t_server		_server_config;
 		bool			_no_location;
 		bool			set_location();
+		bool			check_errors();
+		//choisir quel function on vas utiliser pour cree la reponse
+		void			construct_response();
+
 	public:
-		ResponseHTTP(RequestParser &, t_server );
+		ResponseHTTP(RequestParser &, t_server , t_error );
 		~ResponseHTTP();
 		string	get_response_string(void) const;
-		//choisir quel function on vas utiliser pour cree la reponce
-		void	setup();
 		//creation des error
 		void	generate_400_error(int code);
 		//creation des methods post get delete
 		void	get_methods();
 		void	post_methods();
 		//faire les check d'ereur posible too long ...
-
 };
