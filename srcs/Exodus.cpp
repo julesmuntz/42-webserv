@@ -231,7 +231,7 @@ void					Exodus::allow_methods(t_location *t, string line)
 		if (listenIndex >= tokens.size())
 			throw logic_error("allow_methods");
 		while (listenIndex < tokens.size())
-			t->allow_methods.push_back(tokens[listenIndex++]);
+			t->allow_methods.insert(pair<string, string>(tokens[listenIndex++], ""));
 	}
 	else
 		throw logic_error("allow_methods");

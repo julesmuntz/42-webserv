@@ -1,5 +1,7 @@
 #include "ResponseHTTP.hpp"
 #include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /**********************************************************************************/
 /* -------------------------constructeur destructeur----------------------------- */
@@ -172,19 +174,13 @@ bool	ResponseHTTP::check_errors()
 		return (true);
 	//errors revealed by parsing
 	if (_request.get_req_head().hosts.first.empty())
-	{
 		_error = error_400;
-	}
 	if (!_request.get_rep_head().transfer_encoding.empty()
 			&& _request.get_rep_head().transfer_encoding != "chunked")
-	{
 		_error = error_400;
-	}
 	//error body too long
 	if (_request.get_body().size() > _server_config.client_body_size)
-	{
 		_error = error_431;
-	}
 	if (_error)
 		return (true);
 	return (false);
@@ -216,25 +212,111 @@ void	ResponseHTTP::construct_error_no_config()
 	}
 }
 
+bool	cmp(const t_location a, const t_location b)
+{
+	return (a.uri.size() < b.uri.size());
+}
+
+void	ResponseHTTP::select_location()
+{
+	vector<t_location>::iterator	it;
+	//order locations by size then try each one
+	
+	sort(_server_config.location.begin(), _server_config.location.end(), cmp);
+	for (it = _server_config.location.begin(); it != _server_config.location.end(); it++)
+	{
+		if (it->uri == _request.get_uri().substr(0, it->uri.size()))
+			_location_config = *it;
+	}
+}
+
+void	ResponseHTTP::create_get_response()
+{
+	string	root(".");
+
+	select_location();
+	//allow methods
+	if (_location_config.allow_methods.find("GET") != _location_config.allow_methods.end())
+	{
+		_error = error_405;
+		return ;
+	}
+	//redir_link
+	if (!_location_config.redir_link.empty())
+	{
+		//construct redirection request
+		// put error and fill _html
+		return ;
+	}
+	//directory
+	struct stat	stats;
+	root += _location_config.root;
+	string uri;
+	size_t	pos = _request.get_uri().find(_location_config.uri);
+	if (pos == 0)
+	{
+		uri = _request.get_uri().replace(0, _location_config.uri.size(), root);
+	}
+	if (stat(uri.c_str(), &stats) == 0)
+	{
+		if (S_ISDIR(stats.st_mode))
+		{
+			// is a directory and work on it
+			// opendir readdir and closedir, store content
+			// check directory_listing
+			if (_location_config.directory_listing)
+			{
+				// create page using content
+			}
+			// check index
+			// loop through indexes and loop through content to find match
+			for (vector<string>::iterator it = _location_config.index.begin(); it != _location_config.index.end(); it++)
+			{
+				// if found, break, put it in new uri
+			}
+		}
+		// check if uri regular file
+		// check size of file
+		// if seems ok, open it and put it in _html and put 200 OK
+	}
+	_error = error_404;
+	//cgi
+}
+
 /**********************************************************************************/
 /* ----------------------------------setup--------------------------------------- */
 /**********************************************************************************/
 
 void	ResponseHTTP::construct_response()
 {
-	if (!check_errors())
-	{
+	if (check_errors())
+		return (generate_400_error());
+	if (_request.get_method() == "DELETE")
+		return (delete_methods());
 		// different function or class depending on the request method, could be cgi
 		// [GET] // a map of functions ?
 		// for now, dummy response
-		this->_response_string = DUMMY_RESPONSE;
+	if (_request.get_method() == "GET")
+	{
+		//create_get_response();
 	}
+	this->_response_string = DUMMY_RESPONSE;
 	generate_400_error();
 }
 
 string	ResponseHTTP::get_response_string(void) const
 {
 	return (_response_string);
+}
+
+void	ResponseHTTP::delete_methods()
+{
+	//cree le path le lien entier
+
+	//	verifier si ce lien est valide si non error
+	//	verifier les droit d'ecriture
+	//	verifier si on peut le sup si non error
+	//	si tout est bon envoyer ok
 }
 
 // check error general

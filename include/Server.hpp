@@ -30,7 +30,7 @@ using namespace std;
 typedef struct s_location
 {
 	string			uri;
-	vector<string>	allow_methods;
+	map<string, string>	allow_methods;
 	string			root;
 	vector<string>	index;
 	string			redir_link;
