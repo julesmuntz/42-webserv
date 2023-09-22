@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/16 18:51:42 by mbelrhaz         ###   ########.fr       */
+/*   Updated: 2023/09/22 12:41:03 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,6 +107,20 @@ t_server	Server::choose_server(RequestParser rep, bool &no_server)
 {
 	t_server tmp;
 
+	if (rep.get_req_head().hosts.second == 0)
+	{
+		for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
+		{
+			for (unsigned int i = 0; i < it->server_name.size(); i++)
+			{
+				if (it->server_name[i] == rep.get_req_head().hosts.first)
+				{
+					tmp = *it;
+					return (tmp);
+				}
+			}
+		}
+	}
 	for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
 	{
 		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)

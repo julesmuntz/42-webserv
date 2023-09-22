@@ -41,5 +41,6 @@ class ResponseHTTP
 		//creation des methods post get delete
 		//void	get_methods();
 		void	post_methods();
+		void	delete_methods();
 		//faire les check d'ereur posible too long ...
 };
