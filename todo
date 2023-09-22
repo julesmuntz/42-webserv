@@ -15,8 +15,9 @@ Edouard :
 	Exodus, Response : DELETE, ResponseSender: Decider si envoi en chunk ou pas,
 
 Jules :
-	Response: CGI, POST, tester le programe
+	Response: CGI, POST
 
+tout le monde teste, c'est notre projet donc on doit tous tester, surtout nos parties
 
 faire des pages html
 

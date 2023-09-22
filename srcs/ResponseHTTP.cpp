@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
+#include "ResponseDir.hpp"
 
 /**********************************************************************************/
 /* -------------------------constructeur destructeur----------------------------- */
@@ -128,6 +130,31 @@ bool	ResponseHTTP::set_location()
 /* ----------------------------generate response--------------------------------- */
 /**********************************************************************************/
 
+void	ResponseHTTP::generate_response_string()
+{
+	map<uint32_t, string>::iterator it = _static_code.find(_error);
+
+	if (it != _static_code.end())
+	{
+		if (it->first != 301 && it->first != 200)
+		{
+			generate_400_error();
+			return ;
+		}
+		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
+		if (it->first == 301)
+		{
+			_response << "Location: " << _html << "\r\n";
+			return ;
+		}
+		_response << "Content-Type: text/html\r\n";
+		_response << "Content-Length: " << _html.length() << "\r\n";
+		_response << "\r\n";
+		_response << _html;
+		_response_string = _response.str();
+	}
+}
+
 // check this function again cause not sure
 void	ResponseHTTP::generate_400_error()
 {
@@ -151,7 +178,9 @@ void	ResponseHTTP::generate_400_error()
 			file.open(filename.c_str());
 			if (!file.fail())
 			{
-				file >> _html;
+				stringstream buffer;
+				buffer << file.rdbuf();
+				_html = buffer.str();
 			}
 		}
 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
@@ -221,7 +250,7 @@ void	ResponseHTTP::select_location()
 {
 	vector<t_location>::iterator	it;
 	//order locations by size then try each one
-	
+
 	sort(_server_config.location.begin(), _server_config.location.end(), cmp);
 	for (it = _server_config.location.begin(); it != _server_config.location.end(); it++)
 	{
@@ -230,13 +259,32 @@ void	ResponseHTTP::select_location()
 	}
 }
 
+void	ResponseHTTP::create_dir_page(string uri, map<string, string> files_in_dir)
+{
+	(void) uri;
+	_html =  BEFORE_A_HREF;
+	for (map<string, string>::iterator it = files_in_dir.begin(); it != files_in_dir.end(); it++)
+	{
+		string	a_href;
+		a_href = "<a href='";
+		//add directory
+		a_href += '/' + it->first;
+		a_href += "'>";
+		a_href += it->first;
+		a_href += "</a>";
+		_html += a_href;
+	}
+	_html += AFTER_A_HREF;
+}
+
 void	ResponseHTTP::create_get_response()
 {
 	string	root(".");
 
+	_error = no_error_200;
 	select_location();
 	//allow methods
-	if (_location_config.allow_methods.find("GET") != _location_config.allow_methods.end())
+	if (_location_config.allow_methods.find("GET") == _location_config.allow_methods.end())
 	{
 		_error = error_405;
 		return ;
@@ -244,38 +292,84 @@ void	ResponseHTTP::create_get_response()
 	//redir_link
 	if (!_location_config.redir_link.empty())
 	{
-		//construct redirection request
-		// put error and fill _html
+		_error = error_301;
+		_html = "";
 		return ;
 	}
 	//directory
+	std::cout << "POUTOUT" << std::endl;
 	struct stat	stats;
 	root += _location_config.root;
+	root += '/';
 	string uri;
 	size_t	pos = _request.get_uri().find(_location_config.uri);
 	if (pos == 0)
 	{
 		uri = _request.get_uri().replace(0, _location_config.uri.size(), root);
 	}
+	std::cout << "POUTOUT" << uri << std::endl;
 	if (stat(uri.c_str(), &stats) == 0)
 	{
+		std::cout << "POUTOUT" << uri << std::endl;
 		if (S_ISDIR(stats.st_mode))
 		{
+			struct dirent		*ent;
+			map<string, string>	files_in_dir;
 			// is a directory and work on it
-			// opendir readdir and closedir, store content
+			DIR	*dir = opendir(uri.c_str());
+			if (!dir)
+				perror("opendir");
+			errno = 0;
+			while (1)
+			{
+				ent = readdir(dir);
+				if (errno != 0)
+					perror("readdir");
+				if (ent == NULL)
+					break ;
+				files_in_dir.insert(pair<string, string>(ent->d_name, ""));
+			}
+			if (closedir(dir) == -1)
+				perror("closedir");
 			// check directory_listing
 			if (_location_config.directory_listing)
 			{
-				// create page using content
+				create_dir_page(uri, files_in_dir);
+				return ;
 			}
 			// check index
 			// loop through indexes and loop through content to find match
 			for (vector<string>::iterator it = _location_config.index.begin(); it != _location_config.index.end(); it++)
 			{
 				// if found, break, put it in new uri
+				if (files_in_dir.find(*it) != files_in_dir.end())
+				{
+					uri += '/';
+					uri += *it;
+					break ;
+				}
 			}
 		}
+		std::cout << "POUTOUT" << uri << std::endl;
 		// check if uri regular file
+		// check size of file
+		if (stat(uri.c_str(), &stats) == 0)
+		{
+			if (S_ISREG(stats.st_mode) && stats.st_size != 0 && stats.st_size != INT_MAX)
+			{
+				ifstream	file;
+
+				file.open(uri.c_str());
+				std::cout << "HEREEEE" << std::endl;
+				if (!file.fail())
+				{
+					stringstream buffer;
+					buffer << file.rdbuf();
+					_html = buffer.str();
+					return ;
+				}
+			}
+		}
 		// check size of file
 		// if seems ok, open it and put it in _html and put 200 OK
 	}
@@ -289,19 +383,19 @@ void	ResponseHTTP::create_get_response()
 
 void	ResponseHTTP::construct_response()
 {
+	this->_response_string = DUMMY_RESPONSE;
 	if (check_errors())
 		return (generate_400_error());
 	if (_request.get_method() == "DELETE")
-		return (delete_methods());
+		delete_methods();
 		// different function or class depending on the request method, could be cgi
 		// [GET] // a map of functions ?
 		// for now, dummy response
 	if (_request.get_method() == "GET")
 	{
-		//create_get_response();
+		create_get_response();
 	}
-	this->_response_string = DUMMY_RESPONSE;
-	generate_400_error();
+	generate_response_string();
 }
 
 string	ResponseHTTP::get_response_string(void) const
