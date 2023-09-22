@@ -1,7 +1,7 @@
 [ ] Exodus: si default conf corrupted, prendre variable globale
 		ok	check la taille du fichier avec stat et si renvoie 0 (dev rand) ou superieur a 10K pas ouvrir
 
-[ ] Choose server : rajouter en focntion du server_name
+[ ] Choose server : ok rajouter en focntion du server_name
 
 [ ] Response: CGI, GET, POST, DELETE, check errors
 
@@ -10,3 +10,14 @@
 [ ] Tests
 
 [ ] ResponseSender: Decider si envoi en chunk ou pas
+
+Edouard :
+	Exodus, Response : DELETE, ResponseSender: Decider si envoi en chunk ou pas,
+
+Jules :
+	Response: CGI, POST, tester le programe
+
+
+faire des pages html
+
+clean tout le projets
