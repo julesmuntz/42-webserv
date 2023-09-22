@@ -21,12 +21,15 @@ class ResponseHTTP
 		string	_body;
 		RequestParser	_request;
 		t_server		_server_config;
+		t_location		_location_config;
 		bool			_no_location;
 		bool			set_location();
+		void			select_location();
 		bool			check_errors();
 		//choisir quel function on vas utiliser pour cree la reponse
 		void			construct_response();
 		void			construct_error_no_config();
+		void			create_get_response();
 
 	public:
 		ResponseHTTP(RequestParser &request, t_error error);
@@ -36,7 +39,7 @@ class ResponseHTTP
 		//creation des error
 		void	generate_400_error();
 		//creation des methods post get delete
-		void	get_methods();
+		//void	get_methods();
 		void	post_methods();
 		//faire les check d'ereur posible too long ...
 };
