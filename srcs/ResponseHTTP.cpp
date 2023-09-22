@@ -172,19 +172,13 @@ bool	ResponseHTTP::check_errors()
 		return (true);
 	//errors revealed by parsing
 	if (_request.get_req_head().hosts.first.empty())
-	{
 		_error = error_400;
-	}
 	if (!_request.get_rep_head().transfer_encoding.empty()
 			&& _request.get_rep_head().transfer_encoding != "chunked")
-	{
 		_error = error_400;
-	}
 	//error body too long
 	if (_request.get_body().size() > _server_config.client_body_size)
-	{
 		_error = error_431;
-	}
 	if (_error)
 		return (true);
 	return (false);
@@ -222,19 +216,30 @@ void	ResponseHTTP::construct_error_no_config()
 
 void	ResponseHTTP::construct_response()
 {
-	if (!check_errors())
-	{
+	if (check_errors())
+		return (generate_400_error());
+	if (_request.get_method() == "DELETE")
+		return (delete_methods());
 		// different function or class depending on the request method, could be cgi
 		// [GET] // a map of functions ?
 		// for now, dummy response
-		this->_response_string = DUMMY_RESPONSE;
-	}
-	generate_400_error();
+
+	this->_response_string = DUMMY_RESPONSE;
 }
 
 string	ResponseHTTP::get_response_string(void) const
 {
 	return (_response_string);
+}
+
+void	ResponseHTTP::delete_methods()
+{
+	//cree le path le lien entier
+
+	//	verifier si ce lien est valide si non error
+	//	verifier les droit d'ecriture
+	//	verifier si on peut le sup si non error
+	//	si tout est bon envoyer ok
 }
 
 // check error general
