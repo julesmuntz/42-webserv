@@ -14,16 +14,27 @@ size_t getFilesize(const std::string& filename) {
 
 Exodus::Exodus(string const filename)
 {
-	string		extantion;
+	string		extension;
+	bool		file_error = false;
 
-	extantion = FILE_CONF;
-	if (filename.size() >= extantion.size() && filename.compare(filename.size() - extantion.size(), extantion.size(), extantion))
-		throw Exodus::error_filename();
-	if (getFilesize(filename) == 0 || getFilesize(filename) > 10000)
-		throw Exodus::error_open();
-	this->_ifs.open(filename.c_str(), ifstream::in);
-	if (!this->_ifs.is_open())
-		throw Exodus::error_open();
+	extension = FILE_CONF;
+	if ((filename.size() >= extension.size() && filename.compare(filename.size() - extension.size(), extension.size(), extension)) ||
+		(filename.size() < extension.size()))
+		file_error = true;
+	if (!file_error && (getFilesize(filename) == 0 || getFilesize(filename) > 10000))
+		file_error = true;
+	if (!file_error)
+	{
+		this->_ifs.open(filename.c_str(), ifstream::in);
+		if (!this->_ifs.is_open())
+			file_error = true;
+	}
+	if (file_error)
+	{
+		cout << "config de defautl" << endl;
+		Exodus def(FILE_DEFAULT);
+		this->_server = def._server;
+	}
 }
 
 Exodus::~Exodus()

@@ -11,9 +11,6 @@
 
 [ ] ResponseSender: Decider si envoi en chunk ou pas
 
-Edouard :
-	Exodus, Response : DELETE, ResponseSender: Decider si envoi en chunk ou pas,
-
 Jules :
 	Response: CGI, POST
 
