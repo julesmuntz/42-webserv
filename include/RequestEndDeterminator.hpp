@@ -13,7 +13,7 @@
 #include <iostream>
 #include <ctime>
 #include <string>
-#include <limits>
+#include <climits>
 
 using namespace std;
 

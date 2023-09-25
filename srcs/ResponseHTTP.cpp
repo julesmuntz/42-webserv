@@ -403,14 +403,57 @@ string	ResponseHTTP::get_response_string(void) const
 	return (_response_string);
 }
 
+bool isFile(std::string &path)
+{
+
+	struct stat path_stat;
+
+	bzero(&path_stat, sizeof(path_stat));
+	stat(path.c_str(), &path_stat);
+	return (S_ISREG(path_stat.st_mode));
+}
+
+bool isDir(std::string &path)
+{
+
+	struct stat path_stat;
+
+	bzero(&path_stat, sizeof(path_stat));
+	if (stat(path.c_str(), &path_stat) != 0)
+		return (false);
+	return (S_ISDIR(path_stat.st_mode));
+}
+
+bool	isWrite(std::string &path)
+{
+	struct stat path_stat;
+
+	bzero(&path_stat, sizeof(path_stat));
+	if (stat(path.c_str(), &path_stat))
+		return (false);
+	if (path_stat.st_mode & S_IWUSR)
+		return (true);
+	return (false);
+}
+
 void	ResponseHTTP::delete_methods()
 {
 	//cree le path le lien entier
-
+	string path = _request.get_uri();
+	select_location();
+	path.replace(0, _location_config.uri.size(), _location_config.root);
+	
 	//	verifier si ce lien est valide si non error
+	if (!isFile(path) && !isDir(path))
+		return (_error = error_400, generate_400_error());
 	//	verifier les droit d'ecriture
+	if (!isWrite(path))
+		return (_error = error_404, generate_400_error());
 	//	verifier si on peut le sup si non error
+	if (remove(path.c_str()) != 0)
+		return (_error = error_500, generate_400_error());
 	//	si tout est bon envoyer ok
+	return (_error = no_error_200, construct_error_no_config());
 }
 
 // check error general
