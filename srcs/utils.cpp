@@ -1,5 +1,5 @@
 #include "utils.hpp"
-
+#include <string.h>
 /**********************************************************************************/
 /* ---------------------------------utils---------------------------------------- */
 /**********************************************************************************/
@@ -61,4 +61,42 @@ string	extractmots(string line, string mots) {
 	if (listenIndex >= tokens.size())
 		return ("");
 	return tokens[listenIndex];
+}
+
+bool isFile(std::string &path)
+{
+
+	struct stat path_stat;
+
+	bzero(&path_stat, sizeof(path_stat));
+	stat(path.c_str(), &path_stat);
+	return (S_ISREG(path_stat.st_mode));
+}
+
+bool isDir(std::string &path)
+{
+
+	struct stat path_stat;
+
+	bzero(&path_stat, sizeof(path_stat));
+	if (stat(path.c_str(), &path_stat) != 0)
+		return (false);
+	return (S_ISDIR(path_stat.st_mode));
+}
+
+bool	isWrite(std::string &path)
+{
+	struct stat path_stat;
+
+	bzero(&path_stat, sizeof(path_stat));
+	if (stat(path.c_str(), &path_stat))
+		return (false);
+	if (path_stat.st_mode & S_IWUSR)
+		return (true);
+	return (false);
+}
+
+bool	cmp(const t_location a, const t_location b)
+{
+	return (a.uri.size() < b.uri.size());
 }
