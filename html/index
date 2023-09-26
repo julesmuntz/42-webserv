@@ -10,5 +10,12 @@
 	<h2>oh something interesting</h2>
 	<h2>yeah we got it</h2>
 	<h2>coucou</h2>
+	<form action="" method="post">
+		<button>Post [ / ]</button>
+	</form>
+	<p></p>
+	<form action="color" method="post">
+		<button>Post [ /color ]</button>
+	</form>
 </body>
 </html>

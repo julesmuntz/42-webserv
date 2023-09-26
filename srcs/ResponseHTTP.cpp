@@ -378,6 +378,17 @@ void	ResponseHTTP::create_get_response()
 	//cgi
 }
 
+void	ResponseHTTP::create_post_response()
+{
+	select_location();
+	//allow methods
+	if (_location_config.allow_methods.find("POST") == _location_config.allow_methods.end())
+	{
+		_error = error_405;
+		return ;
+	}
+}
+
 /**********************************************************************************/
 /* ----------------------------------setup--------------------------------------- */
 /**********************************************************************************/
@@ -395,6 +406,10 @@ void	ResponseHTTP::construct_response()
 	if (_request.get_method() == "GET")
 	{
 		create_get_response();
+	}
+	if (_request.get_method() == "POST")
+	{
+		create_post_response();
 	}
 	generate_response_string();
 }

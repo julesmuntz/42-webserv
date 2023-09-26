@@ -30,6 +30,7 @@ class ResponseHTTP
 		void			construct_response();
 		void			construct_error_no_config();
 		void			create_get_response();
+		void			create_post_response();
 		void			generate_response_string();
 		void			create_dir_page(string uri, map<string, string> files_in_dir);
 
