@@ -1,7 +1,5 @@
 #include "ResponseHTTP.hpp"
 #include <fstream>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include "ResponseDir.hpp"
 
@@ -99,7 +97,7 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_error error)
 	this->_request = request;
 	this->_no_location = this->set_location();
 	this->_error = error;
-	this->construct_error_no_config();
+	this->generate_4000_error(error);
 }
 
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server server_config, t_error error)
@@ -137,10 +135,7 @@ void	ResponseHTTP::generate_response_string()
 	if (it != _static_code.end())
 	{
 		if (it->first != 301 && it->first != 200)
-		{
-			generate_400_error();
-			return ;
-		}
+			return (generate_4000_error(_error));
 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
 		if (it->first == 301)
 		{
@@ -157,41 +152,41 @@ void	ResponseHTTP::generate_response_string()
 }
 
 // check this function again cause not sure
-void	ResponseHTTP::generate_400_error()
-{
-	map<uint32_t, string>::iterator it = _static_code.find(_error);
+// void	ResponseHTTP::generate_400_error()
+// {
+// 	map<uint32_t, string>::iterator it = _static_code.find(_error);
 
-	if (it != _static_code.end())
-	{
-		_header = ERRORHEAD;
-		_body = ERRORBODY_PART_1;
-		stringstream num;
-		num << it->first;
-		_body += num.str();
-		_body += ERRORBODY_PART_2;
-		_body += it->second;
-		_body += ERRORBODY_PART_3;
-		_html = _header + _body;
-		if (_server_config.error_pages.find(_error) != _server_config.error_pages.end())
-		{
-			ifstream	file;
-			string		filename = "." + _server_config.error_pages.find(_error)->second;
-			file.open(filename.c_str());
-			if (!file.fail())
-			{
-				stringstream buffer;
-				buffer << file.rdbuf();
-				_html = buffer.str();
-			}
-		}
-		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
-		_response << "Content-Type: text/html\r\n";
-		_response << "Content-Length: " << _html.length() << "\r\n";
-		_response << "\r\n";
-		_response << _html;
-		_response_string = _response.str();
-	}
-}
+// 	if (it != _static_code.end())
+// 	{
+// 		_header = ERRORHEAD;
+// 		_body = ERRORBODY_PART_1;
+// 		stringstream num;
+// 		num << it->first;
+// 		_body += num.str();
+// 		_body += ERRORBODY_PART_2;
+// 		_body += it->second;
+// 		_body += ERRORBODY_PART_3;
+// 		_html = _header + _body;
+// 		if (_server_config.error_pages.find(_error) != _server_config.error_pages.end())
+// 		{
+// 			ifstream	file;
+// 			string		filename = "." + _server_config.error_pages.find(_error)->second;
+// 			file.open(filename.c_str());
+// 			if (!file.fail())
+// 			{
+// 				stringstream buffer;
+// 				buffer << file.rdbuf();
+// 				_html = buffer.str();
+// 			}
+// 		}
+// 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
+// 		_response << "Content-Type: text/html\r\n";
+// 		_response << "Content-Length: " << _html.length() << "\r\n";
+// 		_response << "\r\n";
+// 		_response << _html;
+// 		_response_string = _response.str();
+// 	}
+// }
 
 /**********************************************************************************/
 /* ---------------------------------check_errors--------------------------------- */
@@ -202,13 +197,11 @@ bool	ResponseHTTP::check_errors()
 {
 	if (_error)
 		return (true);
-	//errors revealed by parsing
 	if (_request.get_req_head().hosts.first.empty())
 		_error = error_400;
 	if (!_request.get_rep_head().transfer_encoding.empty()
 			&& _request.get_rep_head().transfer_encoding != "chunked")
 		_error = error_400;
-	//error body too long
 	if (_request.get_body().size() > _server_config.client_body_size)
 		_error = error_431;
 	if (_error)
@@ -216,36 +209,32 @@ bool	ResponseHTTP::check_errors()
 	return (false);
 }
 
-void	ResponseHTTP::construct_error_no_config()
-{
-	if (!_error)
-		_error = error_400;
-	map<uint32_t, string>::iterator it = _static_code.find(_error);
+// void	ResponseHTTP::construct_error_no_config()
+// {
+// 	if (!_error)
+// 		_error = error_400;
+// 	map<uint32_t, string>::iterator it = _static_code.find(_error);
 
-	if (it != _static_code.end())
-	{
-		_header = ERRORHEAD;
-		_body = ERRORBODY_PART_1;
-		stringstream	num;
-		num << it->first;
-		_body += num.str();
-		_body += ERRORBODY_PART_2;
-		_body += it->second;
-		_body += ERRORBODY_PART_3;
-		_html = _header + _body;
-		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
-		_response << "Content-Type: text/html\r\n";
-		_response << "Content-Length: " << _html.length() << "\r\n";
-		_response << "\r\n";
-		_response << _html;
-		_response_string = _response.str();
-	}
-}
+// 	if (it != _static_code.end())
+// 	{
+// 		_header = ERRORHEAD;
+// 		_body = ERRORBODY_PART_1;
+// 		stringstream	num;
+// 		num << it->first;
+// 		_body += num.str();
+// 		_body += ERRORBODY_PART_2;
+// 		_body += it->second;
+// 		_body += ERRORBODY_PART_3;
+// 		_html = _header + _body;
+// 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
+// 		_response << "Content-Type: text/html\r\n";
+// 		_response << "Content-Length: " << _html.length() << "\r\n";
+// 		_response << "\r\n";
+// 		_response << _html;
+// 		_response_string = _response.str();
+// 	}
+// }
 
-bool	cmp(const t_location a, const t_location b)
-{
-	return (a.uri.size() < b.uri.size());
-}
 
 void	ResponseHTTP::select_location()
 {
@@ -397,9 +386,9 @@ void	ResponseHTTP::construct_response()
 {
 	this->_response_string = DUMMY_RESPONSE;
 	if (check_errors())
-		return (generate_400_error());
+		return (generate_4000_error(_error));
 	if (_request.get_method() == "DELETE")
-		delete_methods();
+		return(delete_methods());
 		// different function or class dep//	verifier les droit d'ecritureending on the request method, could be cgi
 		// [GET] // a map of functions ?
 		// for now, dummy response
@@ -419,60 +408,70 @@ string	ResponseHTTP::get_response_string(void) const
 	return (_response_string);
 }
 
-bool isFile(std::string &path)
-{
-
-	struct stat path_stat;
-
-	bzero(&path_stat, sizeof(path_stat));
-	stat(path.c_str(), &path_stat);
-	return (S_ISREG(path_stat.st_mode));
-}
-
-bool isDir(std::string &path)
-{
-
-	struct stat path_stat;
-
-	bzero(&path_stat, sizeof(path_stat));
-	if (stat(path.c_str(), &path_stat) != 0)
-		return (false);
-	return (S_ISDIR(path_stat.st_mode));
-}
-
-bool	isWrite(std::string &path)
-{
-	struct stat path_stat;
-
-	bzero(&path_stat, sizeof(path_stat));
-	if (stat(path.c_str(), &path_stat))
-		return (false);
-	if (path_stat.st_mode & S_IWUSR)
-		return (true);
-	return (false);
-}
-
 void	ResponseHTTP::delete_methods()
 {
-	//cree le path le lien entier
 	string path = _request.get_uri();
 	select_location();
 	path.replace(0, _location_config.uri.size(), _location_config.root);
-	
-	//	verifier si ce lien est valide si non error
+
 	if (!isFile(path) && !isDir(path))
-		return (_error = error_400, generate_400_error());
-	//	verifier les droit d'ecriture
+		return (generate_4000_error(error_400));
 	if (!isWrite(path))
-		return (_error = error_404, generate_400_error());
-	//	verifier si on peut le sup si non error
+		return (generate_4000_error(error_404));
 	if (remove(path.c_str()) != 0)
-		return (_error = error_500, generate_400_error());
-	//	si tout est bon envoyer ok
-	return (_error = no_error_200, construct_error_no_config());
+		return (generate_4000_error(error_500));
+	return (generate_4000_error(no_error_200));
 }
 
 // check error general
 
 // fill structure error, si erreur, alors
 // page generee
+
+
+
+
+
+// Edouard clean fucntion generate page error or not
+
+void	ResponseHTTP::construct_html(uint32_t code, string &str_code)
+{
+	stringstream	num;
+	_header = ERRORHEAD;
+	_body = ERRORBODY_PART_1;
+	num << code;
+	_body += num.str();
+	_body += ERRORBODY_PART_2;
+	_body += str_code;
+	_body += ERRORBODY_PART_3;
+	_html = _header + _body;
+}
+
+void	ResponseHTTP::generate_4000_error(t_error error)
+{
+	if (!error)
+		error = error_400;
+	map<uint32_t, string>::iterator it = _static_code.find(error);
+	if (it != _static_code.end())
+	{
+		this->construct_html(it->first, it->second);
+		if (_server_config.error_pages.find(_error) != _server_config.error_pages.end())
+		{
+			ifstream	file;
+			string		filename = "." + _server_config.error_pages.find(_error)->second;
+			file.open(filename.c_str());
+			if (!file.fail())
+			{
+				stringstream buffer;
+				buffer << file.rdbuf();
+				_html = buffer.str();
+			}
+		}
+	}
+	_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
+	_response << "Content-Type: text/html\r\n";
+	_response << "Content-Length: " << _html.length() << "\r\n";
+	_response << "\r\n";
+	_response << _html;
+	_response_string = _response.str();
+}

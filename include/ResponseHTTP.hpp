@@ -46,4 +46,9 @@ class ResponseHTTP
 		void	post_methods();
 		void	delete_methods();
 		//faire les check d'ereur posible too long ...
+
+
+
+		void	construct_html(uint32_t, string &);
+		void	generate_4000_error(t_error);
 };

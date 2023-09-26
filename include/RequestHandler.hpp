@@ -15,7 +15,7 @@ typedef enum	e_error {
 	error_413    = 413, // request header too long
 	error_431    = 431, // request body too long
 	error_301    = 301, // permanent redirect
-	error_500    = 500, //Internal Server
+	error_500    = 500, // Internal Server
 	no_error_200 = 200, // ok
 	no_error     = 0
 }				t_error;
