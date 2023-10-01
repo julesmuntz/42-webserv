@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/09/22 12:41:03 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/10/01 22:58:38 by mbelrhaz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,10 +103,8 @@ void	Server::update_time(void)
 	}
 }
 
-t_server	Server::choose_server(RequestParser rep, bool &no_server)
+void	Server::choose_server(RequestParser rep, t_server *serv)
 {
-	t_server tmp;
-
 	if (rep.get_req_head().hosts.second == 0)
 	{
 		for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
@@ -115,8 +113,7 @@ t_server	Server::choose_server(RequestParser rep, bool &no_server)
 			{
 				if (it->server_name[i] == rep.get_req_head().hosts.first)
 				{
-					tmp = *it;
-					return (tmp);
+					*serv = *it;
 				}
 			}
 		}
@@ -125,12 +122,9 @@ t_server	Server::choose_server(RequestParser rep, bool &no_server)
 	{
 		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
 		{
-			tmp = *it;
-			return (tmp);
+			*serv = *it;
 		}
 	}
-	no_server = true;
-	return (tmp);
 }
 
 /* Returns true if the fd is a listening socket */
@@ -222,6 +216,7 @@ int	Server::set_up_server(void)
 			this->shutdown_server();
 			return (1);
 		}
+		memset(&event, 0, sizeof(event));
 		event.events = EPOLLIN;
 		event.data.fd = sfd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sfd, &event))
@@ -249,6 +244,7 @@ int	Server::handle_new_connection(int sfd)
 	connfd = accept(sfd, &sock_addr, &sock_len);
 	if (connfd == -1)
 		return (this->shutdown_server("accept"));
+	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN;
 	event.data.fd = connfd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
@@ -287,20 +283,12 @@ int	Server::receive_data(int i)
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
 		requests.find(events[i].data.fd)->second.check_preparsing_errors();
 		RequestParser	parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
-		bool	no_server = false;
-		t_server serv = choose_server(parsedRequest, no_server);
-		if (no_server == false)
-		{
-			ResponseHTTP	responseHTTP(parsedRequest, serv, requests.find(events[i].data.fd)->second.get_error());
-			ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
-			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
-		}
-		else
-		{
-			ResponseHTTP	responseHTTP(parsedRequest, requests.find(events[i].data.fd)->second.get_error());
-			ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
-			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
-		}
+		t_server serv;
+		choose_server(parsedRequest, &serv);
+		ResponseHTTP	responseHTTP(parsedRequest, &serv, requests.find(events[i].data.fd)->second.get_error());
+		ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
+		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
+		memset(&event, 0, sizeof(event));
 		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)

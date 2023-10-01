@@ -20,7 +20,7 @@ class ResponseHTTP
 		string	_header;
 		string	_body;
 		RequestParser	_request;
-		t_server		_server_config;
+		t_server		*_server_config;
 		t_location		_location_config;
 		bool			_no_location;
 		bool			set_location();
@@ -35,8 +35,7 @@ class ResponseHTTP
 		void			create_dir_page(string uri, map<string, string> files_in_dir);
 
 	public:
-		ResponseHTTP(RequestParser &request, t_error error);
-		ResponseHTTP(RequestParser &, t_server , t_error );
+		ResponseHTTP(RequestParser &, t_server *, t_error );
 		~ResponseHTTP();
 		string	get_response_string(void) const;
 		//creation des error

@@ -76,11 +76,6 @@ static map<uint32_t, string> generate_static_code()
 	return (result);
 }
 
-// ResponseHTTP::ResponseHTTP(t_server, t_server server_config)
-// {
-// 	this->_static_code = generate_static_code();
-// }
-
 /*
 	Make a factory for the different methods we handle?
 		GET
@@ -91,22 +86,17 @@ static map<uint32_t, string> generate_static_code()
 	Try and see...
 */
 
-ResponseHTTP::ResponseHTTP(RequestParser &request, t_error error)
-{
-	this->_static_code = generate_static_code();
-	this->_request = request;
-	this->_no_location = this->set_location();
-	this->_error = error;
-	this->generate_4000_error(error);
-}
-
-ResponseHTTP::ResponseHTTP(RequestParser &request, t_server server_config, t_error error)
+ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
 {
 	this->_static_code = generate_static_code();
 	this->_request = request;
 	this->_server_config = server_config;
-	this->_no_location = this->set_location();
 	this->_error = error;
+	if (_server_config != NULL)
+	{
+		this->_no_location = this->set_location();
+		this->generate_4000_error(error_400);
+	}
 	this->construct_response();
 }
 
@@ -116,7 +106,7 @@ bool	ResponseHTTP::set_location()
 {
 	if (!_request.get_uri().empty())
 		return (true);
-	for (vector<t_location>::iterator it = _server_config.location.begin(); it != _server_config.location.end(); it++)
+	for (vector<t_location>::iterator it = _server_config->location.begin(); it != _server_config->location.end(); it++)
 	{
 		if (it->file_location == _request.get_uri())
 			return (false);
@@ -151,43 +141,6 @@ void	ResponseHTTP::generate_response_string()
 	}
 }
 
-// check this function again cause not sure
-// void	ResponseHTTP::generate_400_error()
-// {
-// 	map<uint32_t, string>::iterator it = _static_code.find(_error);
-
-// 	if (it != _static_code.end())
-// 	{
-// 		_header = ERRORHEAD;
-// 		_body = ERRORBODY_PART_1;
-// 		stringstream num;
-// 		num << it->first;
-// 		_body += num.str();
-// 		_body += ERRORBODY_PART_2;
-// 		_body += it->second;
-// 		_body += ERRORBODY_PART_3;
-// 		_html = _header + _body;
-// 		if (_server_config.error_pages.find(_error) != _server_config.error_pages.end())
-// 		{
-// 			ifstream	file;
-// 			string		filename = "." + _server_config.error_pages.find(_error)->second;
-// 			file.open(filename.c_str());
-// 			if (!file.fail())
-// 			{
-// 				stringstream buffer;
-// 				buffer << file.rdbuf();
-// 				_html = buffer.str();
-// 			}
-// 		}
-// 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
-// 		_response << "Content-Type: text/html\r\n";
-// 		_response << "Content-Length: " << _html.length() << "\r\n";
-// 		_response << "\r\n";
-// 		_response << _html;
-// 		_response_string = _response.str();
-// 	}
-// }
-
 /**********************************************************************************/
 /* ---------------------------------check_errors--------------------------------- */
 /**********************************************************************************/
@@ -202,47 +155,20 @@ bool	ResponseHTTP::check_errors()
 	if (!_request.get_rep_head().transfer_encoding.empty()
 			&& _request.get_rep_head().transfer_encoding != "chunked")
 		_error = error_400;
-	if (_request.get_body().size() > _server_config.client_body_size)
+	if (_request.get_body().size() > _server_config->client_body_size)
 		_error = error_431;
 	if (_error)
 		return (true);
 	return (false);
 }
 
-// void	ResponseHTTP::construct_error_no_config()
-// {
-// 	if (!_error)
-// 		_error = error_400;
-// 	map<uint32_t, string>::iterator it = _static_code.find(_error);
-
-// 	if (it != _static_code.end())
-// 	{
-// 		_header = ERRORHEAD;
-// 		_body = ERRORBODY_PART_1;
-// 		stringstream	num;
-// 		num << it->first;
-// 		_body += num.str();
-// 		_body += ERRORBODY_PART_2;
-// 		_body += it->second;
-// 		_body += ERRORBODY_PART_3;
-// 		_html = _header + _body;
-// 		_response << "HTTP/1.1 " << it->first << " " << it->second << "\r\n";
-// 		_response << "Content-Type: text/html\r\n";
-// 		_response << "Content-Length: " << _html.length() << "\r\n";
-// 		_response << "\r\n";
-// 		_response << _html;
-// 		_response_string = _response.str();
-// 	}
-// }
-
-
 void	ResponseHTTP::select_location()
 {
 	vector<t_location>::iterator	it;
 	//order locations by size then try each one
 
-	sort(_server_config.location.begin(), _server_config.location.end(), cmp);
-	for (it = _server_config.location.begin(); it != _server_config.location.end(); it++)
+	sort(_server_config->location.begin(), _server_config->location.end(), cmp);
+	for (it = _server_config->location.begin(); it != _server_config->location.end(); it++)
 	{
 		if (it->uri == _request.get_uri().substr(0, it->uri.size()))
 			_location_config = *it;
@@ -455,10 +381,10 @@ void	ResponseHTTP::generate_4000_error(t_error error)
 	if (it != _static_code.end())
 	{
 		this->construct_html(it->first, it->second);
-		if (_server_config.error_pages.find(_error) != _server_config.error_pages.end())
+		if (_server_config && _server_config->error_pages.find(_error) != _server_config->error_pages.end())
 		{
 			ifstream	file;
-			string		filename = "." + _server_config.error_pages.find(_error)->second;
+			string		filename = "." + _server_config->error_pages.find(_error)->second;
 			file.open(filename.c_str());
 			if (!file.fail())
 			{
