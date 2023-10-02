@@ -114,6 +114,13 @@ void	ResponseHTTP::create_get_response()
 				file.open(uri.c_str());
 				if (!file.fail())
 				{
+					pos = uri.find_last_of('.');
+					string	ext = uri.substr(pos, uri.size() - pos);
+					std::cout << "ext = " << ext << std::endl;
+					if (_static_ext_map.find(ext) != _static_ext_map.end())
+					{
+						_mime_type = _static_ext_map.find(ext)->second;
+					}
 					stringstream buffer;
 					buffer << file.rdbuf();
 					_html = buffer.str();

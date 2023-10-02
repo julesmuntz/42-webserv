@@ -138,6 +138,7 @@ static map<uint32_t, string> generate_static_code()
 
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
 {
+	this->_mime_type = "text/html";
 	this->_static_ext_map = generate_static_ext_map();
 	this->_static_code = generate_static_code();
 	this->_request = request;
@@ -185,7 +186,7 @@ void	ResponseHTTP::generate_response_string()
 			_response_string = _response.str();
 			return ;
 		}
-		_response << "Content-Type: text/html\r\n";
+		_response << "Content-Type: " << _mime_type << "\r\n";
 		_response << "Content-Length: " << _html.length() << "\r\n";
 		_response << "\r\n";
 		_response << _html;

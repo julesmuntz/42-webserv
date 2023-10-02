@@ -17,6 +17,7 @@ class ResponseHTTP
 		stringstream	_response;
 		t_error			_error;
 		// int		_status;
+		string	_mime_type;
 		string	_html;
 		string	_header;
 		string	_body;
