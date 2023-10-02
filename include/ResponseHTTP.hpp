@@ -24,6 +24,9 @@ class ResponseHTTP
 		t_server		*_server_config;
 		t_location		_location_config;
 		bool			_no_location;
+		bool			method_allowed(string method);
+		bool			redir_is_set(void);
+		void			handle_dir(string &uri);
 		bool			set_location();
 		void			select_location();
 		bool			check_errors();
