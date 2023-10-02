@@ -11,6 +11,7 @@
 class ResponseHTTP
 {
 	private:
+		map<string, string>		_static_ext_map;
 		map<uint32_t, string>	_static_code;
 		string			_response_string;
 		stringstream	_response;

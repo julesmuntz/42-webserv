@@ -7,6 +7,55 @@
 /* -------------------------constructeur destructeur----------------------------- */
 /**********************************************************************************/
 
+static map<string, string>	generate_static_ext_map()
+{
+	map<string, string>	ext_map;
+
+	ext_map.insert(pair<string, string>(".html", "text/html"));
+	ext_map.insert(pair<string, string>(".css", "text/css"));
+	ext_map.insert(pair<string, string>(".js", "text/javascript"));
+	ext_map.insert(pair<string, string>(".htm", "text/html"));
+	ext_map.insert(pair<string, string>(".aac", "audio/aac"));
+	ext_map.insert(pair<string, string>(".avif", "image/avif"));
+	ext_map.insert(pair<string, string>(".avi", "video/x-msvideo"));
+	ext_map.insert(pair<string, string>(".bin", "application/octet-stream"));
+	ext_map.insert(pair<string, string>(".bmp", "image/bmp"));
+	ext_map.insert(pair<string, string>(".bz", "application/x-bzip"));
+	ext_map.insert(pair<string, string>(".csh", "application/x-csh"));
+	ext_map.insert(pair<string, string>(".csv", "text/csv"));
+	ext_map.insert(pair<string, string>(".doc", "application/msword"));
+	ext_map.insert(pair<string, string>(".gz", "application/gzip"));
+	ext_map.insert(pair<string, string>(".gif", "image/gif"));
+	ext_map.insert(pair<string, string>(".ico", "image/vnd.microsoft.icon"));
+	ext_map.insert(pair<string, string>(".ics", "text/calendar"));
+	ext_map.insert(pair<string, string>(".jpeg", "image/jpeg"));
+	ext_map.insert(pair<string, string>(".jpg", "image/jpeg"));
+	ext_map.insert(pair<string, string>(".mjs", "text/javascript"));
+	ext_map.insert(pair<string, string>(".mp3", "audio/mpeg"));
+	ext_map.insert(pair<string, string>(".mp4", "video/mp4"));
+	ext_map.insert(pair<string, string>(".mpeg", "video/mpeg"));
+	ext_map.insert(pair<string, string>(".png", "image/png"));
+	ext_map.insert(pair<string, string>(".pdf", "application/pdf"));
+	ext_map.insert(pair<string, string>(".php", "application/x-httpd-php"));
+	ext_map.insert(pair<string, string>(".svg", "image/svg+xml"));
+	ext_map.insert(pair<string, string>(".tar", "application/x-tar"));
+	ext_map.insert(pair<string, string>(".tif", "image/tiff"));
+	ext_map.insert(pair<string, string>(".tiff", "image/tiff"));
+	ext_map.insert(pair<string, string>(".ttf", "font/ttf"));
+	ext_map.insert(pair<string, string>(".txt", "text/plain"));
+	ext_map.insert(pair<string, string>(".wav", "audio/wav"));
+	ext_map.insert(pair<string, string>(".weba", "audio/webm"));
+	ext_map.insert(pair<string, string>(".webm", "video/webm"));
+	ext_map.insert(pair<string, string>(".webp", "image/webp"));
+	ext_map.insert(pair<string, string>(".woff", "font/woff"));
+	ext_map.insert(pair<string, string>(".woff2", "font/woff2"));
+	ext_map.insert(pair<string, string>(".xhtml", "appplication/xhtml+xml"));
+	ext_map.insert(pair<string, string>(".xml", "appplication/xml"));
+	ext_map.insert(pair<string, string>(".zip", "application/zip"));
+
+	return (ext_map);
+}
+
 static map<uint32_t, string> generate_static_code()
 {
 	map<uint32_t, string> result;
@@ -88,6 +137,7 @@ static map<uint32_t, string> generate_static_code()
 
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
 {
+	this->_static_ext_map = generate_static_ext_map();
 	this->_static_code = generate_static_code();
 	this->_request = request;
 	this->_server_config = server_config;
@@ -153,6 +203,8 @@ bool	ResponseHTTP::check_errors()
 		return (true);
 	if (_request.get_req_head().hosts.first.empty())
 		_error = error_400;
+	if (_request.get_version() != "HTTP/1.1")
+		_error = error_505;
 	if (!_request.get_rep_head().transfer_encoding.empty()
 			&& _request.get_rep_head().transfer_encoding != "chunked")
 		_error = error_400;

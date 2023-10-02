@@ -18,6 +18,7 @@ typedef enum	e_error {
 	error_301    = 301, // permanent redirect
 	error_304    = 304, // not modified
 	error_500    = 500, // Internal Server
+	error_505    = 505, // HTTP version not supported
 	no_error_200 = 200, // ok
 	no_error     = 0
 }				t_error;
