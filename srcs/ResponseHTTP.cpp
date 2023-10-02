@@ -95,9 +95,10 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	if (_server_config != NULL)
 	{
 		this->_no_location = this->set_location();
-		this->generate_4000_error(error_400);
+		this->construct_response();
+		return ;
 	}
-	this->construct_response();
+	this->generate_4000_error(error_400);
 }
 
 ResponseHTTP::~ResponseHTTP(){}
@@ -195,10 +196,7 @@ void	ResponseHTTP::create_get_response()
 {
 	string	root(".");
 
-	if (_error == error_301)
-		_error = error_304;
-	else
-		_error = no_error_200;
+	_error = no_error_200;
 	select_location();
 	//allow methods
 	if (_location_config.allow_methods.find("GET") == _location_config.allow_methods.end())
@@ -305,9 +303,16 @@ void	ResponseHTTP::create_post_response()
 {
 	_error = no_error_200;
 	select_location();
-	if (_location_config.allow_methods.find("POST") == _location_config.allow_methods.end() || _request.get_uri() == "/")
+	if (_location_config.allow_methods.find("POST") == _location_config.allow_methods.end())
 	{
 		_error = error_405;
+		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
+		return ;
+	}
+	if (!_location_config.redir_link.empty())
+	{
+		_error = error_301;
+		_html = "";
 		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
 		return ;
 	}
@@ -374,15 +379,14 @@ void	ResponseHTTP::create_post_response()
 					stringstream buffer;
 					buffer << file.rdbuf();
 					_html = buffer.str();
-					_error = error_301;
 					std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
-					create_get_response();
 					return ;
 				}
 			}
 		}
 	}
 	_error = error_404;
+	std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
 }
 
 /**********************************************************************************/
