@@ -269,12 +269,16 @@ void	ResponseHTTP::create_get_response()
 {
 	string	root(".");
 
-	_error = no_error_200;
+	if (_error == error_301)
+		_error = error_304;
+	else
+		_error = no_error_200;
 	select_location();
 	//allow methods
 	if (_location_config.allow_methods.find("GET") == _location_config.allow_methods.end())
 	{
 		_error = error_405;
+		std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 		return ;
 	}
 	//redir_link
@@ -282,6 +286,7 @@ void	ResponseHTTP::create_get_response()
 	{
 		_error = error_301;
 		_html = "";
+		std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 		return ;
 	}
 	//directory
@@ -327,6 +332,7 @@ void	ResponseHTTP::create_get_response()
 			if (_location_config.directory_listing)
 			{
 				create_dir_page(_request.get_uri(), files_in_dir);
+				std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 				return ;
 			}
 			// check index
@@ -356,6 +362,7 @@ void	ResponseHTTP::create_get_response()
 					stringstream buffer;
 					buffer << file.rdbuf();
 					_html = buffer.str();
+					std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 					return ;
 				}
 			}
@@ -364,31 +371,105 @@ void	ResponseHTTP::create_get_response()
 		// if seems ok, open it and put it in _html and put 200 OK
 	}
 	_error = error_404;
+	std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 	//cgi
 }
 
 void	ResponseHTTP::create_post_response()
 {
+	_error = no_error_200;
 	select_location();
-	//allow methods
-	if (_location_config.allow_methods.find("POST") == _location_config.allow_methods.end())
+	if (_location_config.allow_methods.find("POST") == _location_config.allow_methods.end() || _request.get_uri() == "/")
 	{
 		_error = error_405;
+		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
 		return ;
 	}
+	string root(".");
+	root += _location_config.root;
+	root += '/';
+	string uri;
+	size_t pos = _request.get_uri().find(_location_config.uri);
+	if (pos == 0)
+		uri = _request.get_uri().replace(0, _location_config.uri.size(), root);
+	struct stat stats;
+	if (stat(uri.c_str(), &stats) == 0)
+	{
+		if (S_ISDIR(stats.st_mode))
+		{
+			struct dirent		*ent;
+			map<string, string>	files_in_dir;
+			DIR	*dir = opendir(uri.c_str());
+			if (!dir)
+				perror("opendir");
+			errno = 0;
+			while (1)
+			{
+				string	name;
+				ent = readdir(dir);
+				if (errno != 0)
+					perror("readdir");
+				if (ent == NULL)
+					break ;
+				name = ent->d_name;
+				if (stat((uri + '/' + ent->d_name).c_str(), &stats) == 0)
+				{
+					if (S_ISDIR(stats.st_mode))
+						name += '/';
+				}
+				files_in_dir.insert(pair<string, string>(name, ""));
+			}
+			if (closedir(dir) == -1)
+				perror("closedir");
+			if (_location_config.directory_listing)
+			{
+				create_dir_page(_request.get_uri(), files_in_dir);
+				std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
+				return ;
+			}
+			for (vector<string>::iterator it = _location_config.index.begin(); it != _location_config.index.end(); it++)
+			{
+				if (files_in_dir.find(*it) != files_in_dir.end())
+				{
+					uri += '/';
+					uri += *it;
+					break ;
+				}
+			}
+		}
+		if (stat(uri.c_str(), &stats) == 0)
+		{
+			if (S_ISREG(stats.st_mode) && stats.st_size != 0 && stats.st_size != INT_MAX)
+			{
+				ifstream	file;
+				file.open(uri.c_str());
+				if (!file.fail())
+				{
+					stringstream buffer;
+					buffer << file.rdbuf();
+					_html = buffer.str();
+					_error = error_301;
+					std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
+					create_get_response();
+					return ;
+				}
+			}
+		}
+	}
+	_error = error_404;
 }
 
 /**********************************************************************************/
 /* ----------------------------------setup--------------------------------------- */
 /**********************************************************************************/
 
-void	ResponseHTTP::construct_response()
+void ResponseHTTP::construct_response()
 {
 	this->_response_string = DUMMY_RESPONSE;
 	if (check_errors())
 		return (generate_4000_error(_error));
 	if (_request.get_method() == "DELETE")
-		return(delete_methods());
+		return (delete_methods());
 		// different function or class dep//	verifier les droit d'ecritureending on the request method, could be cgi
 		// [GET] // a map of functions ?
 		// for now, dummy response
@@ -403,12 +484,12 @@ void	ResponseHTTP::construct_response()
 	generate_response_string();
 }
 
-string	ResponseHTTP::get_response_string(void) const
+string ResponseHTTP::get_response_string(void) const
 {
 	return (_response_string);
 }
 
-void	ResponseHTTP::delete_methods()
+void ResponseHTTP::delete_methods()
 {
 	string path = _request.get_uri();
 	select_location();
@@ -428,15 +509,11 @@ void	ResponseHTTP::delete_methods()
 // fill structure error, si erreur, alors
 // page generee
 
-
-
-
-
 // Edouard clean fucntion generate page error or not
 
-void	ResponseHTTP::construct_html(uint32_t code, string &str_code)
+void ResponseHTTP::construct_html(uint32_t code, string &str_code)
 {
-	stringstream	num;
+	stringstream num;
 	_header = ERRORHEAD;
 	_body = ERRORBODY_PART_1;
 	num << code;
@@ -447,7 +524,7 @@ void	ResponseHTTP::construct_html(uint32_t code, string &str_code)
 	_html = _header + _body;
 }
 
-void	ResponseHTTP::generate_4000_error(t_error error)
+void ResponseHTTP::generate_4000_error(t_error error)
 {
 	if (!error)
 		error = error_400;
@@ -457,8 +534,8 @@ void	ResponseHTTP::generate_4000_error(t_error error)
 		this->construct_html(it->first, it->second);
 		if (_server_config.error_pages.find(_error) != _server_config.error_pages.end())
 		{
-			ifstream	file;
-			string		filename = "." + _server_config.error_pages.find(_error)->second;
+			ifstream file;
+			string filename = "." + _server_config.error_pages.find(_error)->second;
 			file.open(filename.c_str());
 			if (!file.fail())
 			{
