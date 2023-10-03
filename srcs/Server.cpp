@@ -3,19 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/01 22:58:38 by mbelrhaz         ###   ########.fr       */
+/*   Updated: 2023/10/04 01:08:51 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "ResponseHTTP.hpp"
 
-bool	g_stop_required = 0;
+bool g_stop_required = 0;
 
-Server::Server() : epoll_fd(-1) {
+Server::Server() : epoll_fd(-1)
+{
 	this->memset_events();
 }
 
@@ -23,7 +24,7 @@ Server::~Server() {}
 
 /* Handles CTR+C */
 
-void	Server::sigint_handler(int sig)
+void Server::sigint_handler(int sig)
 {
 	(void)sig;
 	g_stop_required = 1;
@@ -32,9 +33,10 @@ void	Server::sigint_handler(int sig)
 /* Shuts down the server, closes and frees everything,
    writes down error message if necessary with the overload */
 
-void	Server::shutdown_server(void)
+void Server::shutdown_server(void)
 {
-	cout << endl << "Shutting down" << endl;
+	cout << endl
+		 << "Shutting down" << endl;
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
 		if (events[i].data.fd != -1)
@@ -49,10 +51,11 @@ void	Server::shutdown_server(void)
 		close(epoll_fd);
 }
 
-int	Server::shutdown_server(string str_err)
+int Server::shutdown_server(string str_err)
 {
 	perror(str_err.c_str());
-	cout << endl << "Shutting down" << endl;
+	cout << endl
+		 << "Shutting down" << endl;
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
 		if (events[i].data.fd != -1)
@@ -70,7 +73,7 @@ int	Server::shutdown_server(string str_err)
 
 /* Initializes the events queue */
 
-void	Server::memset_events(void)
+void Server::memset_events(void)
 {
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
@@ -80,15 +83,15 @@ void	Server::memset_events(void)
 
 /* Sets context servers from the config file */
 
-void	Server::set_con_servs(vector<t_server> const &co_sers)
+void Server::set_con_servs(vector<t_server> const &co_sers)
 {
 	this->con_servs = co_sers;
 }
 
-void	Server::update_time(void)
+void Server::update_time(void)
 {
-	map<int, RequestHandler>::iterator	it;
-	struct epoll_event					event;
+	map<int, RequestHandler>::iterator it;
+	struct epoll_event event;
 
 	for (it = requests.begin(); it != requests.end(); it++)
 	{
@@ -103,7 +106,7 @@ void	Server::update_time(void)
 	}
 }
 
-void	Server::choose_server(RequestParser rep, t_server *serv)
+void Server::choose_server(RequestParser rep, t_server *serv)
 {
 	if (rep.get_req_head().hosts.second == 0)
 	{
@@ -129,7 +132,7 @@ void	Server::choose_server(RequestParser rep, t_server *serv)
 
 /* Returns true if the fd is a listening socket */
 
-bool	Server::is_listening_socket(int fd)
+bool Server::is_listening_socket(int fd)
 {
 	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
 	{
@@ -142,12 +145,12 @@ bool	Server::is_listening_socket(int fd)
 /* Gets the address of the server, creates a socket and binds it to
    the chosen port */
 
-int	Server::get_a_socket(int port)
+int Server::get_a_socket(int port)
 {
-	struct addrinfo		hints;
-	struct addrinfo		*result, *rp;
-	stringstream		port_sstream;
-	int					sfd, ret;
+	struct addrinfo hints;
+	struct addrinfo *result, *rp;
+	stringstream port_sstream;
+	int sfd, ret;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -166,9 +169,9 @@ int	Server::get_a_socket(int port)
 		sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if (sfd == -1)
 			continue;
-		int	optval = 1;
+		int optval = 1;
 		if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &optval,
-				sizeof(optval)) == -1)
+					   sizeof(optval)) == -1)
 		{
 			close(sfd);
 			freeaddrinfo(result);
@@ -195,10 +198,10 @@ int	Server::get_a_socket(int port)
    with the chosen ports, by creating an epoll and making the
    listening sockets listen() to entrant connections */
 
-int	Server::set_up_server(void)
+int Server::set_up_server(void)
 {
-	struct epoll_event	event;
-	int					sfd;
+	struct epoll_event event;
+	int sfd;
 
 	signal(SIGINT, Server::sigint_handler);
 	signal(SIGQUIT, Server::sigint_handler);
@@ -208,7 +211,7 @@ int	Server::set_up_server(void)
 		return (this->shutdown_server("epoll_create"));
 	}
 	for (vector<t_server>::iterator it = con_servs.begin();
-			it != con_servs.end(); it++)
+		 it != con_servs.end(); it++)
 	{
 		sfd = this->get_a_socket(it->listen.first);
 		if (sfd == 1)
@@ -234,12 +237,12 @@ int	Server::set_up_server(void)
 /* Handles new entrant connections to the listening sockets.
    We use accept() to accept the new connections then add them to epoll */
 
-int	Server::handle_new_connection(int sfd)
+int Server::handle_new_connection(int sfd)
 {
-	struct epoll_event	event;
-	struct sockaddr		sock_addr;
-	socklen_t			sock_len = 0;
-	int					connfd;
+	struct epoll_event event;
+	struct sockaddr sock_addr;
+	socklen_t sock_len = 0;
+	int connfd;
 
 	connfd = accept(sfd, &sock_addr, &sock_len);
 	if (connfd == -1)
@@ -250,18 +253,32 @@ int	Server::handle_new_connection(int sfd)
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
 		return (this->shutdown_server("epoll_ctl: conn_sock"));
 	cout << "NEW fd = " << connfd << " added to epoll" << endl;
-	RequestHandler	req(connfd);
+	RequestHandler req(connfd);
 	requests.insert(pair<int, RequestHandler>(connfd, req));
 	return (0);
 }
 
+void handle_cgi_request(int fd, RequestParser &rp, const t_server &serv)
+{
+	(void)fd;
+	(void)serv;
+	rp.parseFile(rp.get_request_string());
+	std::cout << "fieldName: " << rp.get_fileInfo().fieldName << std::endl;
+	std::cout << "fileName: " << rp.get_fileInfo().fileName << std::endl;
+	std::cout << "contentType: " << rp.get_fileInfo().contentType << std::endl;
+	std::cout << "fileContent: ";
+	for (size_t i = 0; i < rp.get_fileInfo().fileContent.size(); ++i)
+		std::cout << rp.get_fileInfo().fileContent[i] << std::endl;
+	//TBC
+}
+
 /* Handles the data sent to connection sockets by the client */
 
-int	Server::receive_data(int i)
+int Server::receive_data(int i)
 {
-	struct epoll_event	event;
-	ssize_t				nread;
-	char				buf[BUF_SIZE + 1];
+	struct epoll_event event;
+	ssize_t nread;
+	char buf[BUF_SIZE + 1];
 
 	nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
 	if (nread == -1)
@@ -270,7 +287,8 @@ int	Server::receive_data(int i)
 	}
 	if (nread == 0)
 	{
-		cerr << "CONNEXION CLOSED BY CLIENT" << endl << endl;
+		cerr << "CONNEXION CLOSED BY CLIENT" << endl
+			 << endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
 			return (this->shutdown_server("epoll_ctl"));
 		close(events[i].data.fd);
@@ -282,11 +300,25 @@ int	Server::receive_data(int i)
 	{
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
 		requests.find(events[i].data.fd)->second.check_preparsing_errors();
-		RequestParser	parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
+		RequestParser parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
 		t_server serv;
 		choose_server(parsedRequest, &serv);
-		ResponseHTTP	responseHTTP(parsedRequest, &serv, requests.find(events[i].data.fd)->second.get_error());
-		ResponseSender	resp(events[i].data.fd, responseHTTP.get_response_string());
+
+		// Assume get_uri() extracts the URI from the parsedRequest.
+		string uri = parsedRequest.get_uri();
+		for (size_t j = 0; j < serv.location.size(); ++j)
+		{
+			const t_location &loc = serv.location[j];
+			if (uri.find(loc.uri) == 0 && !loc.cgi_script.empty()) // Changed loc.cgi_pass to loc.cgi_script
+			{
+				// This is a CGI request
+				handle_cgi_request(events[i].data.fd, parsedRequest, serv); // Passed parsedRequest as the second argument
+				break;
+			}
+		}
+
+		ResponseHTTP responseHTTP(parsedRequest, &serv, requests.find(events[i].data.fd)->second.get_error());
+		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string());
 		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
 		memset(&event, 0, sizeof(event));
 		event.events = EPOLLOUT;
@@ -300,9 +332,9 @@ int	Server::receive_data(int i)
 /* Sends data through a connection socket to the client,
    then closes the connection socket (close the connection) */
 
-int	Server::send_data(int i)
+int Server::send_data(int i)
 {
-	//check return value of send
+	// check return value of send
 	if (responses.find(events[i].data.fd)->second.send_response())
 	{
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
@@ -316,9 +348,9 @@ int	Server::send_data(int i)
 
 /* Server Work, open sockets, receive requests, send responses */
 
-int	Server::serve_do_your_stuff(void)
+int Server::serve_do_your_stuff(void)
 {
-	int	event_count;
+	int event_count;
 
 	if (this->set_up_server())
 	{
@@ -329,7 +361,7 @@ int	Server::serve_do_your_stuff(void)
 		this->update_time();
 		event_count = epoll_wait(epoll_fd, events, EPOLL_QUEUE_LEN, 1000);
 		if (event_count == -1 && errno == EINTR)
-			break ;
+			break;
 		if (event_count == -1)
 			return (this->shutdown_server("epoll_wait"));
 		for (int i = 0; i < event_count; i++)

@@ -46,6 +46,6 @@ bool	RequestHandler::add_data(char *str, size_t nread)
 		req.msg_too_long = true;
 		return (false);
 	}
-	//cout << "Request is: " << req.request << endl;
+	// cout << "Request is: " << req.request << endl;
 	return (!this->request_is_over());
 }

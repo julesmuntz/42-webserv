@@ -15,7 +15,7 @@ typedef struct s_location
 	vector<string>	index;
 	string			redir_link;
 	string			file_location;
-	string			cgi_pass;
+	string			cgi_script;
 	bool			directory_listing;
 }		t_location;
 

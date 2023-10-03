@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <map>
+#include <sys/wait.h>
 
 using namespace std;
 
