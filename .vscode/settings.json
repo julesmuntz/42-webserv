@@ -1,6 +1,5 @@
 {
 	"files.associations": {
-		"iosfwd": "cpp",
 		"array": "cpp",
 		"atomic": "cpp",
 		"bit": "cpp",
@@ -20,7 +19,6 @@
 		"cwchar": "cpp",
 		"cwctype": "cpp",
 		"deque": "cpp",
-		"list": "cpp",
 		"map": "cpp",
 		"unordered_map": "cpp",
 		"vector": "cpp",
@@ -41,6 +39,7 @@
 		"utility": "cpp",
 		"fstream": "cpp",
 		"initializer_list": "cpp",
+		"iosfwd": "cpp",
 		"iostream": "cpp",
 		"istream": "cpp",
 		"limits": "cpp",

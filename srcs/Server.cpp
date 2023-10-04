@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/04 01:08:51 by julmuntz         ###   ########.fr       */
+/*   Updated: 2023/10/04 13:57:46 by eflaquet         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -318,7 +318,7 @@ int Server::receive_data(int i)
 		}
 
 		ResponseHTTP responseHTTP(parsedRequest, &serv, requests.find(events[i].data.fd)->second.get_error());
-		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string());
+		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string(), parsedRequest.get_chunked());
 		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
 		memset(&event, 0, sizeof(event));
 		event.events = EPOLLOUT;

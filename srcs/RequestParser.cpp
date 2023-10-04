@@ -228,6 +228,13 @@ void	RequestParser::set_body()
 	}
 }
 
+bool	RequestParser::get_chunked() const
+{
+	if (_rep_head.transfer_encoding == "chunked")
+		return (true);
+	return (false);
+}
+
 void	RequestParser::dechunk_body()
 {
 	string	unchunked_body = "";

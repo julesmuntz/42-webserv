@@ -92,5 +92,5 @@ class RequestParser
 		t_Represent_headers	get_rep_head() const;
 		t_FileInfo			get_fileInfo() const;
 		void parseFile(const std::string &input);
-
+		bool get_chunked() const;
 };
