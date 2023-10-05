@@ -1,4 +1,4 @@
-# include "RequestParser.hpp"
+#include "RequestParser.hpp"
 
 /**********************************************************************************/
 /* -------------------------constructeur destructeur----------------------------- */
@@ -8,10 +8,10 @@ RequestParser::RequestParser() {}
 
 RequestParser::RequestParser(string request) : _request(request)
 {
-	string	line;
-	size_t	pos;
-	string	header;
-	//determine header
+	string line;
+	size_t pos;
+	string header;
+	// determine header
 
 	pos = this->_request.find("\r\n\r\n");
 	if (pos != string::npos)
@@ -34,7 +34,7 @@ RequestParser::RequestParser(string request) : _request(request)
 	RequestParser::set_body();
 }
 
-RequestParser	&RequestParser::operator=(const RequestParser &ref)
+RequestParser &RequestParser::operator=(const RequestParser &ref)
 {
 	this->_method = ref._method;
 	this->_uri = ref._uri;
@@ -52,52 +52,52 @@ RequestParser::~RequestParser() {}
 /* ------------------------------geteur serveur---------------------------------- */
 /**********************************************************************************/
 
-string	RequestParser::get_method() const
+string RequestParser::get_method() const
 {
 	return (this->_method);
 }
 
-string	RequestParser::get_uri() const
+string RequestParser::get_uri() const
 {
 	return (this->_uri);
 }
 
-string	RequestParser::get_version() const
+string RequestParser::get_version() const
 {
 	return (this->_version);
 }
 
-string	RequestParser::get_body() const
+string RequestParser::get_body() const
 {
 	return (this->_body);
 }
 
-t_Request_headers	RequestParser::get_req_head() const
+t_Request_headers RequestParser::get_req_head() const
 {
 	return (this->_req_head);
 }
 
-t_General_headers	RequestParser::get_gen_head() const
+t_General_headers RequestParser::get_gen_head() const
 {
 	return (this->_gen_head);
 }
 
-t_Represent_headers	RequestParser::get_rep_head() const
+t_Represent_headers RequestParser::get_rep_head() const
 {
 	return (this->_rep_head);
 }
 
-t_FileInfo	RequestParser::get_fileInfo() const
+t_FileInfo RequestParser::get_fileInfo() const
 {
-	return (this->_fileInfo);
+	return (this->fileInfo);
 }
 
-std::string	RequestParser::get_request_string() const
+std::string RequestParser::get_request_string() const
 {
 	return (this->_request);
 }
 
-void	RequestParser::set_muv()
+void RequestParser::set_muv()
 {
 	vector<string> list = split(this->_lines[0]);
 	this->_method = list[0];
@@ -105,14 +105,14 @@ void	RequestParser::set_muv()
 	this->_version = list[2];
 }
 
-void	RequestParser::set_request_header()
+void RequestParser::set_request_header()
 {
-	string	lists[5] = {"Host:", "User-Agent:", "Accept:", "Accept-Language:", "Accept-Encoding:"};
-	void (RequestParser::*f[5])(string, string) = {&RequestParser::set_host, &RequestParser::set_user_agent,&RequestParser::set_accept,&RequestParser::set_accept_language,&RequestParser::set_accept_encoding};
+	string lists[5] = {"Host:", "User-Agent:", "Accept:", "Accept-Language:", "Accept-Encoding:"};
+	void (RequestParser::*f[5])(string, string) = {&RequestParser::set_host, &RequestParser::set_user_agent, &RequestParser::set_accept, &RequestParser::set_accept_language, &RequestParser::set_accept_encoding};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
-		for(int y = 0; y < 5; y++)
+		for (int y = 0; y < 5; y++)
 		{
 			if (recherche(this->_lines[i], lists[y]))
 				(this->*f[y])(this->_lines[i], lists[y]);
@@ -121,14 +121,14 @@ void	RequestParser::set_request_header()
 	}
 }
 
-void	RequestParser::set_general_header()
+void RequestParser::set_general_header()
 {
-	string	lists[2] = {"Connection:", "Upgrade-Insecure-Requests:"};
+	string lists[2] = {"Connection:", "Upgrade-Insecure-Requests:"};
 	void (RequestParser::*f[2])(string, string) = {&RequestParser::set_connection, &RequestParser::set_upgrade_insecure_requests};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
-		for(int y = 0; y < 2; y++)
+		for (int y = 0; y < 2; y++)
 		{
 			if (recherche(this->_lines[i], lists[y]))
 				(this->*f[y])(this->_lines[i], lists[y]);
@@ -137,14 +137,14 @@ void	RequestParser::set_general_header()
 	}
 }
 
-void	RequestParser::set_represent_header()
+void RequestParser::set_represent_header()
 {
-	string	lists[3] = {"Content-Type:", "Content-Length:", "Transfer-Encoding:"};
+	string lists[3] = {"Content-Type:", "Content-Length:", "Transfer-Encoding:"};
 	void (RequestParser::*f[3])(string, string) = {&RequestParser::set_content_type, &RequestParser::set_content_length, &RequestParser::set_transfer_encoding};
 	long unsigned int i = 1;
 	while (i < this->_lines.size())
 	{
-		for(int y = 0; y < 3; y++)
+		for (int y = 0; y < 3; y++)
 		{
 			if (recherche(this->_lines[i], lists[y]))
 				(this->*f[y])(this->_lines[i], lists[y]);
@@ -153,7 +153,7 @@ void	RequestParser::set_represent_header()
 	}
 }
 
-void	RequestParser::set_host(string line, string mots)
+void RequestParser::set_host(string line, string mots)
 {
 
 	line = line.erase(0, mots.size() + 1);
@@ -166,54 +166,54 @@ void	RequestParser::set_host(string line, string mots)
 	}
 }
 
-void	RequestParser::set_user_agent(string line, string mots)
+void RequestParser::set_user_agent(string line, string mots)
 {
 	this->_req_head.user_agent = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_accept(string line, string mots)
+void RequestParser::set_accept(string line, string mots)
 {
 	this->_req_head.accept = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_accept_language(string line, string mots)
+void RequestParser::set_accept_language(string line, string mots)
 {
 	this->_req_head.accept_language = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_accept_encoding(string line, string mots)
+void RequestParser::set_accept_encoding(string line, string mots)
 {
 	this->_req_head.accept_encoding = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_connection(string line, string mots)
+void RequestParser::set_connection(string line, string mots)
 {
 	this->_gen_head.connection = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_upgrade_insecure_requests(string line, string mots)
+void RequestParser::set_upgrade_insecure_requests(string line, string mots)
 {
 	this->_gen_head.upgrade_insecure_requests = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_content_type(string line, string mots)
+void RequestParser::set_content_type(string line, string mots)
 {
 	this->_rep_head.content_type = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_content_length(string line, string mots)
+void RequestParser::set_content_length(string line, string mots)
 {
 	this->_rep_head.content_length = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_transfer_encoding(string line, string mots)
+void RequestParser::set_transfer_encoding(string line, string mots)
 {
 	this->_rep_head.transfer_encoding = line.erase(0, mots.size() + 1);
 }
 
-void	RequestParser::set_body()
+void RequestParser::set_body()
 {
-	size_t	pos;
+	size_t pos;
 
 	this->_body = "";
 
@@ -228,13 +228,20 @@ void	RequestParser::set_body()
 	}
 }
 
-void	RequestParser::dechunk_body()
+bool RequestParser::get_chunked() const
 {
-	string	unchunked_body = "";
-	string	hexa_str;
-	size_t	hexa;
-	string	data_str;
-	string	body = this->_body;
+	if (_rep_head.transfer_encoding == "chunked")
+		return (true);
+	return (false);
+}
+
+void RequestParser::dechunk_body()
+{
+	string unchunked_body = "";
+	string hexa_str;
+	size_t hexa;
+	string data_str;
+	string body = this->_body;
 
 	while (true)
 	{
@@ -258,57 +265,71 @@ void	RequestParser::dechunk_body()
 
 void RequestParser::parseFile()
 {
-	size_t boundaryPos = this->_body.find("\r\n");
-	cout << this->_body;
-	string teste = this->_body.substr(0, boundaryPos);
-	if (boundaryPos != std::string::npos)
+	string body = this->_body;
+	while(true)
 	{
-		size_t yy = this->_body.find(teste, boundaryPos);
-		size_t nextBoundaryPos = this->_body.find_last_of("\r\n",  yy);
-		if (nextBoundaryPos != std::string::npos)
+		size_t boundaryPos = body.find("\r\n");
+		// cout << body;
+		string teste = body.substr(0, boundaryPos);
+		// t_FileInfo fileInfo;
+		if (boundaryPos != std::string::npos)
 		{
-			std::string section = this->_body.substr(boundaryPos, nextBoundaryPos - boundaryPos);
-			// cout << section;
-			size_t posDisposition = section.find("Content-Disposition:");
-			size_t posContentType = section.find("Content-Type:");
-			if (posDisposition != std::string::npos && posContentType != std::string::npos)
+			size_t yy = body.find(teste, boundaryPos);
+			size_t nextBoundaryPos = body.find_last_of("\r\n", yy);
+			if (nextBoundaryPos != std::string::npos)
 			{
-				size_t posNameStart = section.find("name=\"", posDisposition);
-				if (posNameStart != std::string::npos)
+				std::string section = body.substr(boundaryPos, nextBoundaryPos - boundaryPos);
+				// cout << section;
+				size_t posDisposition = section.find("Content-Disposition:");
+				size_t posContentType = section.find("Content-Type:");
+				if (posDisposition != std::string::npos && posContentType != std::string::npos)
 				{
-					posNameStart += 6;
-					size_t posNameEnd = section.find("\"", posNameStart);
-					if (posNameEnd != std::string::npos)
+					size_t posNameStart = section.find("name=\"", posDisposition);
+					if (posNameStart != std::string::npos)
 					{
-						_fileInfo.fieldName = section.substr(posNameStart, posNameEnd - posNameStart);
+						posNameStart += 6;
+						size_t posNameEnd = section.find("\"", posNameStart);
+						if (posNameEnd != std::string::npos)
+						{
+							fileInfo.fieldName = section.substr(posNameStart, posNameEnd - posNameStart);
+						}
 					}
-				}
-				size_t posFileNameStart = section.find("filename=\"", posDisposition);
-				if (posFileNameStart != std::string::npos)
-				{
-					posFileNameStart += 10;
-					size_t posFileNameEnd = section.find("\"", posFileNameStart);
-					if (posFileNameEnd != std::string::npos)
+					size_t posFileNameStart = section.find("filename=\"", posDisposition);
+					if (posFileNameStart != std::string::npos)
 					{
-						_fileInfo.fileName = section.substr(posFileNameStart, posFileNameEnd - posFileNameStart);
+						posFileNameStart += 10;
+						size_t posFileNameEnd = section.find("\"", posFileNameStart);
+						if (posFileNameEnd != std::string::npos)
+						{
+							fileInfo.fileName = section.substr(posFileNameStart, posFileNameEnd - posFileNameStart);
+						}
 					}
-				}
-                size_t posContentTypeStart = section.find("Content-Type: ");
-                if (posContentTypeStart != std::string::npos)
-                {
-                    posContentTypeStart += 14;
-                    size_t posContentTypeEnd = section.find("\n", posContentTypeStart);
-                    if (posContentTypeEnd != std::string::npos)
-                    {
-                        _fileInfo.contentType = section.substr(posContentTypeStart, posContentTypeEnd - posContentTypeStart);
-                    }
-                }				size_t posContentStart = section.find("\r\n\r\n");
-				if (posContentStart != std::string::npos)
-				{
-					// cout << "HELOO\n" <<section.substr(posContentStart + 4, section.size() - posContentStart - 6);
-					_fileInfo.fileContent= section.substr(posContentStart + 4, section.size() - posContentStart - 5);
+					size_t posContentTypeStart = section.find("Content-Type: ");
+					if (posContentTypeStart != std::string::npos)
+					{
+						posContentTypeStart += 14;
+						size_t posContentTypeEnd = section.find("\n", posContentTypeStart);
+						if (posContentTypeEnd != std::string::npos)
+						{
+							fileInfo.contentType = section.substr(posContentTypeStart, posContentTypeEnd - posContentTypeStart);
+						}
+					}
+					size_t posContentStart = section.find("\r\n\r\n");
+					if (posContentStart != std::string::npos)
+					{
+						fileInfo.fileContent = section.substr(posContentStart + 4, section.size() - posContentStart - 5);
+						cout << fileInfo.fileContent << endl;
+					}
+					size_t uu = body.find("\r\n", nextBoundaryPos + 2);
+					if (uu != string::npos && uu < body.size() - 2)
+						body.erase(0, nextBoundaryPos);
+					else if (uu >= body.size() - 2)
+						break;
+					// cout << body;
+					// _fileInfo.push_back(fileInfo);
 				}
 			}
-		}
+		}else
+			break;
 	}
 }
