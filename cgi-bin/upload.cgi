@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use lib 'cgi-bin';
 use CGI 'CGI.pm';
 
 my $cgi = CGI->new;
@@ -12,10 +13,10 @@ my $filename = $ENV{'UPLOAD_FILE_NAME'} || die "Filename is not provided";
 my $filetype = $ENV{'UPLOAD_FILE_TYPE'} || die "File type is not provided";
 my $filecontent = $ENV{'UPLOAD_FILE_CONTENT'} || die "File content is not provided";
 
-print "Debug Info:<br>";
-print "UPLOAD_FILE_NAME: $ENV{'UPLOAD_FILE_NAME'}<br>";
-print "UPLOAD_FILE_TYPE: $ENV{'UPLOAD_FILE_TYPE'}<br>";
-print "UPLOAD_FILE_CONTENT: $ENV{'UPLOAD_FILE_CONTENT'}<br>";
+# print "Debug Info:<br>";
+# print "UPLOAD_FILE_NAME: $ENV{'UPLOAD_FILE_NAME'}<br>";
+# print "UPLOAD_FILE_TYPE: $ENV{'UPLOAD_FILE_TYPE'}<br>";
+# print "UPLOAD_FILE_CONTENT: $ENV{'UPLOAD_FILE_CONTENT'}<br>";
 
 
 
