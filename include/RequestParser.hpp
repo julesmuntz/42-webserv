@@ -33,7 +33,7 @@ typedef struct s_FileInfo
 	std::string fieldName;
 	std::string fileName;
 	std::string contentType;
-	std::vector<std::string> fileContent;
+	std::string	fileContent;
 }		t_FileInfo;
 
 class RequestParser
@@ -91,6 +91,6 @@ class RequestParser
 		t_General_headers	get_gen_head() const;
 		t_Represent_headers	get_rep_head() const;
 		t_FileInfo			get_fileInfo() const;
-		void parseFile(const std::string &input);
-		bool get_chunked() const;
+		void parseFile();
+
 };

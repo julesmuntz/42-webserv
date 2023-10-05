@@ -228,13 +228,6 @@ void	RequestParser::set_body()
 	}
 }
 
-bool	RequestParser::get_chunked() const
-{
-	if (_rep_head.transfer_encoding == "chunked")
-		return (true);
-	return (false);
-}
-
 void	RequestParser::dechunk_body()
 {
 	string	unchunked_body = "";
@@ -263,15 +256,19 @@ void	RequestParser::dechunk_body()
 	this->_body = unchunked_body;
 }
 
-void RequestParser::parseFile(const std::string &input)
+void RequestParser::parseFile()
 {
-	size_t boundaryPos = input.find("------WebKitFormBoundary");
+	size_t boundaryPos = this->_body.find("\r\n");
+	cout << this->_body;
+	string teste = this->_body.substr(0, boundaryPos);
 	if (boundaryPos != std::string::npos)
 	{
-		size_t nextBoundaryPos = input.find("------WebKitFormBoundary", boundaryPos + 1);
+		size_t yy = this->_body.find(teste, boundaryPos);
+		size_t nextBoundaryPos = this->_body.find_last_of("\r\n",  yy);
 		if (nextBoundaryPos != std::string::npos)
 		{
-			std::string section = input.substr(boundaryPos, nextBoundaryPos - boundaryPos);
+			std::string section = this->_body.substr(boundaryPos, nextBoundaryPos - boundaryPos);
+			// cout << section;
 			size_t posDisposition = section.find("Content-Disposition:");
 			size_t posContentType = section.find("Content-Type:");
 			if (posDisposition != std::string::npos && posContentType != std::string::npos)
@@ -308,7 +305,8 @@ void RequestParser::parseFile(const std::string &input)
                 }				size_t posContentStart = section.find("\r\n\r\n");
 				if (posContentStart != std::string::npos)
 				{
-					_fileInfo.fileContent.push_back(section.substr(posContentStart + 4));
+					// cout << "HELOO\n" <<section.substr(posContentStart + 4, section.size() - posContentStart - 6);
+					_fileInfo.fileContent= section.substr(posContentStart + 4, section.size() - posContentStart - 5);
 				}
 			}
 		}

@@ -3,7 +3,7 @@
 #include <iterator>
 #include <cstring>
 #include <exception>
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
 #include <map>
 #include <algorithm>

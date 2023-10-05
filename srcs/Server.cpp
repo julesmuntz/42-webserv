@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/04 13:57:46 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/10/05 17:15:14 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,18 +258,84 @@ int Server::handle_new_connection(int sfd)
 	return (0);
 }
 
-void handle_cgi_request(int fd, RequestParser &rp, const t_server &serv)
+void set_environment_variables(RequestParser &rp, string cgi_script, string file_location)
 {
+	clearenv();
+
+	setenv("UPLOAD_FILE_NAME", rp.get_fileInfo().fileName.c_str(), 1);
+	setenv("UPLOAD_FILE_TYPE", rp.get_fileInfo().contentType.c_str(), 1);
+	setenv("UPLOAD_FILE_CONTENT", rp.get_fileInfo().fileContent.c_str() , 1);
+	// setenv("REQUEST_METHOD", rp.get_method().c_str(), 1);
+	setenv("CONTENT_LENGTH", rp.get_rep_head().content_length.c_str(), 1);
+	setenv("CONTENT_TYPE", rp.get_rep_head().content_type.c_str(), 1);
+	// setenv("QUERY_STRING", rp.get_query_string().c_str(), 1);
+	string scriptName = "cgi-bin/" + cgi_script;
+	setenv("SCRIPT_NAME", scriptName.c_str(), 1); // Replace with your script's filename
+
+	// Additional CGI variables
+	setenv("REMOTE_ADDR", "127.0.0.1", 1);			   // Replace with client's IP address
+	setenv("REMOTE_PORT", "80", 1);					   // Replace with client's port
+	setenv("SERVER_SOFTWARE", "YourWebServer/1.0", 1); // Replace with your server's info
+	setenv("SERVER_NAME", "localhost", 1);			   // Replace with your server's hostname
+	setenv("SERVER_PORT", "8042", 1);				   // Replace with your server's port
+	setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);		   // Replace with HTTP version
+	setenv("UPLOAD_DIR", file_location.c_str(), 1);
+
+	// cout << "UPLOAD_FILE_NAME:    " << getenv("UPLOAD_FILE_NAME") << endl;
+	// cout << "UPLOAD_FILE_TYPE:    " << getenv("UPLOAD_FILE_TYPE") << endl;
+	// cout << "UPLOAD_FILE_CONTENT: " << getenv("UPLOAD_FILE_CONTENT") << endl;
+	// // cout << "REQUEST_METHOD:      " << getenv("REQUEST_METHOD") << endl;
+	// cout << "CONTENT_LENGTH:      " << getenv("CONTENT_LENGTH") << endl;
+	// cout << "CONTENT_TYPE:        " << getenv("CONTENT_TYPE") << endl;
+	// // cout << "QUERY_STRING:        " << getenv("QUERY_STRING") << endl;
+	// cout << "SCRIPT_NAME:         " << getenv("SCRIPT_NAME") << endl;
+	// cout << "REMOTE_ADDR:         " << getenv("REMOTE_ADDR") << endl;
+	// cout << "REMOTE_PORT:         " << getenv("REMOTE_PORT") << endl;
+	// cout << "SERVER_SOFTWARE:     " << getenv("SERVER_SOFTWARE") << endl;
+	// cout << "SERVER_NAME:         " << getenv("SERVER_NAME") << endl;
+	// cout << "SERVER_PORT:         " << getenv("SERVER_PORT") << endl;
+	// cout << "SERVER_PROTOCOL:     " << getenv("SERVER_PROTOCOL") << endl;
+	// cout << "UPLOAD_DIR:          " << getenv("UPLOAD_DIR") << endl;
+
+	// Set additional environment variables based on request headers
+	// You can iterate through request headers and set relevant environment variables here
+
+	// Example: setting HTTP_USER_AGENT
+	const std::string userAgentHeader = rp.get_req_head().user_agent;
+	if (!userAgentHeader.empty())
+	{
+		setenv("HTTP_USER_AGENT", userAgentHeader.c_str(), 1);
+	}
+
+	// Set a unique variable to identify the request (e.g., for logging purposes)
+	setenv("UNIQUE_ID", "12345", 1);
+}
+
+void handle_cgi_request(int fd, RequestParser &rp, string cgi_script, string file_location)
+{
+	rp.parseFile();
+	set_environment_variables(rp, cgi_script, file_location);
+	if (rp.get_method() != "POST")
+		return;
+	string cmd = "./cgi-bin/" + cgi_script + " > output.txt 2>&1";
+	std::system(cmd.c_str());
+
 	(void)fd;
-	(void)serv;
-	rp.parseFile(rp.get_request_string());
-	std::cout << "fieldName: " << rp.get_fileInfo().fieldName << std::endl;
-	std::cout << "fileName: " << rp.get_fileInfo().fileName << std::endl;
-	std::cout << "contentType: " << rp.get_fileInfo().contentType << std::endl;
-	std::cout << "fileContent: ";
-	for (size_t i = 0; i < rp.get_fileInfo().fileContent.size(); ++i)
-		std::cout << rp.get_fileInfo().fileContent[i] << std::endl;
-	//TBC
+	// ifstream output_file("output.txt");
+	// if (output_file.is_open())
+	// {
+	// 	string line;
+	// 	while (getline(output_file, line))
+	// 	{
+	// 		send(fd, line.c_str(), line.length(), 0);
+	// 		send(fd, "\n", 1, 0);
+	// 	}
+	// 	output_file.close();
+	// }
+	// else
+	// {
+	// 	cout << "Failed to open output file";
+	// }
 }
 
 /* Handles the data sent to connection sockets by the client */
@@ -312,13 +378,13 @@ int Server::receive_data(int i)
 			if (uri.find(loc.uri) == 0 && !loc.cgi_script.empty()) // Changed loc.cgi_pass to loc.cgi_script
 			{
 				// This is a CGI request
-				handle_cgi_request(events[i].data.fd, parsedRequest, serv); // Passed parsedRequest as the second argument
+				handle_cgi_request(events[i].data.fd, parsedRequest, loc.cgi_script, loc.file_location); // Passed parsedRequest as the second argument
 				break;
 			}
 		}
 
 		ResponseHTTP responseHTTP(parsedRequest, &serv, requests.find(events[i].data.fd)->second.get_error());
-		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string(), parsedRequest.get_chunked());
+		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string());
 		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
 		memset(&event, 0, sizeof(event));
 		event.events = EPOLLOUT;
