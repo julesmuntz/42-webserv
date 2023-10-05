@@ -51,7 +51,7 @@ class RequestParser
 		t_Request_headers	_req_head;
 		t_General_headers	_gen_head;
 		t_Represent_headers	_rep_head;
-		t_FileInfo			_fileInfo;
+		t_FileInfo			fileInfo;
 
 		void	set_muv();
 		void	set_request_header();
@@ -92,5 +92,5 @@ class RequestParser
 		t_Represent_headers	get_rep_head() const;
 		t_FileInfo			get_fileInfo() const;
 		void parseFile();
-
+		bool get_chunked() const;
 };
