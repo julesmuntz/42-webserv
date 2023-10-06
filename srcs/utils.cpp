@@ -100,3 +100,17 @@ bool	cmp(const t_location a, const t_location b)
 {
 	return (a.uri.size() < b.uri.size());
 }
+
+std::string uint32_to_string(uint32_t value)
+{
+	std::ostringstream oss;
+	oss << value;
+	return oss.str();
+}
+
+std::string max_chars(const char *input, size_t cap)
+{
+	std::string result(cap, '\0');
+	strncpy(&result[0], input, cap);
+	return result;
+}

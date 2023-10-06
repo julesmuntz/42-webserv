@@ -87,9 +87,9 @@ t_Represent_headers RequestParser::get_rep_head() const
 	return (this->_rep_head);
 }
 
-t_FileInfo RequestParser::get_fileInfo() const
+const vector<t_FileInfo> &RequestParser::get_fileInfo() const
 {
-	return (this->fileInfo);
+	return (this->_fileInfo);
 }
 
 std::string RequestParser::get_request_string() const
@@ -266,70 +266,40 @@ void RequestParser::dechunk_body()
 void RequestParser::parseFile()
 {
 	string body = this->_body;
-	while(true)
+	size_t boundaryPos = body.find("\r\n");
+	if (boundaryPos == std::string::npos)
+		return;
+	string boundary = body.substr(0, boundaryPos);
+	boundaryPos += 2;
+	while (true)
 	{
-		size_t boundaryPos = body.find("\r\n");
-		// cout << body;
-		string teste = body.substr(0, boundaryPos);
-		// t_FileInfo fileInfo;
-		if (boundaryPos != std::string::npos)
-		{
-			size_t yy = body.find(teste, boundaryPos);
-			size_t nextBoundaryPos = body.find_last_of("\r\n", yy);
-			if (nextBoundaryPos != std::string::npos)
-			{
-				std::string section = body.substr(boundaryPos, nextBoundaryPos - boundaryPos);
-				// cout << section;
-				size_t posDisposition = section.find("Content-Disposition:");
-				size_t posContentType = section.find("Content-Type:");
-				if (posDisposition != std::string::npos && posContentType != std::string::npos)
-				{
-					size_t posNameStart = section.find("name=\"", posDisposition);
-					if (posNameStart != std::string::npos)
-					{
-						posNameStart += 6;
-						size_t posNameEnd = section.find("\"", posNameStart);
-						if (posNameEnd != std::string::npos)
-						{
-							fileInfo.fieldName = section.substr(posNameStart, posNameEnd - posNameStart);
-						}
-					}
-					size_t posFileNameStart = section.find("filename=\"", posDisposition);
-					if (posFileNameStart != std::string::npos)
-					{
-						posFileNameStart += 10;
-						size_t posFileNameEnd = section.find("\"", posFileNameStart);
-						if (posFileNameEnd != std::string::npos)
-						{
-							fileInfo.fileName = section.substr(posFileNameStart, posFileNameEnd - posFileNameStart);
-						}
-					}
-					size_t posContentTypeStart = section.find("Content-Type: ");
-					if (posContentTypeStart != std::string::npos)
-					{
-						posContentTypeStart += 14;
-						size_t posContentTypeEnd = section.find("\n", posContentTypeStart);
-						if (posContentTypeEnd != std::string::npos)
-						{
-							fileInfo.contentType = section.substr(posContentTypeStart, posContentTypeEnd - posContentTypeStart);
-						}
-					}
-					size_t posContentStart = section.find("\r\n\r\n");
-					if (posContentStart != std::string::npos)
-					{
-						fileInfo.fileContent = section.substr(posContentStart + 4, section.size() - posContentStart - 5);
-						cout << fileInfo.fileContent << endl;
-					}
-					size_t uu = body.find("\r\n", nextBoundaryPos + 2);
-					if (uu != string::npos && uu < body.size() - 2)
-						body.erase(0, nextBoundaryPos);
-					else if (uu >= body.size() - 2)
-						break;
-					// cout << body;
-					// _fileInfo.push_back(fileInfo);
-				}
-			}
-		}else
+		size_t nextBoundaryPos = body.find(boundary, boundaryPos + boundary.length());
+		if (nextBoundaryPos == std::string::npos)
 			break;
+		std::string section = body.substr(boundaryPos, nextBoundaryPos - boundaryPos);
+		size_t posDisposition = section.find("Content-Disposition:");
+		size_t posFileType = section.find("Content-Type:");
+		if (posDisposition != std::string::npos && posFileType != std::string::npos)
+		{
+			t_FileInfo fileInfo;
+			size_t posNameStart = section.find("name=\"", posDisposition) + 6;
+			size_t posNameEnd = section.find("\"", posNameStart);
+			if (posNameStart != std::string::npos && posNameEnd != std::string::npos)
+				fileInfo.fieldName = section.substr(posNameStart, posNameEnd - posNameStart);
+			size_t posFileNameStart = section.find("filename=\"", posDisposition) + 10;
+			size_t posFileNameEnd = section.find("\"", posFileNameStart);
+			if (posFileNameStart != std::string::npos && posFileNameEnd != std::string::npos)
+				fileInfo.fileName = section.substr(posFileNameStart, posFileNameEnd - posFileNameStart);
+			size_t posFileTypeStart = section.find("Content-Type: ", posFileType) + 14;
+			size_t posFileTypeEnd = section.find("\r\n", posFileTypeStart);
+			if (posFileTypeStart != std::string::npos && posFileTypeEnd != std::string::npos)
+				fileInfo.fileType = section.substr(posFileTypeStart, posFileTypeEnd - posFileTypeStart);
+			size_t posContentStart = section.find("\r\n\r\n", posFileTypeEnd) + 4;
+			size_t posContentEnd = section.rfind("\r\n", nextBoundaryPos - boundaryPos);
+			if (posContentStart != std::string::npos && posContentEnd != std::string::npos)
+				fileInfo.fileContent = section.substr(posContentStart, posContentEnd - posContentStart);
+			this->_fileInfo.push_back(fileInfo);
+		}
+		boundaryPos = nextBoundaryPos + boundary.length() + 2;
 	}
 }
