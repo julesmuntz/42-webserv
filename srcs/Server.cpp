@@ -6,7 +6,7 @@
 /*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/06 18:52:01 by julmuntz         ###   ########.fr       */
+/*   Updated: 2023/10/07 15:50:56 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,13 +258,13 @@ int Server::handle_new_connection(int sfd)
 	return (0);
 }
 
-static void set_environment_variables(RequestParser &rp, string cgi_script, string file_location, vector<t_FileInfo>::const_iterator it)
+ void set_environment_variables(RequestParser &rp, string cgi_script, string file_location, vector<t_FileInfo>::const_iterator it)
 {
 	clearenv();
 
 	setenv("UPLOAD_FILE_NAME", it->fileName.c_str(), 1);
 	setenv("UPLOAD_FILE_TYPE", it->fileType.c_str(), 1);
-	setenv("UPLOAD_FILE_CONTENT", it->fileContent.c_str(), 1);
+	setenv("UPLOAD_FILE_PATH", "cgi-bin/.tmp", 1);
 	setenv("REQUEST_METHOD", rp.get_method().c_str(), 1);
 	setenv("CONTENT_LENGTH", rp.get_rep_head().content_length.c_str(), 1);
 	setenv("CONTENT_TYPE", rp.get_rep_head().content_type.c_str(), 1);
@@ -279,21 +279,21 @@ static void set_environment_variables(RequestParser &rp, string cgi_script, stri
 	setenv("UPLOAD_DIR", file_location.c_str(), 1);
 	setenv("HTTP_USER_AGENT", rp.get_req_head().user_agent.c_str(), 1);
 
-	cout << "UPLOAD_FILE_NAME:    " << getenv("UPLOAD_FILE_NAME") << endl;
-	cout << "UPLOAD_FILE_TYPE:    " << getenv("UPLOAD_FILE_TYPE") << endl;
-	cout << "UPLOAD_FILE_CONTENT: " << max_chars(getenv("UPLOAD_FILE_CONTENT"), 350) << endl;
-	cout << "REQUEST_METHOD:      " << getenv("REQUEST_METHOD") << endl;
-	cout << "CONTENT_LENGTH:      " << getenv("CONTENT_LENGTH") << endl;
-	cout << "CONTENT_TYPE:        " << getenv("CONTENT_TYPE") << endl;
-	cout << "SCRIPT_NAME:         " << getenv("SCRIPT_NAME") << endl;
-	cout << "REMOTE_ADDR:         " << getenv("REMOTE_ADDR") << endl;
-	cout << "REMOTE_PORT:         " << getenv("REMOTE_PORT") << endl;
-	cout << "SERVER_SOFTWARE:     " << getenv("SERVER_SOFTWARE") << endl;
-	cout << "SERVER_NAME:         " << getenv("SERVER_NAME") << endl;
-	cout << "SERVER_PORT:         " << getenv("SERVER_PORT") << endl;
-	cout << "SERVER_PROTOCOL:     " << getenv("SERVER_PROTOCOL") << endl;
-	cout << "UPLOAD_DIR:          " << getenv("UPLOAD_DIR") << endl;
-	cout << "HTTP_USER_AGENT:     " << getenv("HTTP_USER_AGENT") << endl;
+	// cout << "UPLOAD_FILE_NAME:    " << getenv("UPLOAD_FILE_NAME") << endl;
+	// cout << "UPLOAD_FILE_TYPE:    " << getenv("UPLOAD_FILE_TYPE") << endl;
+	// cout << "UPLOAD_FILE_CONTENT: " << max_chars(getenv("UPLOAD_FILE_CONTENT"), 350) << endl;
+	// cout << "REQUEST_METHOD:      " << getenv("REQUEST_METHOD") << endl;
+	// cout << "CONTENT_LENGTH:      " << getenv("CONTENT_LENGTH") << endl;
+	// cout << "CONTENT_TYPE:        " << getenv("CONTENT_TYPE") << endl;
+	// cout << "SCRIPT_NAME:         " << getenv("SCRIPT_NAME") << endl;
+	// cout << "REMOTE_ADDR:         " << getenv("REMOTE_ADDR") << endl;
+	// cout << "REMOTE_PORT:         " << getenv("REMOTE_PORT") << endl;
+	// cout << "SERVER_SOFTWARE:     " << getenv("SERVER_SOFTWARE") << endl;
+	// cout << "SERVER_NAME:         " << getenv("SERVER_NAME") << endl;
+	// cout << "SERVER_PORT:         " << getenv("SERVER_PORT") << endl;
+	// cout << "SERVER_PROTOCOL:     " << getenv("SERVER_PROTOCOL") << endl;
+	// cout << "UPLOAD_DIR:          " << getenv("UPLOAD_DIR") << endl;
+	// cout << "HTTP_USER_AGENT:     " << getenv("HTTP_USER_AGENT") << endl;
 }
 
 void handle_cgi_request(string cgi_script)
@@ -320,21 +320,8 @@ void handle_cgi_request(string cgi_script)
 			perror("dup2");
 			exit(EXIT_FAILURE);
 		}
-		string scriptPath = "cgi-bin/" + cgi_script;
-		int outfile = open("output.txt", O_WRONLY | O_CREAT, 0644);
-		if (outfile == -1)
-		{
-			perror("open");
-			exit(EXIT_FAILURE);
-		}
-		if (dup2(outfile, STDOUT_FILENO) == -1)
-		{
-			perror("dup2");
-			exit(EXIT_FAILURE);
-		}
-		close(outfile);
-		execl(scriptPath.c_str(), cgi_script.c_str(), (char *)NULL);
-		perror("execl");
+		string cmd = "./cgi-bin/" + cgi_script + " > output.txt 2>&1";
+		std::system(cmd.c_str());
 		exit(EXIT_FAILURE);
 	}
 	else
@@ -385,8 +372,14 @@ int Server::receive_data(int i)
 				parsedRequest.parseFile();
 				for (vector<t_FileInfo>::const_iterator it = parsedRequest.get_fileInfo().begin(); it != parsedRequest.get_fileInfo().end(); it++)
 				{
+					std::ofstream outfile("cgi-bin/.tmp");
+					if (!outfile.is_open())
+						break;
+					outfile << it->fileContent;
+					outfile.close();
 					set_environment_variables(parsedRequest, loc.cgi_script, loc.file_location, it);
 					handle_cgi_request(loc.cgi_script);
+					remove("cgi-bin/.tmp");
 				}
 				break;
 			}
