@@ -44,7 +44,6 @@ class ResponseHTTP
 		~ResponseHTTP();
 		string	get_response_string(void) const;
 		//creation des error
-		void	generate_400_error();
 		//creation des methods post get delete
 		//void	get_methods();
 		void	post_methods();

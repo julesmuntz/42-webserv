@@ -254,14 +254,14 @@ void	ResponseHTTP::create_post_response()
 	{
 		_error = error_405;
 		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
-		return ;
+		return (generate_response_string());
 	}
 	if (!_location_config.redir_link.empty())
 	{
 		_error = error_301;
 		_html = "";
 		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
-		return ;
+		return (generate_response_string());
 	}
 	string root(".");
 	root += _location_config.root;
@@ -303,7 +303,7 @@ void	ResponseHTTP::create_post_response()
 			{
 				create_dir_page(_request.get_uri(), files_in_dir);
 				std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
-				return ;
+				return (generate_response_string());
 			}
 			for (vector<string>::iterator it = _location_config.index.begin(); it != _location_config.index.end(); it++)
 			{
@@ -327,13 +327,14 @@ void	ResponseHTTP::create_post_response()
 					buffer << file.rdbuf();
 					_html = buffer.str();
 					std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
-					return ;
+					return (generate_response_string());
 				}
 			}
 		}
 	}
 	_error = error_404;
 	std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
+	return (generate_response_string());
 }
 
 /**********************************************************************************/
@@ -351,14 +352,10 @@ void ResponseHTTP::construct_response()
 		// [GET] // a map of functions ?
 		// for now, dummy response
 	if (_request.get_method() == "GET")
-	{
-		create_get_response();
-	}
+		return(create_get_response());
 	if (_request.get_method() == "POST")
-	{
-		create_post_response();
-	}
-	generate_response_string();
+		return (create_post_response());
+
 }
 
 string ResponseHTTP::get_response_string(void) const

@@ -73,6 +73,7 @@ void	ResponseHTTP::handle_dir(string &uri)
 			break ;
 		}
 	}
+
 }
 
 void	ResponseHTTP::create_get_response()
@@ -85,24 +86,19 @@ void	ResponseHTTP::create_get_response()
 	select_location();
 	//allow methods
 	if (!method_allowed("GET"))
-		return ;
+		return (generate_response_string());
 	//redir_link
 	if (redir_is_set())
-		return ;
+		return (generate_response_string());
 	//directory
 	root += _location_config.root + '/';
 	size_t	pos = _request.get_uri().find(_location_config.uri);
 	if (pos == 0)
-	{
 		uri = _request.get_uri().replace(0, _location_config.uri.size(), root);
-	}
 	if (stat(uri.c_str(), &stats) == 0)
 	{
 		if (S_ISDIR(stats.st_mode))
-		{
-			// is a directory and work on it
 			handle_dir(uri);
-		}
 		// check if uri regular file
 		// check size of file
 		if (stat(uri.c_str(), &stats) == 0)
@@ -125,7 +121,7 @@ void	ResponseHTTP::create_get_response()
 					buffer << file.rdbuf();
 					_html = buffer.str();
 					std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
-					return ;
+					return (generate_response_string());
 				}
 			}
 		}
@@ -135,4 +131,5 @@ void	ResponseHTTP::create_get_response()
 	_error = error_404;
 	std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 	//cgi
+	return (generate_response_string());
 }
