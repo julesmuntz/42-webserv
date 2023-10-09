@@ -6,11 +6,25 @@ use lib 'cgi-bin';
 use CGI 'CGI.pm';
 
 my $cgi = CGI->new;
-my $upload_dir = $ENV{'UPLOAD_DIR'} || "/home/jules/42/42-webserv/html/static"; 
+my $buffer;
+my $pair;
+my $value;
+my %in;
 
-my $filename = $ENV{'UPLOAD_FILE_NAME'} || die "Filename is not provided";
-my $filetype = $ENV{'UPLOAD_FILE_TYPE'} || die "File type is not provided";
-my $filepath = $ENV{'UPLOAD_FILE_PATH'} || die "File path is not provided";
+if (length ($ENV{'QUERY_STRING'}) > 0){
+    $buffer = $ENV{'QUERY_STRING'};
+    my @pairs = split(/&/, $buffer);
+    foreach $pair (@pairs){
+        my ($name, $value) = split(/=/, $pair);
+        $value =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+        $in{$name} = $value;
+    }
+}
+
+my $upload_dir = $in{'dir'} || "/home/jules/42/42-webserv/html/static";
+
+my $filename = $in{'name'} || die "Filename is not provided";
+my $filepath = $in{'path'} || die "File path is not provided";
 
 print $cgi->start_html('File Upload');
 

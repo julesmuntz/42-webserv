@@ -273,32 +273,56 @@ void RequestParser::parseFile()
 	boundaryPos += 2;
 	while (true)
 	{
-		size_t nextBoundaryPos = body.find(boundary, boundaryPos + boundary.length());
+		size_t nextBoundaryPos = body.find(boundary, boundaryPos);
 		if (nextBoundaryPos == std::string::npos)
 			break;
 		std::string section = body.substr(boundaryPos, nextBoundaryPos - boundaryPos);
+		// cout << section << endl;
 		size_t posDisposition = section.find("Content-Disposition:");
 		size_t posFileType = section.find("Content-Type:");
-		if (posDisposition != std::string::npos && posFileType != std::string::npos)
+		if ((posDisposition != std::string::npos && posFileType != std::string::npos) || (posDisposition != std::string::npos))
 		{
 			t_FileInfo fileInfo;
+
 			size_t posNameStart = section.find("name=\"", posDisposition) + 6;
 			size_t posNameEnd = section.find("\"", posNameStart);
 			if (posNameStart != std::string::npos && posNameEnd != std::string::npos)
 				fileInfo.fieldName = section.substr(posNameStart, posNameEnd - posNameStart);
-			size_t posFileNameStart = section.find("filename=\"", posDisposition) + 10;
-			size_t posFileNameEnd = section.find("\"", posFileNameStart);
-			if (posFileNameStart != std::string::npos && posFileNameEnd != std::string::npos)
-				fileInfo.fileName = section.substr(posFileNameStart, posFileNameEnd - posFileNameStart);
-			size_t posFileTypeStart = section.find("Content-Type: ", posFileType) + 14;
-			size_t posFileTypeEnd = section.find("\r\n", posFileTypeStart);
-			if (posFileTypeStart != std::string::npos && posFileTypeEnd != std::string::npos)
-				fileInfo.fileType = section.substr(posFileTypeStart, posFileTypeEnd - posFileTypeStart);
-			size_t posContentStart = section.find("\r\n\r\n", posFileTypeEnd) + 4;
-			size_t posContentEnd = section.rfind("\r\n", nextBoundaryPos - boundaryPos);
-			if (posContentStart != std::string::npos && posContentEnd != std::string::npos)
-				fileInfo.fileContent = section.substr(posContentStart, posContentEnd - posContentStart);
+
+			if (section[posNameEnd + 1] == ';')
+			{
+				size_t posFileNameStart = section.find("filename=\"", posDisposition) + 10;
+				size_t posFileNameEnd = section.find("\"", posFileNameStart);
+				if (posFileNameStart != std::string::npos && posFileNameEnd != std::string::npos)
+					fileInfo.fileName = section.substr(posFileNameStart, posFileNameEnd - posFileNameStart);
+			}else
+				fileInfo.fileName = fileInfo.fieldName;
+
+			if (posFileType != std::string::npos)
+			{
+
+				size_t posFileTypeStart = section.find("Content-Type: ", posFileType) + 14;
+				size_t posFileTypeEnd = section.find("\r\n", posFileTypeStart);
+				if (posFileTypeStart != std::string::npos && posFileTypeEnd != std::string::npos)
+					fileInfo.fileType = section.substr(posFileTypeStart, posFileTypeEnd - posFileTypeStart);
+
+				size_t posContentStart = section.find("\r\n\r\n", posFileTypeEnd) + 4;
+				size_t posContentEnd = section.rfind("\r\n", nextBoundaryPos - boundaryPos);
+				if (posContentStart != std::string::npos && posContentEnd != std::string::npos)
+					fileInfo.fileContent = section.substr(posContentStart, posContentEnd - posContentStart);
+
+			}
+			else
+			{
+
+				size_t posContentStart = section.find("\r\n\r\n", posDisposition) + 4;
+				size_t posContentEnd = section.rfind("\r\n", nextBoundaryPos - boundaryPos);
+				if (posContentStart != std::string::npos && posContentEnd != std::string::npos)
+					fileInfo.fileContent = section.substr(posContentStart, posContentEnd - posContentStart);
+
+			}
 			this->_fileInfo.push_back(fileInfo);
+			cout << "name  "<< section[posNameEnd + 1]<< endl;
 		}
 		boundaryPos = nextBoundaryPos + boundary.length() + 2;
 	}
