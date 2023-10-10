@@ -114,3 +114,15 @@ std::string max_chars(const char *input, size_t cap)
 	strncpy(&result[0], input, cap);
 	return result;
 }
+
+string	get_path(string uri, t_location &loc)
+{
+	string root("./");
+	root += loc.root;
+	root += '/';
+	string path;
+	size_t pos = uri.find(loc.uri);
+	if (pos == 0)
+		path = uri.replace(0, loc.uri.size(), root);
+	return (path);
+}

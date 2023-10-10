@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: eflaquet <eflaquet@student.42.fr>          +#+  +:+       +#+        */
+/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/09 15:21:14 by eflaquet         ###   ########.fr       */
+/*   Updated: 2023/10/10 16:52:17 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -268,19 +268,19 @@ int Server::handle_new_connection(int sfd)
 	// setenv("UPLOAD_FILE_NAME", it->fileName.c_str(), 1);
 	// setenv("UPLOAD_FILE_TYPE", it->fileType.c_str(), 1);
 	// setenv("UPLOAD_FILE_PATH", "cgi-bin/.tmp", 1);
-	// setenv("REQUEST_METHOD", rp.get_method().c_str(), 1);
-	// setenv("CONTENT_LENGTH", rp.get_rep_head().content_length.c_str(), 1);
-	// setenv("CONTENT_TYPE", rp.get_rep_head().content_type.c_str(), 1);
-	// string scriptName = "cgi-bin/" + cgi_script;
-	// setenv("SCRIPT_NAME", scriptName.c_str(), 1);
-	// setenv("REMOTE_ADDR", "127.0.0.1", 1);
-	// setenv("REMOTE_PORT", "80", 1);
-	// setenv("SERVER_SOFTWARE", "WebServ/1.42", 1);
-	// setenv("SERVER_NAME", rp.get_req_head().hosts.first.c_str(), 1);
-	// setenv("SERVER_PORT", uint32_to_string(rp.get_req_head().hosts.second).c_str(), 1);
-	// setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
-	// setenv("UPLOAD_DIR", file_location.c_str(), 1);
-	// setenv("HTTP_USER_AGENT", rp.get_req_head().user_agent.c_str(), 1);
+	setenv("REQUEST_METHOD", rp.get_method().c_str(), 1);
+	setenv("CONTENT_LENGTH", rp.get_rep_head().content_length.c_str(), 1);
+	setenv("CONTENT_TYPE", rp.get_rep_head().content_type.c_str(), 1);
+	string scriptName = "cgi-bin/" + cgi_script;
+	setenv("SCRIPT_NAME", scriptName.c_str(), 1);
+	setenv("REMOTE_ADDR", "127.0.0.1", 1);
+	setenv("REMOTE_PORT", "80", 1);
+	setenv("SERVER_SOFTWARE", "WebServ/1.42", 1);
+	setenv("SERVER_NAME", rp.get_req_head().hosts.first.c_str(), 1);
+	setenv("SERVER_PORT", uint32_to_string(rp.get_req_head().hosts.second).c_str(), 1);
+	setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+	setenv("UPLOAD_DIR", file_location.c_str(), 1);
+	setenv("HTTP_USER_AGENT", rp.get_req_head().user_agent.c_str(), 1);
 
 	// cout << "UPLOAD_FILE_NAME:    " << getenv("UPLOAD_FILE_NAME") << endl;
 	// cout << "UPLOAD_FILE_TYPE:    " << getenv("UPLOAD_FILE_TYPE") << endl;
@@ -380,7 +380,8 @@ int Server::receive_data(int i)
 						break;
 					outfile << it->fileContent;
 					outfile.close();
-					set_environment_variables(parsedRequest, loc.cgi_script, loc.file_location, it);
+					string file_location = loc.root + "/" + loc.file_location;
+					set_environment_variables(parsedRequest, loc.cgi_script, file_location, it);
 					handle_cgi_request(loc.cgi_script);
 					remove("cgi-bin/.tmp");
 				}

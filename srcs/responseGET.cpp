@@ -79,7 +79,7 @@ void	ResponseHTTP::handle_dir(string &uri)
 void	ResponseHTTP::create_get_response()
 {
 	struct stat	stats;
-	string		root(".");
+	string		root("./");
 	string		uri;
 
 	_error = no_error_200;
@@ -94,7 +94,7 @@ void	ResponseHTTP::create_get_response()
 	root += _location_config.root + '/';
 	size_t	pos = _request.get_uri().find(_location_config.uri);
 	if (pos == 0)
-		uri = _request.get_uri().replace(0, _location_config.uri.size(), root);
+		uri = get_path(_request.get_uri(), _location_config);
 	if (stat(uri.c_str(), &stats) == 0)
 	{
 		if (S_ISDIR(stats.st_mode))

@@ -23,3 +23,4 @@ bool			isWrite(std::string &path);
 bool			cmp(const t_location a, const t_location b);
 std::string		uint32_to_string(uint32_t value);
 std::string		max_chars(const char *input, size_t cap);
+string			get_path(string uri, t_location &loc);

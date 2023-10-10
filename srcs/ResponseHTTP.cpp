@@ -263,13 +263,7 @@ void	ResponseHTTP::create_post_response()
 		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
 		return (generate_response_string());
 	}
-	string root(".");
-	root += _location_config.root;
-	root += '/';
-	string uri;
-	size_t pos = _request.get_uri().find(_location_config.uri);
-	if (pos == 0)
-		uri = _request.get_uri().replace(0, _location_config.uri.size(), root);
+	string uri = get_path(_request.get_uri(), _location_config);
 	struct stat stats;
 	if (stat(uri.c_str(), &stats) == 0)
 	{
@@ -365,9 +359,8 @@ string ResponseHTTP::get_response_string(void) const
 
 void ResponseHTTP::delete_methods()
 {
-	string path = _request.get_uri();
 	select_location();
-	path.replace(0, _location_config.uri.size(), _location_config.root);
+	string path = get_path(_request.get_uri(), _location_config);;
 
 	if (!isFile(path) && !isDir(path))
 		return (generate_4000_error(error_400));

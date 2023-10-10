@@ -295,7 +295,8 @@ void RequestParser::parseFile()
 				size_t posFileNameEnd = section.find("\"", posFileNameStart);
 				if (posFileNameStart != std::string::npos && posFileNameEnd != std::string::npos)
 					fileInfo.fileName = section.substr(posFileNameStart, posFileNameEnd - posFileNameStart);
-			}else
+			}
+			else
 				fileInfo.fileName = fileInfo.fieldName;
 
 			if (posFileType != std::string::npos)
@@ -322,7 +323,6 @@ void RequestParser::parseFile()
 
 			}
 			this->_fileInfo.push_back(fileInfo);
-			cout << "name  "<< section[posNameEnd + 1]<< endl;
 		}
 		boundaryPos = nextBoundaryPos + boundary.length() + 2;
 	}
