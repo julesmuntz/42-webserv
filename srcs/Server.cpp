@@ -299,20 +299,20 @@ int Server::handle_new_connection(int sfd)
 	// cout << "HTTP_USER_AGENT:     " << getenv("HTTP_USER_AGENT") << endl;
 }
 
-void handle_cgi_request(string cgi_script)
+int	Server::handle_cgi_request(string cgi_script)
 {
 	int pipefd[2];
 	if (pipe(pipefd) == -1)
 	{
 		perror("pipe");
-		exit(EXIT_FAILURE);
+		return (1);
 	}
 
 	pid_t pid = fork();
 	if (pid == -1)
 	{
 		perror("fork");
-		exit(EXIT_FAILURE);
+		return (1);
 	}
 
 	if (pid == 0)
@@ -321,22 +321,25 @@ void handle_cgi_request(string cgi_script)
 		if (dup2(pipefd[0], STDIN_FILENO) == -1)
 		{
 			perror("dup2");
-			exit(EXIT_FAILURE);
+			return (1);
 		}
 		string cmd = "./cgi-bin/" + cgi_script + " > output.txt 2>&1";
 		std::system(cmd.c_str());
-		exit(EXIT_FAILURE);
+		return (1);
 	}
 	else
 	{
 		close(pipefd[0]);
 		close(pipefd[1]);
 		wait(NULL);
+		return (0);
 	}
+	return (0);
 }
 
 /* Handles the data sent to connection sockets by the client */
 
+//return error server instead of shutting down the server, or before shutting down the server
 int Server::receive_data(int i)
 {
 	struct epoll_event event;
@@ -382,7 +385,8 @@ int Server::receive_data(int i)
 					outfile.close();
 					string file_location = loc.root + "/" + loc.file_location;
 					set_environment_variables(parsedRequest, loc.cgi_script, file_location, it);
-					handle_cgi_request(loc.cgi_script);
+					if (handle_cgi_request(loc.cgi_script))
+						return (this->shutdown_server(), 1);
 					remove("cgi-bin/.tmp");
 				}
 				break;
