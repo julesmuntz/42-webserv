@@ -203,14 +203,17 @@ bool	ResponseHTTP::check_errors()
 {
 	if (_error)
 		return (true);
-	if (_request.get_req_head().hosts.first.empty())
+	if (_request.get_method() != "GET"
+			&& _request.get_method() != "DELETE" && _request.get_method() != "POST")
+		_error = error_405;
+	else if (_request.get_req_head().hosts.first.empty())
 		_error = error_400;
-	if (_request.get_version() != "HTTP/1.1")
+	else if (_request.get_version() != "HTTP/1.1")
 		_error = error_505;
-	if (!_request.get_rep_head().transfer_encoding.empty()
+	else if (!_request.get_rep_head().transfer_encoding.empty()
 			&& _request.get_rep_head().transfer_encoding != "chunked")
 		_error = error_400;
-	if (_request.get_body().size() > _server_config->client_body_size)
+	else if (_request.get_body().size() > _server_config->client_body_size)
 		_error = error_431;
 	if (_error)
 		return (true);
@@ -337,7 +340,6 @@ void	ResponseHTTP::create_post_response()
 
 void ResponseHTTP::construct_response()
 {
-	this->_response_string = DUMMY_RESPONSE;
 	if (check_errors())
 		return (generate_4000_error(_error));
 	if (_request.get_method() == "DELETE")
@@ -349,7 +351,8 @@ void ResponseHTTP::construct_response()
 		return(create_get_response());
 	if (_request.get_method() == "POST")
 		return (create_post_response());
-
+	else
+		return (generate_4000_error(_error));
 }
 
 string ResponseHTTP::get_response_string(void) const
