@@ -10,7 +10,6 @@ bool	ResponseHTTP::method_allowed(string method)
 	if (_location_config.allow_methods.find(method) == _location_config.allow_methods.end())
 	{
 		_error = error_405;
-		std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 		return (false);
 	}
 	return (true);
@@ -22,7 +21,6 @@ bool	ResponseHTTP::redir_is_set(void)
 	{
 		_error = error_301;
 		_html = "";
-		std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 		return (true);
 	}
 	return (false);

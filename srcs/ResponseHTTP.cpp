@@ -253,19 +253,11 @@ void	ResponseHTTP::create_post_response()
 {
 	_error = no_error_200;
 	select_location();
-	if (_location_config.allow_methods.find("POST") == _location_config.allow_methods.end())
-	{
-		_error = error_405;
-		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
+	if (!method_allowed("POST"))
 		return (generate_response_string());
-	}
-	if (!_location_config.redir_link.empty())
-	{
-		_error = error_301;
-		_html = "";
-		std::cout << "\e[32m" << _error << "\e[0m POST" << std::endl;//temp
+	if (redir_is_set())
 		return (generate_response_string());
-	}
+
 	string uri = get_path(_request.get_uri(), _location_config);
 	struct stat stats;
 	if (stat(uri.c_str(), &stats) == 0)
