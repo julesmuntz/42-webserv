@@ -112,7 +112,7 @@ bool	RequestEndDeterminator::check_no_body_end(void)
 
 bool	RequestEndDeterminator::check_content_end(void)
 {
-	std::cout << req.request << std::endl;
+	// std::cout << req.request << std::endl;
 	if (msg_len - req.header_size >= req.content_length)
 		return (true);
 	return (false);

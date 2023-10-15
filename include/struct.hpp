@@ -26,4 +26,5 @@ typedef struct s_server
 	uint32_t						client_body_size;
 	map<uint32_t, string>			error_pages;
 	vector<t_location>				location;
+	bool							cgi;
 }		t_server;

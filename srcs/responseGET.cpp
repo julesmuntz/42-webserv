@@ -58,7 +58,6 @@ void	ResponseHTTP::handle_dir(string &uri)
 	if (_location_config.directory_listing)
 	{
 		create_dir_page(_request.get_uri(), files_in_dir);
-		std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 		return ;
 	}
 	// check index
@@ -118,7 +117,6 @@ void	ResponseHTTP::create_get_response()
 					stringstream buffer;
 					buffer << file.rdbuf();
 					_html = buffer.str();
-					std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 					return (generate_response_string());
 				}
 			}
@@ -127,7 +125,6 @@ void	ResponseHTTP::create_get_response()
 		// if seems ok, open it and put it in _html and put 200 OK
 	}
 	_error = error_404;
-	std::cout << "\e[32m" << _error << "\e[0m GET" << std::endl;//temp
 	//cgi
 	return (generate_response_string());
 }

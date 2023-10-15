@@ -6,7 +6,7 @@
 /*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/10 16:52:17 by julmuntz         ###   ########.fr       */
+/*   Updated: 2023/10/15 18:37:43 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,85 +258,6 @@ int Server::handle_new_connection(int sfd)
 	return (0);
 }
 
- void set_environment_variables(RequestParser &rp, string cgi_script, string file_location, vector<t_FileInfo>::const_iterator it)
-{
-	clearenv();
-	(void)rp;(void) cgi_script;
-	string query_string = "name=" + it->fileName + "&path=cgi-bin/.tmp&dir=" + file_location;
-	setenv("QUERY_STRING", query_string.c_str(), 1);
-	// cout << "QUERY " << getenv("QUERY_STRING") << endl;
-	// setenv("UPLOAD_FILE_NAME", it->fileName.c_str(), 1);
-	// setenv("UPLOAD_FILE_TYPE", it->fileType.c_str(), 1);
-	// setenv("UPLOAD_FILE_PATH", "cgi-bin/.tmp", 1);
-	setenv("REQUEST_METHOD", rp.get_method().c_str(), 1);
-	setenv("CONTENT_LENGTH", rp.get_rep_head().content_length.c_str(), 1);
-	setenv("CONTENT_TYPE", rp.get_rep_head().content_type.c_str(), 1);
-	string scriptName = "cgi-bin/" + cgi_script;
-	setenv("SCRIPT_NAME", scriptName.c_str(), 1);
-	setenv("REMOTE_ADDR", "127.0.0.1", 1);
-	setenv("REMOTE_PORT", "80", 1);
-	setenv("SERVER_SOFTWARE", "WebServ/1.42", 1);
-	setenv("SERVER_NAME", rp.get_req_head().hosts.first.c_str(), 1);
-	setenv("SERVER_PORT", uint32_to_string(rp.get_req_head().hosts.second).c_str(), 1);
-	setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
-	setenv("UPLOAD_DIR", file_location.c_str(), 1);
-	setenv("HTTP_USER_AGENT", rp.get_req_head().user_agent.c_str(), 1);
-
-	// cout << "UPLOAD_FILE_NAME:    " << getenv("UPLOAD_FILE_NAME") << endl;
-	// cout << "UPLOAD_FILE_TYPE:    " << getenv("UPLOAD_FILE_TYPE") << endl;
-	// cout << "UPLOAD_FILE_CONTENT: " << max_chars(getenv("UPLOAD_FILE_CONTENT"), 350) << endl;
-	// cout << "REQUEST_METHOD:      " << getenv("REQUEST_METHOD") << endl;
-	// cout << "CONTENT_LENGTH:      " << getenv("CONTENT_LENGTH") << endl;
-	// cout << "CONTENT_TYPE:        " << getenv("CONTENT_TYPE") << endl;
-	// cout << "SCRIPT_NAME:         " << getenv("SCRIPT_NAME") << endl;
-	// cout << "REMOTE_ADDR:         " << getenv("REMOTE_ADDR") << endl;
-	// cout << "REMOTE_PORT:         " << getenv("REMOTE_PORT") << endl;
-	// cout << "SERVER_SOFTWARE:     " << getenv("SERVER_SOFTWARE") << endl;
-	// cout << "SERVER_NAME:         " << getenv("SERVER_NAME") << endl;
-	// cout << "SERVER_PORT:         " << getenv("SERVER_PORT") << endl;
-	// cout << "SERVER_PROTOCOL:     " << getenv("SERVER_PROTOCOL") << endl;
-	// cout << "UPLOAD_DIR:          " << getenv("UPLOAD_DIR") << endl;
-	// cout << "HTTP_USER_AGENT:     " << getenv("HTTP_USER_AGENT") << endl;
-}
-
-int	Server::handle_cgi_request(string cgi_script)
-{
-	int pipefd[2];
-	if (pipe(pipefd) == -1)
-	{
-		perror("pipe");
-		return (1);
-	}
-
-	pid_t pid = fork();
-	if (pid == -1)
-	{
-		perror("fork");
-		return (1);
-	}
-
-	if (pid == 0)
-	{
-		close(pipefd[1]);
-		if (dup2(pipefd[0], STDIN_FILENO) == -1)
-		{
-			perror("dup2");
-			return (1);
-		}
-		string cmd = "./cgi-bin/" + cgi_script + " > output.txt 2>&1";
-		std::system(cmd.c_str());
-		return (1);
-	}
-	else
-	{
-		close(pipefd[0]);
-		close(pipefd[1]);
-		wait(NULL);
-		return (0);
-	}
-	return (0);
-}
-
 /* Handles the data sent to connection sockets by the client */
 
 //return error server instead of shutting down the server, or before shutting down the server
@@ -375,20 +296,7 @@ int Server::receive_data(int i)
 			const t_location &loc = serv.location[j];
 			if (uri.find(loc.uri) == 0 && !loc.cgi_script.empty())
 			{
-				parsedRequest.parseFile();
-				for (vector<t_FileInfo>::const_iterator it = parsedRequest.get_fileInfo().begin(); it != parsedRequest.get_fileInfo().end(); it++)
-				{
-					std::ofstream outfile("cgi-bin/.tmp");
-					if (!outfile.is_open())
-						break;
-					outfile << it->fileContent;
-					outfile.close();
-					string file_location = loc.root + "/" + loc.file_location;
-					set_environment_variables(parsedRequest, loc.cgi_script, file_location, it);
-					if (handle_cgi_request(loc.cgi_script))
-						return (this->shutdown_server(), 1);
-					remove("cgi-bin/.tmp");
-				}
+				serv.cgi = true;
 				break;
 			}
 		}

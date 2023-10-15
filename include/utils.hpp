@@ -25,3 +25,4 @@ std::string		uint32_to_string(uint32_t value);
 std::string		max_chars(const char *input, size_t cap);
 string			get_path(string uri, t_location &loc);
 string			get_path(t_location &);
+void			delete_env(char **env, std::size_t size);

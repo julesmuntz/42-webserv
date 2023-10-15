@@ -127,4 +127,9 @@ string	get_path(string uri, t_location &loc)
 	return (path);
 }
 
-
+void delete_env(char **env, std::size_t size)
+{
+	for (std::size_t i = 0; i < size; ++i)
+		delete[] env[i];
+	delete[] env;
+}

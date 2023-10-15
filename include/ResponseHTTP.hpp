@@ -38,6 +38,8 @@ class ResponseHTTP
 		void			create_post_response();
 		void			generate_response_string();
 		void			create_dir_page(string uri, map<string, string> files_in_dir);
+		char			**create_env(RequestParser &rp, string cgi_script, string file_location, vector<t_FileInfo>::const_iterator it, t_error error);
+		int				handle_cgi_request(RequestParser &rp, string cgi_script, string file_location, vector<t_FileInfo>::const_iterator it, t_error error);
 
 	public:
 		ResponseHTTP(RequestParser &, t_server *, t_error );
