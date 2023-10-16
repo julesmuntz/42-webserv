@@ -9,6 +9,11 @@ string	RequestHandler::get_request_string(void) const
 	return (req.request);
 }
 
+void	RequestHandler::set_error(t_error new_error)
+{
+	error = new_error;
+}
+
 t_error	RequestHandler::get_error(void) const
 {
 	return (error);

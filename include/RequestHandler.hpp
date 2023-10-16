@@ -32,6 +32,7 @@ class RequestHandler : virtual public RequestEndDeterminator
 	public:
 		RequestHandler(int fd);
 		virtual ~RequestHandler();
+		void	set_error(t_error new_error);
 		string	get_request_string(void) const;
 		t_error	get_error(void) const;
 		bool	add_data(char *str, size_t nread);

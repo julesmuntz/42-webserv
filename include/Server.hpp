@@ -27,9 +27,6 @@ using namespace std;
 #define ERROR_OPEN "error open"
 #define ERROR_END "error end"
 
-
-
-
 class Server
 {
 	private:

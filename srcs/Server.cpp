@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/15 18:37:43 by julmuntz         ###   ########.fr       */
+/*   Updated: 2023/10/16 21:14:48 by mbelrhaz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,118 +28,6 @@ void Server::sigint_handler(int sig)
 {
 	(void)sig;
 	g_stop_required = 1;
-}
-
-/* Shuts down the server, closes and frees everything,
-   writes down error message if necessary with the overload */
-
-void Server::shutdown_server(void)
-{
-	cout << endl
-		 << "Shutting down" << endl;
-	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
-	{
-		if (events[i].data.fd != -1)
-			close(events[i].data.fd);
-	}
-	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
-	{
-		if (*it != -1)
-			close(*it);
-	}
-	if (epoll_fd != -1)
-		close(epoll_fd);
-}
-
-int Server::shutdown_server(string str_err)
-{
-	perror(str_err.c_str());
-	cout << endl
-		 << "Shutting down" << endl;
-	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
-	{
-		if (events[i].data.fd != -1)
-			close(events[i].data.fd);
-	}
-	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
-	{
-		if (*it != -1)
-			close(*it);
-	}
-	if (epoll_fd != -1)
-		close(epoll_fd);
-	return (1);
-}
-
-/* Initializes the events queue */
-
-void Server::memset_events(void)
-{
-	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
-	{
-		events[i].data.fd = -1;
-	}
-}
-
-/* Sets context servers from the config file */
-
-void Server::set_con_servs(vector<t_server> const &co_sers)
-{
-	this->con_servs = co_sers;
-}
-
-void Server::update_time(void)
-{
-	map<int, RequestHandler>::iterator it;
-	struct epoll_event event;
-
-	for (it = requests.begin(); it != requests.end(); it++)
-	{
-		if (it->second.check_timeout())
-		{
-			it->second.deactivate_timeout();
-			event.events = EPOLLOUT;
-			event.data.fd = it->first;
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, it->first, &event) == -1)
-				this->shutdown_server("epoll_ctl");
-		}
-	}
-}
-
-void Server::choose_server(RequestParser rep, t_server *serv)
-{
-	if (rep.get_req_head().hosts.second == 0)
-	{
-		for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
-		{
-			for (unsigned int i = 0; i < it->server_name.size(); i++)
-			{
-				if (it->server_name[i] == rep.get_req_head().hosts.first)
-				{
-					*serv = *it;
-				}
-			}
-		}
-	}
-	for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
-	{
-		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
-		{
-			*serv = *it;
-		}
-	}
-}
-
-/* Returns true if the fd is a listening socket */
-
-bool Server::is_listening_socket(int fd)
-{
-	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
-	{
-		if (*it == fd)
-			return (true);
-	}
-	return (false);
 }
 
 /* Gets the address of the server, creates a socket and binds it to
@@ -246,12 +134,18 @@ int Server::handle_new_connection(int sfd)
 
 	connfd = accept(sfd, &sock_addr, &sock_len);
 	if (connfd == -1)
-		return (this->shutdown_server("accept"));
+	{
+		perror("accept");
+		return (0);
+	}
 	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN;
 	event.data.fd = connfd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, connfd, &event) == -1)
-		return (this->shutdown_server("epoll_ctl: conn_sock"));
+	{
+		perror("epoll_ctl: conn_sock");
+		return (0);
+	}
 	cout << "NEW fd = " << connfd << " added to epoll" << endl;
 	RequestHandler req(connfd);
 	requests.insert(pair<int, RequestHandler>(connfd, req));
@@ -260,7 +154,6 @@ int Server::handle_new_connection(int sfd)
 
 /* Handles the data sent to connection sockets by the client */
 
-//return error server instead of shutting down the server, or before shutting down the server
 int Server::receive_data(int i)
 {
 	struct epoll_event event;
@@ -270,14 +163,16 @@ int Server::receive_data(int i)
 	nread = recv(events[i].data.fd, buf, BUF_SIZE, 0);
 	if (nread == -1)
 	{
-		return (this->shutdown_server("recv"));
+		perror("recv");
+		//return (this->shutdown_server("recv"));
 	}
 	if (nread == 0)
 	{
 		cerr << "CONNEXION CLOSED BY CLIENT" << endl
 			 << endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-			return (this->shutdown_server("epoll_ctl"));
+			perror("epoll_ctl");
+			//return (this->shutdown_server("epoll_ctl"));
 		close(events[i].data.fd);
 		requests.erase(events[i].data.fd);
 		return (0);
@@ -308,7 +203,8 @@ int Server::receive_data(int i)
 		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
-			return (this->shutdown_server("epoll_ctl"));
+			perror("epoll_ctl");
+			//return (this->shutdown_server("epoll_ctl"));
 	}
 	return (0);
 }
