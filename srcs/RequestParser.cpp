@@ -100,9 +100,10 @@ std::string RequestParser::get_request_string() const
 void RequestParser::set_muv()
 {
 	vector<string> list = split(this->_lines[0]);
-	this->_method = list[0];
-	this->_uri = list[1];
-	this->_version = list[2];
+
+	this->_method = list.size() > 0 ? list[0] : "";
+	this->_uri = list.size() > 1 ? list[1] : "";
+	this->_version = list.size() > 2 ? list[2] : "";
 }
 
 void RequestParser::set_request_header()
