@@ -245,7 +245,6 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	this->_request = request;
 	this->_server_config = server_config;
 	this->_error = error;
-	std::cout << "HELLO " << error << std::endl;
 	if (_server_config != NULL)
 	{
 		this->_no_location = this->set_location();
