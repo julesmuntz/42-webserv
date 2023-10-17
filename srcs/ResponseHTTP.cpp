@@ -237,24 +237,6 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, strin
 	}
 }
 
-// void shutdown_server(void)
-// {
-// 	cout << endl
-// 		 << "Shutting down" << endl;
-// 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
-// 	{
-// 		if (events[i].data.fd != -1)
-// 			close(events[i].data.fd);
-// 	}
-// 	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
-// 	{
-// 		if (*it != -1)
-// 			close(*it);
-// 	}
-// 	if (epoll_fd != -1)
-// 		close(epoll_fd);
-// }
-
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
 {
 	this->_mime_type = "text/html";
@@ -466,9 +448,6 @@ void ResponseHTTP::construct_response()
 		return (generate_4000_error(_error));
 	if (_request.get_method() == "DELETE")
 		return (delete_methods());
-	// different function or class dep//	verifier les droit d'ecritureending on the request method, could be cgi
-	// [GET] // a map of functions ?
-	// for now, dummy response
 	if (_request.get_method() == "GET")
 		return (create_get_response());
 	if (_request.get_method() == "POST")
@@ -496,13 +475,6 @@ void ResponseHTTP::delete_methods()
 		return (generate_4000_error(error_500));
 	return (generate_4000_error(no_error_200));
 }
-
-// check error general
-
-// fill structure error, si erreur, alors
-// page generee
-
-// Edouard clean fucntion generate page error or not
 
 void ResponseHTTP::construct_html(uint32_t code, string &str_code)
 {

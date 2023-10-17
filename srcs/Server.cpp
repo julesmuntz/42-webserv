@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/16 21:14:48 by mbelrhaz         ###   ########.fr       */
+/*   Updated: 2023/10/10 16:52:17 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,6 +154,9 @@ int Server::handle_new_connection(int sfd)
 
 /* Handles the data sent to connection sockets by the client */
 
+// return error server instead of shutting down the server, or before shutting down the server
+// define a server error state to be able to respond to all the clients before quitting
+
 int Server::receive_data(int i)
 {
 	struct epoll_event event;
@@ -164,15 +167,13 @@ int Server::receive_data(int i)
 	if (nread == -1)
 	{
 		perror("recv");
-		//return (this->shutdown_server("recv"));
 	}
 	if (nread == 0)
 	{
 		cerr << "CONNEXION CLOSED BY CLIENT" << endl
 			 << endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-			perror("epoll_ctl");
-			//return (this->shutdown_server("epoll_ctl"));
+			perror("epoll_ctl: del");
 		close(events[i].data.fd);
 		requests.erase(events[i].data.fd);
 		return (0);
@@ -185,17 +186,6 @@ int Server::receive_data(int i)
 		RequestParser parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
 		t_server serv;
 		choose_server(parsedRequest, &serv);
-		string uri = parsedRequest.get_uri();
-		for (size_t j = 0; j < serv.location.size(); ++j)
-		{
-			const t_location &loc = serv.location[j];
-			if (uri.find(loc.uri) == 0 && !loc.cgi_script.empty())
-			{
-				serv.cgi = true;
-				break;
-			}
-		}
-
 		ResponseHTTP responseHTTP(parsedRequest, &serv, requests.find(events[i].data.fd)->second.get_error());
 		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string(), parsedRequest.get_chunked());
 		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
@@ -203,8 +193,7 @@ int Server::receive_data(int i)
 		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, events[i].data.fd, &event) == -1)
-			perror("epoll_ctl");
-			//return (this->shutdown_server("epoll_ctl"));
+			perror("epoll_ctl: mod");
 	}
 	return (0);
 }
@@ -269,3 +258,6 @@ int Server::serve_do_your_stuff(void)
 	this->shutdown_server();
 	return (0);
 }
+
+//if server internal error state, close the listening socket,
+// leave all others and respond to all others before quitting
