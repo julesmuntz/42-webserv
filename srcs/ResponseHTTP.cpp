@@ -245,6 +245,7 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	this->_request = request;
 	this->_server_config = server_config;
 	this->_error = error;
+	std::cout << "HELLO " << error << std::endl;
 	if (_server_config != NULL)
 	{
 		this->_no_location = this->set_location();
@@ -315,7 +316,6 @@ void ResponseHTTP::generate_response_string()
 /* ---------------------------------check_errors--------------------------------- */
 /**********************************************************************************/
 
-// more errors to add
 bool ResponseHTTP::check_errors()
 {
 	if (_error)
@@ -338,7 +338,6 @@ bool ResponseHTTP::check_errors()
 void ResponseHTTP::select_location()
 {
 	vector<t_location>::iterator it;
-	// order locations by size then try each one
 
 	sort(_server_config->location.begin(), _server_config->location.end(), cmp);
 	for (it = _server_config->location.begin(); it != _server_config->location.end(); it++)

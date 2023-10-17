@@ -119,7 +119,5 @@ void	ResponseHTTP::create_get_response()
 		// check size of file
 		// if seems ok, open it and put it in _html and put 200 OK
 	}
-	_error = error_404;
-	//cgi
 	return (generate_response_string());
 }

@@ -33,7 +33,7 @@
     <h1>Error "
 #define ERRORBODY_PART_2 " - "
 
-#define ERRORBODY_PART_3 "' :(</h1> \
+#define ERRORBODY_PART_3 " :(</h1> \
     <div class='tenor-gif-embed' data-postid='22693394' data-share-method='host' data-aspect-ratio='0.87' data-width='100%'> \
         </div> <script type='text/javascript' async src='https://tenor.com/embed.js'></script> \
 </body> \

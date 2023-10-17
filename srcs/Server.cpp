@@ -184,9 +184,9 @@ int Server::receive_data(int i)
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
 		requests.find(events[i].data.fd)->second.check_preparsing_errors();
 		RequestParser parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
-		t_server serv;
-		choose_server(parsedRequest, &serv);
-		ResponseHTTP responseHTTP(parsedRequest, &serv, requests.find(events[i].data.fd)->second.get_error());
+		t_server *serv = NULL;
+		choose_server(parsedRequest, serv);
+		ResponseHTTP responseHTTP(parsedRequest, serv, requests.find(events[i].data.fd)->second.get_error());
 		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string(), parsedRequest.get_chunked());
 		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
 		memset(&event, 0, sizeof(event));
