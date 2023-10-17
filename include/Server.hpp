@@ -37,7 +37,7 @@ class Server
 		map<int, ResponseSender>	responses;
 		vector<t_server>			con_servs;
 
-		void		choose_server(RequestParser rep, t_server *serv);
+		t_server	*choose_server(RequestParser rep, t_server *serv);
 		bool		is_listening_socket(int fd);
 		int			get_a_socket(int port);
 		int			set_up_server(void);

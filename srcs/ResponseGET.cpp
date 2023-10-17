@@ -34,26 +34,45 @@ void	ResponseHTTP::handle_dir(string &uri)
 
 	DIR	*dir = opendir(uri.c_str());
 	if (!dir)
+	{
 		perror("opendir");
+		_error = error_500;
+		return ;
+	}
 	errno = 0;
 	while (1)
 	{
 		string	name;
 		ent = readdir(dir);
 		if (errno != 0)
-					perror("readdir");
-				if (ent == NULL)
-					break ;
-				name = ent->d_name;
-				if (stat((uri + '/' + ent->d_name).c_str(), &stats) == 0)
+		{
+			perror("readdir");
+			_error = error_500;
+			if (closedir(dir) == -1)
+			{
+				perror("closedir");
+				return ;
+			}
+			return ;
+		}
+		if (ent == NULL)
+			break ;
+		name = ent->d_name;
+		if (stat((uri + '/' + ent->d_name).c_str(), &stats) == 0)
 		{
 			if (S_ISDIR(stats.st_mode))
 				name += '/';
 		}
+		else
+			perror("stat");
 		files_in_dir.insert(pair<string, string>(name, ""));
 	}
 	if (closedir(dir) == -1)
+	{
 		perror("closedir");
+		_error = error_500;
+		return ;
+	}
 	if (_location_config.directory_listing)
 	{
 		create_dir_page(_request.get_uri(), files_in_dir);
@@ -90,12 +109,14 @@ void	ResponseHTTP::create_get_response()
 	if (stat(uri.c_str(), &stats) == 0)
 	{
 		if (S_ISDIR(stats.st_mode))
+		{
 			handle_dir(uri);
-		// check if uri regular file
-		// check size of file
+			if (_error != no_error_200)
+				return (generate_response_string());
+		}
 		if (stat(uri.c_str(), &stats) == 0)
 		{
-			if (S_ISREG(stats.st_mode) && stats.st_size != 0 && stats.st_size != INT_MAX)
+			if (S_ISREG(stats.st_mode) && stats.st_size != 0 && stats.st_size < INT_MAX)
 			{
 				ifstream	file;
 
@@ -115,9 +136,19 @@ void	ResponseHTTP::create_get_response()
 					return (generate_response_string());
 				}
 			}
+			else if (stats.st_size == 0)
+				return (generate_response_string());
+			else if (stats.st_size >= INT_MAX)
+			{
+				_error = error_500;
+				return (generate_response_string());
+			}
 		}
-		// check size of file
-		// if seems ok, open it and put it in _html and put 200 OK
+		else
+		{
+			perror("stat");
+			_error = error_500;
+		}
 	}
 	return (generate_response_string());
 }

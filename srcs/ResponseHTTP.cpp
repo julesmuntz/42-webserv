@@ -249,7 +249,7 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	{
 		this->_no_location = this->set_location();
 		this->construct_response();
-		if (server_config->cgi == true)
+		if (server_config->cgi == true) // check initialization
 		{
 			request.parseFile();
 			for (vector<t_FileInfo>::const_iterator it = request.get_fileInfo().begin(); it != request.get_fileInfo().end(); it++)

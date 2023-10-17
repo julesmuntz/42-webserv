@@ -17,7 +17,7 @@ void Server::set_con_servs(vector<t_server> const &co_sers)
 	this->con_servs = co_sers;
 }
 
-void Server::choose_server(RequestParser rep, t_server *serv)
+t_server	*Server::choose_server(RequestParser rep, t_server *serv)
 {
 	if (rep.get_req_head().hosts.second == 0)
 	{
@@ -28,6 +28,7 @@ void Server::choose_server(RequestParser rep, t_server *serv)
 				if (it->server_name[i] == rep.get_req_head().hosts.first)
 				{
 					*serv = *it;
+					return (serv);
 				}
 			}
 		}
@@ -37,8 +38,10 @@ void Server::choose_server(RequestParser rep, t_server *serv)
 		if (it->listen.first == rep.get_req_head().hosts.second && it->listen.second == rep.get_req_head().hosts.first)
 		{
 			*serv = *it;
+			return (serv);
 		}
 	}
+	return (NULL);
 }
 
 /* Shuts down the server, closes and frees everything,
