@@ -165,6 +165,8 @@ void RequestParser::set_host(string line, string mots)
 		tests.second = atoi(line.substr(line.find(":") + 1, line.size()).c_str());
 		this->_req_head.hosts = tests;
 	}
+	else
+		this->_req_head.hosts.first = line;
 }
 
 void RequestParser::set_user_agent(string line, string mots)

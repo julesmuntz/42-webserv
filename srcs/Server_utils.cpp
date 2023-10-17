@@ -21,12 +21,15 @@ t_server	*Server::choose_server(RequestParser rep, t_server *serv)
 {
 	if (rep.get_req_head().hosts.second == 0)
 	{
+		std::cout << "ok" << std::endl;
 		for (vector<t_server>::iterator it = con_servs.begin(); it != con_servs.end(); it++)
 		{
 			for (unsigned int i = 0; i < it->server_name.size(); i++)
 			{
+				std::cout << rep.get_req_head().hosts.first << endl;
 				if (it->server_name[i] == rep.get_req_head().hosts.first)
 				{
+					cout << "je suis la !" <<endl;
 					*serv = *it;
 					return (serv);
 				}
