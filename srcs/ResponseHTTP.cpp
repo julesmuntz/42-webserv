@@ -1,5 +1,4 @@
 #include "ResponseHTTP.hpp"
-#include "responseGET.hpp"
 #include <fstream>
 #include <dirent.h>
 #include "ResponseDir.hpp"
@@ -125,16 +124,6 @@ static map<uint32_t, string> generate_static_code()
 
 	return (result);
 }
-
-/*
-	Make a factory for the different methods we handle?
-		GET
-		POST
-		DELETE
-	They have common fonctionalities, but different methods
-	Do we really need this?
-	Try and see...
-*/
 
 string getResponseCode(t_error error)
 {

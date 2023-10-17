@@ -54,13 +54,11 @@ void	ResponseHTTP::handle_dir(string &uri)
 	}
 	if (closedir(dir) == -1)
 		perror("closedir");
-	// check directory_listing
 	if (_location_config.directory_listing)
 	{
 		create_dir_page(_request.get_uri(), files_in_dir);
 		return ;
 	}
-	// check index
 	for (vector<string>::iterator it = _location_config.index.begin(); it != _location_config.index.end(); it++)
 	{
 		if (files_in_dir.find(*it) != files_in_dir.end())
@@ -81,13 +79,10 @@ void	ResponseHTTP::create_get_response()
 
 	_error = no_error_200;
 	select_location();
-	//allow methods
 	if (!method_allowed("GET"))
 		return (generate_response_string());
-	//redir_link
 	if (redir_is_set())
 		return (generate_response_string());
-	//directory
 	root += _location_config.root + '/';
 	size_t	pos = _request.get_uri().find(_location_config.uri);
 	if (pos == 0)

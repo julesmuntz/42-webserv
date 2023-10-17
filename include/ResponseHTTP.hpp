@@ -16,7 +16,6 @@ class ResponseHTTP
 		string			_response_string;
 		stringstream	_response;
 		t_error			_error;
-		// int		_status;
 		string	_mime_type;
 		string	_html;
 		string	_header;
@@ -31,7 +30,6 @@ class ResponseHTTP
 		bool			set_location();
 		void			select_location();
 		bool			check_errors();
-		//choisir quel function on vas utiliser pour cree la reponse
 		void			construct_response();
 		void			construct_error_no_config();
 		void			create_get_response();
@@ -45,15 +43,8 @@ class ResponseHTTP
 		ResponseHTTP(RequestParser &, t_server *, t_error );
 		~ResponseHTTP();
 		string	get_response_string(void) const;
-		//creation des error
-		//creation des methods post get delete
-		//void	get_methods();
 		void	post_methods();
 		void	delete_methods();
-		//faire les check d'ereur posible too long ...
-
-
-
 		void	construct_html(uint32_t, string &);
 		void	generate_4000_error(t_error);
 };
