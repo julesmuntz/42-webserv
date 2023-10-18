@@ -119,8 +119,8 @@ string	get_path(string uri, t_location &loc)
 {
 	string root = loc.root;
 	string path;
-	if (root[root.size() - 1] != '/')
-		root += '/';
+	// if (root[root.size() - 1] != '/')
+	// 	root += '/';
 	size_t pos = uri.find(loc.uri);
 	if (pos == 0)
 		path = uri.replace(0, loc.uri.size(), root);

@@ -160,16 +160,15 @@ string getResponseCode(t_error error)
 	}
 }
 
-char **ResponseHTTP::create_env(RequestParser &rp, string cgi_script, string file_location, vector<t_FileInfo>::const_iterator it, t_error error)
+char **ResponseHTTP::create_env(RequestParser &rp, string cgi_script, string file_location, t_error error)
 {
 	std::vector<std::string> env_vars;
-	string query_string = "name=" + it->fileName + "&path=cgi-bin/.tmp&dir=" + file_location;
-	env_vars.push_back("QUERY_STRING=" + query_string);
+	// string query_string = "name=" + it->fileName + "&path=cgi-bin/.tmp&dir=" + file_location;
+	// env_vars.push_back("QUERY_STRING=" + query_string);
 	env_vars.push_back("REQUEST_METHOD=" + rp.get_method());
 	env_vars.push_back("CONTENT_LENGTH=" + rp.get_rep_head().content_length);
 	env_vars.push_back("CONTENT_TYPE=" + rp.get_rep_head().content_type);
-	string scriptName = "cgi-bin/" + cgi_script;
-	env_vars.push_back("SCRIPT_FILENAME=" + scriptName);
+	env_vars.push_back("SCRIPT_FILENAME=" + cgi_script);
 	env_vars.push_back("REMOTE_ADDR=" + string("127.0.0.1"));
 	env_vars.push_back("REMOTE_PORT=" + string("80"));
 	env_vars.push_back("SERVER_SOFTWARE=" + string("WebServ/1.42"));
@@ -180,7 +179,7 @@ char **ResponseHTTP::create_env(RequestParser &rp, string cgi_script, string fil
 	env_vars.push_back("HTTP_USER_AGENT=" + rp.get_req_head().user_agent);
 	env_vars.push_back("REDIRECT_STATUS=" + getResponseCode(error));
 	env_vars.push_back("DOCUMENT_ROOT=" + _location_config.root);
-
+	cout << "body : " << rp.get_body() << endl;
 	char **env = new char *[env_vars.size() + 1];
 	for (std::size_t i = 0; i < env_vars.size(); ++i)
 	{
@@ -192,7 +191,7 @@ char **ResponseHTTP::create_env(RequestParser &rp, string cgi_script, string fil
 	return env;
 }
 
-int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, string file_location, vector<t_FileInfo>::const_iterator it, t_error error)
+int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, string file_location, t_error error)
 {
 	int pipefd[2];
 	if (pipe(pipefd) == -1)
@@ -201,7 +200,7 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, strin
 		return 1;
 	}
 
-	char **env = create_env(rp, cgi_script, file_location, it, error);
+	char **env = create_env(rp, cgi_script, file_location, error);
 	pid_t pid = fork();
 	if (pid == -1)
 	{
@@ -211,15 +210,18 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, strin
 
 	if (pid == 0) // Child process
 	{
-		close(pipefd[1]); // Close write end of the pipe.
-
+		//write(STDIN_FILENO, rp.get_body().c_str(), rp.get_body().size());
+		//dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[1]);
+		dup2(pipefd[1], STDOUT_FILENO);
 		if (dup2(pipefd[0], STDIN_FILENO) == -1)
 		{
 			perror("dup2");
 			exit(EXIT_FAILURE);
 		}
-
-		char *arg[] = {(char *)"/usr/bin/php-cgi", NULL};
+		close(pipefd[0]);
+		cout << cgi_script << endl;
+		char *arg[] = {(char *)"/usr/bin/php-cgi", const_cast<char*>(cgi_script.c_str()), NULL};
 
 		execve(arg[0], arg, env);
 
@@ -230,8 +232,8 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, strin
 	{
 		close(pipefd[0]); // Close read end of the pipe.
 		close(pipefd[1]); // Close write end of the pipe.
-
-		delete_env(env, 15);
+		write(1, rp.get_body().c_str(), rp.get_body().size());
+		delete_env(env, 14);
 		wait(NULL); // Wait for child process to finish.
 		return 0;
 	}
@@ -249,21 +251,6 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	{
 		this->_no_location = this->set_location();
 		this->construct_response();
-		if (server_config->cgi == true) // check initialization
-		{
-			request.parseFile();
-			for (vector<t_FileInfo>::const_iterator it = request.get_fileInfo().begin(); it != request.get_fileInfo().end(); it++)
-			{
-				std::ofstream outfile("cgi-bin/.tmp");
-				if (!outfile.is_open())
-					break;
-				outfile << it->fileContent;
-				outfile.close();
-				string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
-				handle_cgi_request(request, this->_location_config.cgi_script, file_location, it, error);
-				remove("cgi-bin/.tmp");
-			}
-		}
 		cout << "\e[32m" << getResponseCode(error) << "\e[0m " << _request.get_method() << endl;
 		return;
 	}
@@ -420,6 +407,15 @@ void ResponseHTTP::create_post_response()
 		{
 			if (S_ISREG(stats.st_mode) && stats.st_size != 0 && stats.st_size != INT_MAX)
 			{
+				size_t pos = uri.find_last_of('.');
+				string	ext = uri.substr(pos, uri.size() - pos);
+				if (ext == ".php")
+				{
+					std::cout << "POST CGI HAHA" << std::endl;
+					string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
+					handle_cgi_request(_request, uri, file_location, _error);
+					std::cout << "END CGI HAHA" << std::endl;
+				}
 				ifstream file;
 				file.open(uri.c_str());
 				if (!file.fail())

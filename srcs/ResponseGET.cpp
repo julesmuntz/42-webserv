@@ -120,6 +120,13 @@ void	ResponseHTTP::create_get_response()
 			{
 				ifstream	file;
 
+				pos = uri.find_last_of('.');
+				string	ext = uri.substr(pos, uri.size() - pos);
+				if (ext == ".php")
+				{
+					string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
+					handle_cgi_request(_request, uri, file_location, _error);
+				}
 				file.open(uri.c_str());
 				if (!file.fail())
 				{
