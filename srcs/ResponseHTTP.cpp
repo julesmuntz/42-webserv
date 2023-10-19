@@ -193,7 +193,13 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_
 	char **env = create_env(rp, uri, file_location, error);
 	char *arg[] = {const_cast<char *>("/usr/bin/php-cgi"), const_cast<char *>(uri.c_str()), NULL};
 	int pipefd[2];
+	int fd[2];
 	if (pipe(pipefd) == -1)
+	{
+		perror("pipe");
+		return 1;
+	}
+	if (pipe(fd) == -1)
 	{
 		perror("pipe");
 		return 1;
@@ -205,25 +211,49 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_
 		perror("fork");
 		return 1;
 	}
-
 	if (pid == 0)
 	{
-		close(pipefd[1]);
-		if (dup2(pipefd[0], STDIN_FILENO) == -1)
+		std::string body = rp.get_body();
+		write(fd[1], body.c_str(), body.size());
+		if (dup2(fd[0], STDIN_FILENO) == -1)
 		{
 			perror("dup2");
 			exit(EXIT_FAILURE);
 		}
+		if (dup2(pipefd[1], STDOUT_FILENO) == -1)
+		{
+			perror ("dup2");
+			exit(EXIT_FAILURE);
+		}
+		close(pipefd[1]);
+		close(pipefd[0]);
+		close(fd[0]);
+		close(fd[1]);
 		execve(arg[0], arg, env);
 		perror("execve");
 		exit(EXIT_FAILURE);
 	}
 	else
 	{
-		close(pipefd[0]);
-		std::string body = rp.get_body();
-		write(pipefd[1], body.c_str(), body.size());
 		close(pipefd[1]);
+		std::string	output;
+		while (1)
+		{
+			std::cout << "hello" << std::endl;
+			char	buffer[50];
+			int		n = read(pipefd[0], buffer, 49);
+			std::cout << "n = " << n << std::endl;
+			if (n <= 0)
+				break;
+			buffer[n] = 0;
+			output += buffer;
+		}
+		std::cout << output << std::endl;
+		output.erase(0, output.find("\n") + 1);
+		_html = output;
+		close(pipefd[0]);
+		close(fd[0]);
+		close(fd[1]);
 		int status;
 		waitpid(pid, &status, 0);
 	}
@@ -407,6 +437,7 @@ void ResponseHTTP::create_post_response()
 					string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
 					handle_cgi_request(_request, uri, file_location, _error);
 					std::cout << "END CGI HAHA" << std::endl;
+					return (generate_response_string());
 				}
 				ifstream file;
 				file.open(uri.c_str());
