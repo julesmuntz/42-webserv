@@ -249,6 +249,7 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_
 			output += buffer;
 		}
 		std::cout << output << std::endl;
+		//parsing of output to do
 		output.erase(0, output.find("\n") + 1);
 		_html = output;
 		close(pipefd[0]);
