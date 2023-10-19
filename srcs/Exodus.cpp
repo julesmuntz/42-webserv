@@ -124,7 +124,7 @@ t_location				Exodus::set_location(string line)
 {
 	bool		end = false;
 	t_location	exodus_location;
-	string	locations[8] = {"uri", "allow_methods", "root", "redir_link", "index", "directory_listing", "file_location", "cgi_script"};
+	string	locations[8] = {"uri", "allow_methods", "root", "redir_link", "index", "directory_listing", "file_location", "cgi_pass"};
 	void		(Exodus::*f[8])(t_location *, string) = {&Exodus::uri, &Exodus::allow_methods, &Exodus::root, &Exodus::redir_link, &Exodus::index, &Exodus::directory_listing, &Exodus::file_location, &Exodus::cgi_pass};
 
 	exodus_location.directory_listing = false;
@@ -290,9 +290,9 @@ void	Exodus::file_location(t_location *t, string line)
 
 void					Exodus::cgi_pass(t_location *t, string line)
 {
-	string extractedWord = extractmots(line, "cgi_script");
+	string extractedWord = extractmots(line, "cgi_pass");
 	if (!extractedWord.empty())
-		t->cgi_script = extractedWord;
+		t->cgi_pass = extractedWord;
 }
 
 void					Exodus::directory_listing(t_location *t, string line)

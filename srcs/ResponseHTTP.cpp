@@ -160,15 +160,13 @@ string getResponseCode(t_error error)
 	}
 }
 
-char **ResponseHTTP::create_env(RequestParser &rp, string cgi_script, string file_location, t_error error)
+char **ResponseHTTP::create_env(RequestParser &rp, string uri, string file_location, t_error error)
 {
 	std::vector<std::string> env_vars;
-	// string query_string = "name=" + it->fileName + "&path=cgi-bin/.tmp&dir=" + file_location;
-	// env_vars.push_back("QUERY_STRING=" + query_string);
 	env_vars.push_back("REQUEST_METHOD=" + rp.get_method());
 	env_vars.push_back("CONTENT_LENGTH=" + rp.get_rep_head().content_length);
 	env_vars.push_back("CONTENT_TYPE=" + rp.get_rep_head().content_type);
-	env_vars.push_back("SCRIPT_FILENAME=" + cgi_script);
+	env_vars.push_back("SCRIPT_FILENAME=" + uri);
 	env_vars.push_back("REMOTE_ADDR=" + string("127.0.0.1"));
 	env_vars.push_back("REMOTE_PORT=" + string("80"));
 	env_vars.push_back("SERVER_SOFTWARE=" + string("WebServ/1.42"));
@@ -183,7 +181,6 @@ char **ResponseHTTP::create_env(RequestParser &rp, string cgi_script, string fil
 	char **env = new char *[env_vars.size() + 1];
 	for (std::size_t i = 0; i < env_vars.size(); ++i)
 	{
-		cout << env_vars[i] << endl;
 		env[i] = new char[env_vars[i].length() + 1];
 		std::strcpy(env[i], env_vars[i].c_str());
 	}
@@ -191,8 +188,10 @@ char **ResponseHTTP::create_env(RequestParser &rp, string cgi_script, string fil
 	return env;
 }
 
-int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, string file_location, t_error error)
+int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_location, t_error error)
 {
+	char **env = create_env(rp, uri, file_location, error);
+	char *arg[] = {const_cast<char *>("/usr/bin/php-cgi"), const_cast<char *>(uri.c_str()), NULL};
 	int pipefd[2];
 	if (pipe(pipefd) == -1)
 	{
@@ -200,7 +199,6 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, strin
 		return 1;
 	}
 
-	char **env = create_env(rp, cgi_script, file_location, error);
 	pid_t pid = fork();
 	if (pid == -1)
 	{
@@ -208,35 +206,29 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string cgi_script, strin
 		return 1;
 	}
 
-	if (pid == 0) // Child process
+	if (pid == 0)
 	{
-		//write(STDIN_FILENO, rp.get_body().c_str(), rp.get_body().size());
-		//dup2(pipefd[1], STDOUT_FILENO);
 		close(pipefd[1]);
-		dup2(pipefd[1], STDOUT_FILENO);
 		if (dup2(pipefd[0], STDIN_FILENO) == -1)
 		{
 			perror("dup2");
 			exit(EXIT_FAILURE);
 		}
-		close(pipefd[0]);
-		cout << cgi_script << endl;
-		char *arg[] = {(char *)"/usr/bin/php-cgi", const_cast<char*>(cgi_script.c_str()), NULL};
-
 		execve(arg[0], arg, env);
-
-		perror("execve"); // execve() only returns on error.
+		perror("execve");
 		exit(EXIT_FAILURE);
 	}
-	else // Parent process
+	else
 	{
-		close(pipefd[0]); // Close read end of the pipe.
-		close(pipefd[1]); // Close write end of the pipe.
-		write(1, rp.get_body().c_str(), rp.get_body().size());
-		delete_env(env, 14);
-		wait(NULL); // Wait for child process to finish.
-		return 0;
+		close(pipefd[0]);
+		std::string body = rp.get_body();
+		write(pipefd[1], body.c_str(), body.size());
+		close(pipefd[1]);
+		int status;
+		waitpid(pid, &status, 0);
 	}
+	delete_env(env, 15);
+	return 0;
 }
 
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
@@ -408,7 +400,7 @@ void ResponseHTTP::create_post_response()
 			if (S_ISREG(stats.st_mode) && stats.st_size != 0 && stats.st_size != INT_MAX)
 			{
 				size_t pos = uri.find_last_of('.');
-				string	ext = uri.substr(pos, uri.size() - pos);
+				string ext = uri.substr(pos, uri.size() - pos);
 				if (ext == ".php")
 				{
 					std::cout << "POST CGI HAHA" << std::endl;
