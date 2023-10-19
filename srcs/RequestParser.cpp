@@ -21,7 +21,10 @@ RequestParser::RequestParser(string request) : _request(request)
 	istringstream iss(header);
 
 	while (getline(iss, line))
+	{
+		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 		this->_lines.push_back(line);
+	}
 
 	// pay attention to only check in header for header stuff
 	if (!this->_lines.empty())
