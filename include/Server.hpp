@@ -3,6 +3,7 @@
 #include "RequestHandler.hpp"
 #include "RequestParser.hpp"
 #include "ResponseSender.hpp"
+#include "ResponseHTTP.hpp"
 #include <map>
 #include <sys/epoll.h>
 #include <fcntl.h>
@@ -35,6 +36,8 @@ class Server
 		struct epoll_event			events[EPOLL_QUEUE_LEN];
 		map<int, RequestHandler>	requests;
 		map<int, ResponseSender>	responses;
+		map<int, ResponseHTTP>		responseHTTPs;
+		map<std::vector<int>, int>	pipefds;
 		vector<t_server>			con_servs;
 
 		t_server	*choose_server(RequestParser rep, t_server *serv);

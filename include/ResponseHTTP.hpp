@@ -16,10 +16,13 @@ class ResponseHTTP
 		string			_response_string;
 		stringstream	_response;
 		t_error			_error;
+		pid_t	_pid;
+		std::vector<int> _write_read_pipes;
 		string	_mime_type;
 		string	_html;
 		string	_header;
 		string	_body;
+		bool	_need_cgi;
 		RequestParser	_request;
 		t_server		*_server_config;
 		t_location		_location_config;
@@ -42,7 +45,10 @@ class ResponseHTTP
 	public:
 		ResponseHTTP(RequestParser &, t_server *, t_error );
 		~ResponseHTTP();
+		int		handle_cgi_request(RequestParser &rp, string uri, string file_location, t_error error);
 		string	get_response_string(void) const;
+		bool	get_need_cgi(void) const;
+		int		*get_write_read(void) const;
 		void	post_methods();
 		void	delete_methods();
 		void	construct_html(uint32_t, string &);

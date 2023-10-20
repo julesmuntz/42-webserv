@@ -204,7 +204,15 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_
 		perror("pipe");
 		return 1;
 	}
+}
 
+int ResponseHTTP::write_cgi()
+{
+	write(fd[1], body.c_str(), body.size());
+}
+
+int ResponseHTTP::fork_cgi()
+{
 	pid_t pid = fork();
 	if (pid == -1)
 	{
@@ -214,7 +222,6 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_
 	if (pid == 0)
 	{
 		std::string body = rp.get_body();
-		write(fd[1], body.c_str(), body.size());
 		if (dup2(fd[0], STDIN_FILENO) == -1)
 		{
 			perror("dup2");
@@ -233,37 +240,40 @@ int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_
 		perror("execve");
 		exit(EXIT_FAILURE);
 	}
-	else
+}
+
+int ResponseHTTP::read_cgi()
+{
+	close(pipefd[1]);
+	std::string	output;
+	while (1)
 	{
-		close(pipefd[1]);
-		std::string	output;
-		while (1)
-		{
-			std::cout << "hello" << std::endl;
-			char	buffer[50];
-			int		n = read(pipefd[0], buffer, 49);
-			std::cout << "n = " << n << std::endl;
-			if (n <= 0)
-				break;
-			buffer[n] = 0;
-			output += buffer;
-		}
-		std::cout << output << std::endl;
-		//parsing of output to do
-		output.erase(0, output.find("\n") + 1);
-		_html = output;
-		close(pipefd[0]);
-		close(fd[0]);
-		close(fd[1]);
-		int status;
-		waitpid(pid, &status, 0);
+		std::cout << "hello" << std::endl;
+		char	buffer[50];
+		int		n = read(pipefd[0], buffer, 49);
+		std::cout << "n = " << n << std::endl;
+		if (n <= 0)
+			break;
+		buffer[n] = 0;
+		output += buffer;
 	}
-	delete_env(env, 15);
+	std::cout << output << std::endl;
+	//parsing of output to do
+	output.erase(0, output.find("\n") + 1);
+	_html = output;
+	close(pipefd[0]);
+	close(fd[0]);
+	close(fd[1]);
+	int status;
+	waitpid(_pid, &status, 0);
+	//delete_env(env, 15);
+	construct_response();
 	return 0;
 }
 
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
 {
+	this->_need_cgi = false;
 	this->_mime_type = "text/html";
 	this->_static_ext_map = generate_static_ext_map();
 	this->_static_code = generate_static_code();
@@ -434,11 +444,13 @@ void ResponseHTTP::create_post_response()
 				string ext = uri.substr(pos, uri.size() - pos);
 				if (ext == ".php")
 				{
-					std::cout << "POST CGI HAHA" << std::endl;
+					//std::cout << "POST CGI HAHA" << std::endl;
 					string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
+					_need_cgi = true;
 					handle_cgi_request(_request, uri, file_location, _error);
-					std::cout << "END CGI HAHA" << std::endl;
-					return (generate_response_string());
+					return ;
+					//std::cout << "END CGI HAHA" << std::endl;
+					//return (generate_response_string());
 				}
 				ifstream file;
 				file.open(uri.c_str());
@@ -534,4 +546,9 @@ void ResponseHTTP::generate_4000_error(t_error error)
 	_response << "\r\n";
 	_response << _html;
 	_response_string = _response.str();
+}
+
+bool	ResponseHTTP::get_need_cgi() const
+{
+	return (_need_cgi);
 }

@@ -187,8 +187,7 @@ int Server::receive_data(int i)
 		t_server serv;
 		t_server *p_serv = choose_server(parsedRequest, &serv);
 		ResponseHTTP responseHTTP(parsedRequest, p_serv, requests.find(events[i].data.fd)->second.get_error());
-		ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string(), parsedRequest.get_chunked());
-		responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
+		responseHTTPs.insert(pair<int, ResponseHTTP>(events[i].data.fd, responseHTTP));
 		memset(&event, 0, sizeof(event));
 		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
@@ -203,6 +202,21 @@ int Server::receive_data(int i)
 
 int Server::send_data(int i)
 {
+	static bool	_send_mode = false;
+
+	if (_send_mode == false)
+	{
+		if (responseHTTPs.find(events[i].data.fd)->second.get_need_cgi() == true)
+		{
+			return (0);
+		}
+		else
+		{
+			ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string(), parsedRequest.get_chunked());
+			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
+			_send_mode = true;
+		}
+	}
 	// check return value of send
 	if (responses.find(events[i].data.fd)->second.send_response())
 	{
