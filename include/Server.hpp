@@ -28,16 +28,21 @@ using namespace std;
 #define ERROR_OPEN "error open"
 #define ERROR_END "error end"
 
+class ResponseHTTP;
+
 class Server
 {
 	private:
 		int							epoll_fd;
 		vector<int>					sfds;
+		int							read_fd;
 		struct epoll_event			events[EPOLL_QUEUE_LEN];
 		map<int, RequestHandler>	requests;
 		map<int, ResponseSender>	responses;
 		map<int, ResponseHTTP>		responseHTTPs;
-		map<std::vector<int>, int>	pipefds;
+		map<int, RequestParser>		parsedRequests;
+		map<int, int>				readPipe;
+		map<int, int>				writePipe;
 		vector<t_server>			con_servs;
 
 		t_server	*choose_server(RequestParser rep, t_server *serv);

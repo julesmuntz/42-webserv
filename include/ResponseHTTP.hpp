@@ -16,12 +16,17 @@ class ResponseHTTP
 		string			_response_string;
 		stringstream	_response;
 		t_error			_error;
+		char	**_env;
+		char	**_arg;
 		pid_t	_pid;
-		std::vector<int> _write_read_pipes;
+		int		_pipefd[2];
+		int		_fd[2];
 		string	_mime_type;
+		string	_uri;
 		string	_html;
 		string	_header;
 		string	_body;
+		string	_output;
 		bool	_need_cgi;
 		RequestParser	_request;
 		t_server		*_server_config;
@@ -39,18 +44,25 @@ class ResponseHTTP
 		void			create_post_response();
 		void			generate_response_string();
 		void			create_dir_page(string uri, map<string, string> files_in_dir);
-		char			**create_env(RequestParser &rp, string uri, string file_location, t_error error);
-		int				handle_cgi_request(RequestParser &rp, string uri, string file_location, t_error error);
+		char			**create_env(string uri, string file_location, t_error error);
+		int				handle_cgi_request(string uri, string file_location, t_error error);
 
 	public:
+		ResponseHTTP();
 		ResponseHTTP(RequestParser &, t_server *, t_error );
+		ResponseHTTP(ResponseHTTP const &);
 		~ResponseHTTP();
+		ResponseHTTP	&operator=(ResponseHTTP const &resp);
 		int		handle_cgi_request(RequestParser &rp, string uri, string file_location, t_error error);
 		string	get_response_string(void) const;
 		bool	get_need_cgi(void) const;
-		int		*get_write_read(void) const;
 		void	post_methods();
 		void	delete_methods();
 		void	construct_html(uint32_t, string &);
 		void	generate_4000_error(t_error);
+		int 	fork_cgi(void);
+		int 	write_cgi(void);
+		int		read_cgi(void);
+		int		get_write(void) const;
+		int		get_read(void) const;
 };

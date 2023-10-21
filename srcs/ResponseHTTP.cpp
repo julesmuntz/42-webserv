@@ -160,24 +160,24 @@ string getResponseCode(t_error error)
 	}
 }
 
-char **ResponseHTTP::create_env(RequestParser &rp, string uri, string file_location, t_error error)
+char **ResponseHTTP::create_env(string uri, string file_location, t_error error)
 {
 	std::vector<std::string> env_vars;
-	env_vars.push_back("REQUEST_METHOD=" + rp.get_method());
-	env_vars.push_back("CONTENT_LENGTH=" + rp.get_rep_head().content_length);
-	env_vars.push_back("CONTENT_TYPE=" + rp.get_rep_head().content_type);
+	env_vars.push_back("REQUEST_METHOD=" + _request.get_method());
+	env_vars.push_back("CONTENT_LENGTH=" + _request.get_rep_head().content_length);
+	env_vars.push_back("CONTENT_TYPE=" + _request.get_rep_head().content_type);
 	env_vars.push_back("SCRIPT_FILENAME=" + uri);
 	env_vars.push_back("REMOTE_ADDR=" + string("127.0.0.1"));
 	env_vars.push_back("REMOTE_PORT=" + string("80"));
 	env_vars.push_back("SERVER_SOFTWARE=" + string("WebServ/1.42"));
-	env_vars.push_back("SERVER_NAME=" + rp.get_req_head().hosts.first);
-	env_vars.push_back("SERVER_PORT=" + uint32_to_string(rp.get_req_head().hosts.second));
+	env_vars.push_back("SERVER_NAME=" + _request.get_req_head().hosts.first);
+	env_vars.push_back("SERVER_PORT=" + uint32_to_string(_request.get_req_head().hosts.second));
 	env_vars.push_back("SERVER_PROTOCOL=" + string("HTTP/1.1"));
 	env_vars.push_back("UPLOAD_DIR=" + file_location);
-	env_vars.push_back("HTTP_USER_AGENT=" + rp.get_req_head().user_agent);
+	env_vars.push_back("HTTP_USER_AGENT=" + _request.get_req_head().user_agent);
 	env_vars.push_back("REDIRECT_STATUS=" + getResponseCode(error));
 	env_vars.push_back("DOCUMENT_ROOT=" + _location_config.root);
-	cout << "body : " << rp.get_body() << endl;
+	cout << "body : " << _request.get_body() << endl;
 	char **env = new char *[env_vars.size() + 1];
 	for (std::size_t i = 0; i < env_vars.size(); ++i)
 	{
@@ -188,92 +188,145 @@ char **ResponseHTTP::create_env(RequestParser &rp, string uri, string file_locat
 	return env;
 }
 
-int ResponseHTTP::handle_cgi_request(RequestParser &rp, string uri, string file_location, t_error error)
+int ResponseHTTP::handle_cgi_request(string uri, string file_location, t_error error)
 {
-	char **env = create_env(rp, uri, file_location, error);
-	char *arg[] = {const_cast<char *>("/usr/bin/php-cgi"), const_cast<char *>(uri.c_str()), NULL};
-	int pipefd[2];
-	int fd[2];
-	if (pipe(pipefd) == -1)
+	_uri = uri;
+	std::cout << "COLO" << std::endl;
+	_env = create_env(uri, file_location, error);
+	_need_cgi = true;
+	char *arg[] = {const_cast<char *>("cgi-bin/php-cgi"), const_cast<char *>(uri.c_str()), NULL};
+	_arg = arg;
+	if (pipe(_pipefd) == -1)
 	{
 		perror("pipe");
 		return 1;
 	}
-	if (pipe(fd) == -1)
+	if (pipe(_fd) == -1)
 	{
 		perror("pipe");
 		return 1;
 	}
+	std::cout << "BOLO" << std::endl;
+	return 0;
 }
 
 int ResponseHTTP::write_cgi()
 {
-	write(fd[1], body.c_str(), body.size());
+	static int	size = _request.get_body().size();
+	static int	i;
+	int			n;
+	int			size_to_send;
+	
+	if (size == -1)
+	{
+		size = _request.get_body().size();
+	}
+	if (size < 10000)
+		size_to_send = size;
+	else
+		size_to_send = 10000;
+	if (size == 0)
+	{
+		fork_cgi();
+		i = 0;
+		size = -1;
+		return (1);
+	}
+	std::cout << "NOUNOU " << size_to_send << std::endl;
+	n = write(_fd[1], _request.get_body().c_str() + i, size_to_send);
+	i += size_to_send;
+	size -= size_to_send;
+	if (n == 0)
+	{
+		fork_cgi();
+		i = 0;
+		size = -1;
+		return (1);
+	}
+	if (n < 0)
+	{
+		i = 0;
+		size = -1;
+		return (1);
+	}
+	return (0);
 }
 
 int ResponseHTTP::fork_cgi()
 {
-	pid_t pid = fork();
-	if (pid == -1)
+	char *arg[] = {const_cast<char *>("/bin/php-cgi"), const_cast<char *>(_uri.c_str()), NULL};
+	_pid = fork();
+	if (_pid == -1)
 	{
 		perror("fork");
 		return 1;
 	}
-	if (pid == 0)
+	if (_pid == 0)
 	{
-		std::string body = rp.get_body();
-		if (dup2(fd[0], STDIN_FILENO) == -1)
+		std::cout << "HELLOOO" << std::endl;
+		if (dup2(_fd[0], STDIN_FILENO) == -1)
 		{
 			perror("dup2");
 			exit(EXIT_FAILURE);
 		}
-		if (dup2(pipefd[1], STDOUT_FILENO) == -1)
+		if (dup2(_pipefd[1], STDOUT_FILENO) == -1)
 		{
 			perror ("dup2");
 			exit(EXIT_FAILURE);
 		}
-		close(pipefd[1]);
-		close(pipefd[0]);
-		close(fd[0]);
-		close(fd[1]);
-		execve(arg[0], arg, env);
+		close(_pipefd[1]);
+		close(_pipefd[0]);
+		close(_fd[0]);
+		close(_fd[1]);
+		execve(arg[0], arg, _env);
 		perror("execve");
 		exit(EXIT_FAILURE);
 	}
+	return 0;
 }
 
 int ResponseHTTP::read_cgi()
 {
-	close(pipefd[1]);
-	std::string	output;
-	while (1)
-	{
-		std::cout << "hello" << std::endl;
-		char	buffer[50];
-		int		n = read(pipefd[0], buffer, 49);
-		std::cout << "n = " << n << std::endl;
-		if (n <= 0)
-			break;
+	static int	i;
+
+	if (i == 0)
+		close(_pipefd[1]);
+	i = 1;
+	char	buffer[10000];
+	int		n = read(_pipefd[0], buffer, 9999);
+	if (n >= 0)
 		buffer[n] = 0;
-		output += buffer;
+	std::string	addon;
+	//std::cout << "n = " << buffer << std::endl;
+	addon.assign(buffer, n);
+	_output += addon;
+	if (n <= 0)
+	{
+		std::cout << "OUTPUT" << _output << std::endl;
+		//parsing of output to do
+		_output.erase(0, _output.find("\n") + 3);
+		_html = _output;
+		close(_pipefd[0]);
+		close(_fd[0]);
+		close(_fd[1]);
+		int status;
+		waitpid(_pid, &status, 0);
+		delete_env(_env, 15);
+		generate_response_string();
+		_need_cgi = false;
+		i = 0;
+		return 1;
 	}
-	std::cout << output << std::endl;
-	//parsing of output to do
-	output.erase(0, output.find("\n") + 1);
-	_html = output;
-	close(pipefd[0]);
-	close(fd[0]);
-	close(fd[1]);
-	int status;
-	waitpid(_pid, &status, 0);
-	//delete_env(env, 15);
-	construct_response();
 	return 0;
 }
+
+ResponseHTTP::ResponseHTTP() {};
 
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
 {
 	this->_need_cgi = false;
+	this->_pipefd[0] = -1;
+	this->_pipefd[1] = -1;
 	this->_mime_type = "text/html";
 	this->_static_ext_map = generate_static_ext_map();
 	this->_static_code = generate_static_code();
@@ -290,7 +343,40 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	this->generate_4000_error(error_400);
 }
 
+ResponseHTTP::ResponseHTTP(ResponseHTTP const &resp)
+{
+	if (this != &resp)
+	{
+		*this = resp;
+	}
+}
+
 ResponseHTTP::~ResponseHTTP() {}
+
+ResponseHTTP	&ResponseHTTP::operator=(ResponseHTTP const &resp)
+{
+	this->_need_cgi = resp._need_cgi;
+	this->_pipefd[0] = resp._pipefd[0];
+	this->_pipefd[1] = resp._pipefd[1];
+	this->_fd[0] = resp._fd[0];
+	this->_fd[1] = resp._fd[1];
+	this->_mime_type = resp._mime_type;
+	this->_static_ext_map = generate_static_ext_map();
+	this->_static_code = generate_static_code();
+	this->_request = resp._request;
+	this->_server_config = resp._server_config;
+	this->_error = resp._error;
+	this->_env = resp._env;
+	this->_arg = resp._arg;
+	this->_html = resp._html;
+	this->_header = resp._header;
+	this->_body = resp._body;
+	this->_response_string = resp._response_string;
+	this->_pid = resp._pid;
+	this->_no_location = resp._no_location;
+	this->_location_config = resp._location_config;
+	return (*this);
+}
 
 bool ResponseHTTP::set_location()
 {
@@ -447,7 +533,7 @@ void ResponseHTTP::create_post_response()
 					//std::cout << "POST CGI HAHA" << std::endl;
 					string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
 					_need_cgi = true;
-					handle_cgi_request(_request, uri, file_location, _error);
+					handle_cgi_request(uri, file_location, _error);
 					return ;
 					//std::cout << "END CGI HAHA" << std::endl;
 					//return (generate_response_string());
@@ -495,7 +581,6 @@ void ResponseHTTP::delete_methods()
 {
 	select_location();
 	string path = get_path(_request.get_uri(), _location_config);
-	;
 
 	if (!isFile(path) && !isDir(path))
 		return (generate_4000_error(error_400));
@@ -548,7 +633,17 @@ void ResponseHTTP::generate_4000_error(t_error error)
 	_response_string = _response.str();
 }
 
-bool	ResponseHTTP::get_need_cgi() const
+bool	ResponseHTTP::get_need_cgi(void) const
 {
 	return (_need_cgi);
+}
+
+int	ResponseHTTP::get_write(void) const
+{
+	return (_fd[1]);
+}
+
+int	ResponseHTTP::get_read(void) const
+{
+	return (_pipefd[0]);
 }

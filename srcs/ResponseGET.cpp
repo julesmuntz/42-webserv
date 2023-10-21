@@ -125,7 +125,8 @@ void	ResponseHTTP::create_get_response()
 				if (ext == ".php")
 				{
 					string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
-					handle_cgi_request(_request, uri, file_location, _error);
+					handle_cgi_request(uri, file_location, _error);
+					return ;
 				}
 				file.open(uri.c_str());
 				if (!file.fail())

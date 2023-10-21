@@ -3,15 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/10 16:52:17 by julmuntz         ###   ########.fr       */
+/*   Updated: 2023/10/21 22:46:42 by mbelrhaz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
-#include "ResponseHTTP.hpp"
 
 bool g_stop_required = 0;
 
@@ -184,10 +183,30 @@ int Server::receive_data(int i)
 		requests.find(events[i].data.fd)->second.deactivate_timeout();
 		requests.find(events[i].data.fd)->second.check_preparsing_errors();
 		RequestParser parsedRequest = RequestParser(requests.find(events[i].data.fd)->second.get_request_string());
+		parsedRequests.insert(pair<int, RequestParser>(events[i].data.fd, parsedRequest));
 		t_server serv;
 		t_server *p_serv = choose_server(parsedRequest, &serv);
-		ResponseHTTP responseHTTP(parsedRequest, p_serv, requests.find(events[i].data.fd)->second.get_error());
+		ResponseHTTP responseHTTP =  ResponseHTTP(parsedRequest, p_serv, requests.find(events[i].data.fd)->second.get_error());
 		responseHTTPs.insert(pair<int, ResponseHTTP>(events[i].data.fd, responseHTTP));
+
+		if (responseHTTP.get_need_cgi() == true)
+		{
+			// get pipes and insert them
+			writePipe.insert(pair<int, int>(responseHTTP.get_write(), events[i].data.fd));
+			readPipe.insert(pair<int, int>(responseHTTP.get_read(), events[i].data.fd));
+			read_fd = responseHTTP.get_read();
+			memset(&event, 0, sizeof(event));
+			event.events = EPOLLOUT;
+			event.data.fd = responseHTTP.get_write();
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, responseHTTP.get_write(), &event) == -1)
+				perror("epoll_ctl: mod");
+			memset(&event, 0, sizeof(event));
+			event.events = EPOLLIN;
+			event.data.fd = responseHTTP.get_read();
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, responseHTTP.get_read(), &event) == -1)
+				perror("epoll_ctl: mod");
+			// and create event for them
+		}
 		memset(&event, 0, sizeof(event));
 		event.events = EPOLLOUT;
 		event.data.fd = events[i].data.fd;
@@ -212,8 +231,16 @@ int Server::send_data(int i)
 		}
 		else
 		{
-			ResponseSender resp(events[i].data.fd, responseHTTP.get_response_string(), parsedRequest.get_chunked());
+			std::cout << "response_string : " 
+						<< responseHTTPs.find(events[i].data.fd)->second.get_response_string() << std::endl;
+			ResponseSender resp(events[i].data.fd,
+				responseHTTPs.find(events[i].data.fd)->second.get_response_string(),
+				parsedRequests.find(events[i].data.fd)->second.get_chunked());
 			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
+			std::cout << "READ FD" << read_fd << std::endl;
+			//if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, read_fd, NULL) == -1)
+			//		return (this->shutdown_server("epoll_ctl lo"));
+			readPipe.erase(read_fd);
 			_send_mode = true;
 		}
 	}
@@ -221,10 +248,13 @@ int Server::send_data(int i)
 	if (responses.find(events[i].data.fd)->second.send_response())
 	{
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-			return (this->shutdown_server("epoll_ctl"));
+			return (this->shutdown_server("epoll_ctl go"));
 		close(events[i].data.fd);
 		requests.erase(events[i].data.fd);
+		responseHTTPs.erase(events[i].data.fd);
 		responses.erase(events[i].data.fd);
+		parsedRequests.erase(events[i].data.fd);
+		_send_mode = false;
 	}
 	return (0);
 }
@@ -253,6 +283,27 @@ int Server::serve_do_your_stuff(void)
 			{
 				if (this->handle_new_connection(events[i].data.fd))
 					return (1);
+			}
+			else if (readPipe.find(events[i].data.fd) != readPipe.end())
+			{
+				std::cout << "COCOOOO" << std::endl;
+				int sfd = readPipe.find(events[i].data.fd)->second;
+				if (responseHTTPs.find(sfd)->second.read_cgi())
+				{
+					//if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
+					//	return (this->shutdown_server("epoll_ctl"));
+					//readPipe.erase(events[i].data.fd);
+				}
+			}
+			else if (writePipe.find(events[i].data.fd) != writePipe.end())
+			{
+				int sfd = writePipe.find(events[i].data.fd)->second;
+				if (responseHTTPs.find(sfd)->second.write_cgi())
+				{
+					if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
+						return (this->shutdown_server("epoll_ctl hoho"));
+					writePipe.erase(events[i].data.fd);
+				}
 			}
 			else
 			{
