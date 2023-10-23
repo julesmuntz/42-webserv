@@ -220,6 +220,7 @@ int Server::receive_data(int i)
 
 int Server::send_data(int i)
 {
+	//static not good
 	static bool	_send_mode = false;
 
 	if (_send_mode == false)
@@ -287,6 +288,7 @@ int Server::serve_do_your_stuff(void)
 			}
 			else if (writePipe.find(events[i].data.fd) != writePipe.end())
 			{
+				std::cout << "here" << std::endl;
 				int sfd = writePipe.find(events[i].data.fd)->second;
 				int status = responseHTTPs.find(sfd)->second.write_cgi();
 				if (status == 2)

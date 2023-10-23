@@ -129,6 +129,7 @@ static map<uint32_t, string> generate_static_code()
 
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error , Server *server)
 {
+	this->_pid = 2;
 	this->_need_cgi = false;
 	this->_pipefd[0] = -1;
 	this->_pipefd[1] = -1;

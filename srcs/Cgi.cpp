@@ -58,36 +58,40 @@ int ResponseHTTP::write_cgi()
 	int			n;
 	int			size_to_send;
 
-	if (size == -1)
-		size = _request.get_body().size();
-	if (size < 10000)
-		size_to_send = size;
-	else
-		size_to_send = 10000;
-	if (size == 0)
+	if (_pid == 2)
 	{
 		if (fork_cgi() == 2)
 			return (2);
-		i = 0;
-		size = -1;
-		return (1);
 	}
-	n = write(_fd[1], _request.get_body().c_str() + i, size_to_send);
-	i += size_to_send;
-	size -= size_to_send;
-	if (n == 0)
+	if (_pid != 0)
 	{
-		if (fork_cgi() == 2)
-		 	return (2);
-		i = 0;
-		size = -1;
-		return (1);
-	}
-	if (n < 0)
-	{
-		i = 0;
-		size = -1;
-		return (1);
+		if (size == -1)
+			size = _request.get_body().size();
+		if (size < 1024)
+			size_to_send = size;
+		else
+			size_to_send = 1024;
+		if (size == 0)
+		{
+			i = 0;
+			size = -1;
+			return (1);
+		}
+		n = write(_fd[1], _request.get_body().c_str() + i, size_to_send);
+		i += size_to_send;
+		size -= size_to_send;
+		if (n == 0)
+		{
+			i = 0;
+			size = -1;
+			return (1);
+		}
+		if (n < 0)
+		{
+			i = 0;
+			size = -1;
+			return (1);
+		}
 	}
 	return (0);
 }
@@ -99,6 +103,12 @@ int ResponseHTTP::fork_cgi()
 	if (_pid == -1)
 	{
 		perror("fork");
+		if (_pipefd[0] != -1)
+			close(_pipefd[0]);
+		if (_fd[0] != -1)
+			close(_fd[0]);
+		if (_fd[1] != -1)
+			close(_fd[1]);
 		return 1;
 	}
 	if (_pid == 0)
@@ -115,10 +125,14 @@ int ResponseHTTP::fork_cgi()
 			delete_env(_env, 14);
 			return (2);
 		}
-		close(_pipefd[1]);
-		close(_pipefd[0]);
-		close(_fd[0]);
-		close(_fd[1]);
+		if (_pipefd[1] != -1)
+			close(_pipefd[1]);
+		if (_pipefd[0] != -1)
+			close(_pipefd[0]);
+		if (_fd[0] != -1)
+			close(_fd[0]);
+		if (_fd[1] != -1)
+			close(_fd[1]);
 		_server->shutdown_server();
 		execve(arg[0], arg, _env);
 		perror("execve");
@@ -132,11 +146,16 @@ int ResponseHTTP::read_cgi()
 {
 	static int	i;
 
+	int	n = 0;
 	if (i == 0)
-		close(_pipefd[1]);
+	{
+		if (_pipefd[1] != -1)
+			close(_pipefd[1]);
+	}
 	i = 1;
 	char	buffer[10000];
-	int		n = read(_pipefd[0], buffer, 9999);
+	if (_pipefd[0] != -1)
+		n = read(_pipefd[0], buffer, 9999);
 	if (n >= 0)
 		buffer[n] = 0;
 	std::string	addon;
@@ -148,12 +167,20 @@ int ResponseHTTP::read_cgi()
 		//parsing of output to do
 		//_output.erase(0, _output.find("\n") + 3);
 		_html = _output;
-		close(_pipefd[0]);
-		close(_fd[0]);
-		close(_fd[1]);
+		if (_pipefd[0] != -1)
+			close(_pipefd[0]);
+		if (_fd[0] != -1)
+			close(_fd[0]);
+		if (_fd[1] != -1)
+			close(_fd[1]);
 		int status;
 		waitpid(_pid, &status, 0);
 		delete_env(_env, 14);
+		if (WIFSIGNALED(status) && WTERMSIG(status) == 2)
+		{
+			std::cout << "SIGNAL" << std::endl;
+			//return error
+		}
 		generate_response_string();
 		_need_cgi = false;
 		i = 0;

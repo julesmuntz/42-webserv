@@ -123,24 +123,24 @@ void	ResponseHTTP::create_get_post_response(string method)
 				pos = uri.find_last_of('.');
 				string	ext = uri.substr(pos, uri.size() - pos);
 				string file_location = this->_location_config.root + "/" + this->_location_config.file_location;
-				if (method == "POST")
-				{
-					_request.parseFile();
-					for (vector<t_FileInfo>::const_iterator it = _request.get_fileInfo().begin(); it != _request.get_fileInfo().end(); it++)
-					{
-						/*tmp*/std:: cout << "Data of file " << it - _request.get_fileInfo().begin() << std::endl << "fieldName: " << it->fieldName << std::endl << "fileName: " << it->fileName << std::endl << "fileType: " << it->fileType << std::endl << "fileContent: " << max_chars(it->fileContent.c_str(), 300) << std::endl; 
-						std::string uploadPath = file_location + "/" + it->fileName;
-						std::ofstream outfile(uploadPath.c_str());
-						if (!outfile)
-							break;
-						outfile << it->fileContent;
-						outfile.close();
-					}
-				}
+				// if (method == "POST")
+				// {
+				// 	_request.parseFile();
+				// 	for (vector<t_FileInfo>::const_iterator it = _request.get_fileInfo().begin(); it != _request.get_fileInfo().end(); it++)
+				// 	{
+				// 		/*tmp*/std:: cout << "Data of file " << it - _request.get_fileInfo().begin() << std::endl << "fieldName: " << it->fieldName << std::endl << "fileName: " << it->fileName << std::endl << "fileType: " << it->fileType << std::endl << "fileContent: " << max_chars(it->fileContent.c_str(), 300) << std::endl;
+				// 		std::string uploadPath = file_location + "/" + it->fileName;
+				// 		std::ofstream outfile(uploadPath.c_str());
+				// 		if (!outfile)
+				// 			break;
+				// 		outfile << it->fileContent;
+				// 		outfile.close();
+				// 	}
+				// }
 				if (ext == ".php")
 				{
 					handle_cgi_request(uri);
-					return ;
+					return (generate_response_string());
 				}
 				file.open(uri.c_str());
 				if (!file.fail())
