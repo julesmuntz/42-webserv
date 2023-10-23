@@ -46,8 +46,8 @@ class ResponseHTTP
 		void			create_get_post_response(string);
 		void			generate_response_string();
 		void			create_dir_page(string uri, map<string, string> files_in_dir);
-		char			**create_env(string uri, string file_location);
-		int				handle_cgi_request(string uri, string file_location);
+		char			**create_env(string uri);
+		int				handle_cgi_request(string uri);
 
 	public:
 		//ResponseHTTP();

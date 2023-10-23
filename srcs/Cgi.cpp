@@ -1,7 +1,7 @@
 #include "ResponseHTTP.hpp"
 
 
-char **ResponseHTTP::create_env(string uri, string file_location)
+char **ResponseHTTP::create_env(string uri)
 {
 	std::vector<std::string> env_vars;
 	env_vars.push_back("REQUEST_METHOD=" + _request.get_method());
@@ -14,7 +14,6 @@ char **ResponseHTTP::create_env(string uri, string file_location)
 	env_vars.push_back("SERVER_NAME=" + _request.get_req_head().hosts.first);
 	env_vars.push_back("SERVER_PORT=" + uint32_to_string(_request.get_req_head().hosts.second));
 	env_vars.push_back("SERVER_PROTOCOL=" + string("HTTP/1.1"));
-	env_vars.push_back("UPLOAD_DIR=" + file_location);
 	env_vars.push_back("HTTP_USER_AGENT=" + _request.get_req_head().user_agent);
 	stringstream ss_error;
 	ss_error << _error;
@@ -32,10 +31,10 @@ char **ResponseHTTP::create_env(string uri, string file_location)
 	return env;
 }
 
-int ResponseHTTP::handle_cgi_request(string uri, string file_location)
+int ResponseHTTP::handle_cgi_request(string uri)
 {
 	_uri = uri;
-	_env = create_env(uri, file_location);
+	_env = create_env(uri);
 	_need_cgi = true;
 	char *arg[] = {const_cast<char *>("cgi-bin/php-cgi"), const_cast<char *>(uri.c_str()), NULL};
 	_arg = arg;
@@ -107,13 +106,13 @@ int ResponseHTTP::fork_cgi()
 		if (dup2(_fd[0], STDIN_FILENO) == -1)
 		{
 			perror("dup2");
-			delete_env(_env, 15);
+			delete_env(_env, 14);
 			return (2);
 		}
 		if (dup2(_pipefd[1], STDOUT_FILENO) == -1)
 		{
 			perror ("dup2");
-			delete_env(_env, 15);
+			delete_env(_env, 14);
 			return (2);
 		}
 		close(_pipefd[1]);
@@ -123,7 +122,7 @@ int ResponseHTTP::fork_cgi()
 		_server->shutdown_server();
 		execve(arg[0], arg, _env);
 		perror("execve");
-		delete_env(_env, 15);
+		delete_env(_env, 14);
 		return (2);
 	}
 	return 0;
@@ -154,7 +153,7 @@ int ResponseHTTP::read_cgi()
 		close(_fd[1]);
 		int status;
 		waitpid(_pid, &status, 0);
-		delete_env(_env, 15);
+		delete_env(_env, 14);
 		generate_response_string();
 		_need_cgi = false;
 		i = 0;
