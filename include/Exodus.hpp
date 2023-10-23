@@ -12,7 +12,7 @@ class Exodus
 private:
 	ifstream			_ifs;
 	vector<t_server>	_server;
-
+	bool		file_error;
 	void	listen(t_server *, string);
 	void	server_name(t_server *, string);
 	void	client_body_size(t_server *, string);

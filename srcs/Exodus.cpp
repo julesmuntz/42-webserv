@@ -15,7 +15,7 @@ size_t getFilesize(const std::string& filename) {
 Exodus::Exodus(string const filename)
 {
 	string		extension;
-	bool		file_error = false;
+	file_error = false;
 
 	extension = FILE_CONF;
 	if ((filename.size() >= extension.size() && filename.compare(filename.size() - extension.size(), extension.size(), extension)) ||
@@ -28,13 +28,6 @@ Exodus::Exodus(string const filename)
 		this->_ifs.open(filename.c_str(), ifstream::in);
 		if (!this->_ifs.is_open())
 			file_error = true;
-	}
-	if (file_error)
-	{
-		cout << "config de defautl fj" << endl;
-		Exodus def(FILE_DEFAULT);
-		this->_server = def._server;
-		cout << this->_server[0].listen.first;
 	}
 }
 
@@ -59,7 +52,14 @@ vector<t_server>	Exodus::get_server() const
 void	Exodus::setup()
 {
 	string line;
-
+	if (file_error)
+	{
+		cout << "config de defautl fj" << endl;
+		Exodus def(FILE_DEFAULT);
+		def.setup();
+		this->_server = def._server;
+		return ;
+	}
 	while (getline(this->_ifs, line))
 	{
 		if (recherche(line, "server") && recherche(line, "{"))
@@ -73,6 +73,7 @@ void	Exodus::setup()
 		{
 			cout << "config de defautl" << endl;
 			Exodus def(FILE_DEFAULT);
+			def.setup();
 			this->_server = def._server;
 			return ;
 		}
@@ -83,6 +84,7 @@ void	Exodus::setup()
 				{
 					cout << "config de defautl" << endl;
 					Exodus def(FILE_DEFAULT);
+					def.setup();
 					this->_server = def._server;
 					return ;
 				}
