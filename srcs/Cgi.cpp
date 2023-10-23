@@ -146,7 +146,7 @@ int ResponseHTTP::read_cgi()
 	{
 		std::cout << "OUTPUT" << _output << std::endl;
 		//parsing of output to do
-		_output.erase(0, _output.find("\n") + 3);
+		//_output.erase(0, _output.find("\n") + 3);
 		_html = _output;
 		close(_pipefd[0]);
 		close(_fd[0]);

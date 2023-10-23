@@ -49,8 +49,8 @@ t_server	*Server::choose_server(RequestParser rep, t_server *serv)
 
 void Server::shutdown_server(void)
 {
-	cout << endl
-		 << "Shutting down" << endl;
+	//cout << endl
+	//	 << "Shutting down" << endl;
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
 		if (events[i].data.fd != -1)
