@@ -41,23 +41,14 @@
         <textarea id="comments" name="comments" rows="4" cols="50"></textarea>
         <br><br>
 
-        <input type="submit" value="Submit (POST allowed)">
-    </form>
-	<p></p>
-    <form action="post_no" method="post" novalidate enctype="multipart/form-data">
-		<input type="submit" value="Submit (POST not allowed)">
-    </form>
-	<p></p>
-    <form>
-		<input type="submit" value="Submit (nothing)">
-    </form>
-	<p></p>
-	<form action="post_yes" method="post" novalidate enctype="multipart/form-data">
-		<label for="fileUpload">Choose an image to upload:</label>
-		<input type="file" id="fileUpload" name="fileUpload" accept="file/*" required>
+        <label for="fileUpload">Choose an image to upload:</label>
+		<br><br>
 		<input type="file" id="fileUpload" name="fileUpload" accept="file/*" required>
 		<br><br>
-		<input type="submit" value="Upload File">
-	</form>
+		<input type="file" id="fileUpload" name="fileUpload" accept="file/*" required>
+		<br><br>
+
+		<input type="submit" value="Submit">
+    </form>
 </body>
 </html>
