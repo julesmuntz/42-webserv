@@ -2,7 +2,7 @@
 
 /* Initializes the events queue */
 
-void Server::memset_events(void)
+void	Server::memset_events(void)
 {
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
@@ -12,7 +12,7 @@ void Server::memset_events(void)
 
 /* Sets context servers from the config file */
 
-void Server::set_con_servs(vector<t_server> const &co_sers)
+void	Server::set_con_servs(vector<t_server> const &co_sers)
 {
 	this->con_servs = co_sers;
 }
@@ -60,6 +60,11 @@ void Server::shutdown_server(void)
 	{
 		if (*it != -1)
 			close(*it);
+	}
+	for (map<int, int>::iterator it = connfds.begin(); it != connfds.end(); it++)
+	{
+		if (it->second != -1)
+			close(it->second);
 	}
 	if (epoll_fd != -1)
 		close(epoll_fd);

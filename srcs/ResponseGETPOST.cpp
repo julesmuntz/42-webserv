@@ -139,6 +139,7 @@ void	ResponseHTTP::create_get_post_response(string method)
 					}
 					stringstream buffer;
 					buffer << file.rdbuf();
+					file.close();
 					_html = buffer.str();
 					return (generate_response_string());
 				}

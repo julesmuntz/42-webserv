@@ -137,6 +137,7 @@ int Server::handle_new_connection(int sfd)
 		perror("accept");
 		return (0);
 	}
+	connfds.insert(pair<int, int>(connfd, connfd));
 	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN;
 	event.data.fd = connfd;
@@ -145,7 +146,7 @@ int Server::handle_new_connection(int sfd)
 		perror("epoll_ctl: conn_sock");
 		return (0);
 	}
-	//cout << "NEW fd = " << connfd << " added to epoll" << endl;
+	cout << "NEW fd = " << connfd << " added to epoll" << endl;
 	RequestHandler req(connfd);
 	requests.insert(pair<int, RequestHandler>(connfd, req));
 	return (0);
@@ -191,7 +192,6 @@ int Server::receive_data(int i)
 
 		if (responseHTTP.get_need_cgi() == true)
 		{
-			// get pipes and insert them
 			writePipe.insert(pair<int, int>(responseHTTP.get_write(), events[i].data.fd));
 			readPipe.insert(pair<int, int>(responseHTTP.get_read(), events[i].data.fd));
 			read_fd = responseHTTP.get_read();
@@ -205,7 +205,6 @@ int Server::receive_data(int i)
 			event.data.fd = responseHTTP.get_read();
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, responseHTTP.get_read(), &event) == -1)
 				perror("epoll_ctl: mod");
-			// and create event for them
 		}
 		memset(&event, 0, sizeof(event));
 		event.events = EPOLLOUT;

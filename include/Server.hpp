@@ -37,6 +37,7 @@ class Server
 		vector<int>					sfds;
 		int							read_fd;
 		struct epoll_event			events[EPOLL_QUEUE_LEN];
+		map<int, int>				connfds;
 		map<int, RequestHandler>	requests;
 		map<int, ResponseSender>	responses;
 		map<int, ResponseHTTP>		responseHTTPs;
