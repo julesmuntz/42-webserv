@@ -1,0 +1,3 @@
+cgi-bin/CGI/* linguist-vendored=true
+cgi-bin/CGI.pm linguist-documentation=true
+cgi-bin/CGI.pod linguist-documentation=true
