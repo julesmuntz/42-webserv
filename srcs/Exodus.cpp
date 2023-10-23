@@ -67,6 +67,14 @@ void	Exodus::setup()
 	}
 	if (this->_ifs.is_open())
 		this->_ifs.close();
+	if (this->_server.empty())
+	{
+		cout << "config de defautl" << endl;
+		Exodus def(FILE_DEFAULT);
+		def.setup();
+		this->_server = def._server;
+		return ;
+	}
 	for(long unsigned int i = 0; i < this->_server.size(); i++)
 	{
 		if (this->_server[i].listen.first == 0 || this->_server[i].listen.second.empty() || this->_server[i].server_name.empty() || this->_server[i].client_body_size == 0)
