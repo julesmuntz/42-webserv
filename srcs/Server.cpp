@@ -187,7 +187,7 @@ int Server::receive_data(int i)
 		parsedRequests.insert(pair<int, RequestParser>(events[i].data.fd, parsedRequest));
 		t_server serv;
 		t_server *p_serv = choose_server(parsedRequest, &serv);
-		ResponseHTTP responseHTTP =  ResponseHTTP(parsedRequest, p_serv, requests.find(events[i].data.fd)->second.get_error());
+		ResponseHTTP responseHTTP =  ResponseHTTP(parsedRequest, p_serv, requests.find(events[i].data.fd)->second.get_error(), this);
 		responseHTTPs.insert(pair<int, ResponseHTTP>(events[i].data.fd, responseHTTP));
 
 		if (responseHTTP.get_need_cgi() == true)

@@ -80,6 +80,11 @@ int Server::shutdown_server(string str_err)
 		if (events[i].data.fd != -1)
 			close(events[i].data.fd);
 	}
+	for (map<int, int>::iterator it = connfds.begin(); it != connfds.end(); it++)
+	{
+		if (it->second != -1)
+			close(it->second);
+	}
 	for (vector<int>::iterator it = sfds.begin(); it != sfds.end(); it++)
 	{
 		if (*it != -1)

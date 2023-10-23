@@ -120,6 +120,7 @@ int ResponseHTTP::fork_cgi()
 		close(_pipefd[0]);
 		close(_fd[0]);
 		close(_fd[1]);
+		_server->shutdown_server();
 		execve(arg[0], arg, _env);
 		perror("execve");
 		delete_env(_env, 15);

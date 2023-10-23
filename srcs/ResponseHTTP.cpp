@@ -125,9 +125,9 @@ static map<uint32_t, string> generate_static_code()
 	return (result);
 }
 
-ResponseHTTP::ResponseHTTP() {};
+//ResponseHTTP::ResponseHTTP() {};
 
-ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error)
+ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error , Server *server)
 {
 	this->_need_cgi = false;
 	this->_pipefd[0] = -1;
@@ -138,6 +138,7 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	this->_request = request;
 	this->_server_config = server_config;
 	this->_error = error;
+	this->_server = server;
 	if (_server_config != NULL)
 	{
 		this->_no_location = this->set_location();
@@ -179,6 +180,7 @@ ResponseHTTP	&ResponseHTTP::operator=(ResponseHTTP const &resp)
 	this->_pid = resp._pid;
 	this->_no_location = resp._no_location;
 	this->_location_config = resp._location_config;
+	this->_server = resp._server;
 	return (*this);
 }
 

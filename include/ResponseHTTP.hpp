@@ -8,6 +8,8 @@
 						<title>Document</title></head> \
 						<body>houhou</body></html>\n\n"
 
+class Server;
+
 class ResponseHTTP
 {
 	private:
@@ -16,6 +18,7 @@ class ResponseHTTP
 		string			_response_string;
 		stringstream	_response;
 		t_error			_error;
+		Server	*_server;
 		char	**_env;
 		char	**_arg;
 		pid_t	_pid;
@@ -47,8 +50,8 @@ class ResponseHTTP
 		int				handle_cgi_request(string uri, string file_location);
 
 	public:
-		ResponseHTTP();
-		ResponseHTTP(RequestParser &, t_server *, t_error );
+		//ResponseHTTP();
+		ResponseHTTP(RequestParser &, t_server *, t_error, Server *);
 		ResponseHTTP(ResponseHTTP const &);
 		~ResponseHTTP();
 		ResponseHTTP	&operator=(ResponseHTTP const &resp);

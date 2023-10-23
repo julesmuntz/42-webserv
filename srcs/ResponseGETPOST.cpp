@@ -156,6 +156,7 @@ void	ResponseHTTP::create_get_post_response(string method)
 		{
 			perror("stat");
 			_error = error_500;
+			return (generate_response_string());
 		}
 	}
 	_error = error_404;

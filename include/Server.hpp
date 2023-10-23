@@ -57,7 +57,6 @@ class Server
 		static void	sigint_handler(int sig);
 		void		memset_events(void);
 		void		update_time(void);
-		void		shutdown_server(void);
 		int			shutdown_server(string str_err);
 
 	public:
@@ -65,4 +64,5 @@ class Server
 		~Server();
 		int		serve_do_your_stuff(void);
 		void	set_con_servs(vector<t_server> const &co_sers);
+		void		shutdown_server(void);
 };
