@@ -53,8 +53,6 @@ int ResponseHTTP::handle_cgi_request(string uri)
 
 int ResponseHTTP::write_cgi()
 {
-	static int	size = _request.get_body().size();
-	int			n;
 	int			size_to_send;
 
 	if (_pid == 2)
@@ -64,28 +62,19 @@ int ResponseHTTP::write_cgi()
 	}
 	if (_pid != 0)
 	{
-		if (size == -1)
-			size = _request.get_body().size();
-		if (size < 1024)
-			size_to_send = size;
+		if (_size_left < 1024)
+			size_to_send = _size_left;
 		else
 			size_to_send = 1024;
-		if (size == 0)
+		if (_size_left == 0)
 		{
-			size = -1;
 			return (1);
 		}
-		n = write(_fd[1], _request.get_body().c_str() + _write_count, size_to_send);
+		int n = write(_fd[1], _request.get_body().c_str() + _write_count, size_to_send);
 		_write_count += size_to_send;
-		size -= size_to_send;
-		if (n == 0)
+		_size_left -= size_to_send;
+		if (n <= 0)
 		{
-			size = -1;
-			return (1);
-		}
-		if (n < 0)
-		{
-			size = -1;
 			return (1);
 		}
 	}

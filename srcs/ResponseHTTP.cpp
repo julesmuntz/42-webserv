@@ -187,6 +187,7 @@ ResponseHTTP	&ResponseHTTP::operator=(ResponseHTTP const &resp)
 	this->_location_config = resp._location_config;
 	this->_server = resp._server;
 	this->_write_count = resp._write_count;
+	this->_size_left = resp._size_left;
 	return (*this);
 }
 
