@@ -236,7 +236,6 @@ int Server::send_data(int i)
 			responseHTTPs.find(events[i].data.fd)->second.set_send_mode(true);
 		}
 	}
-	// check return value of send
 	if (responses.find(events[i].data.fd)->second.send_response())
 	{
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
@@ -246,7 +245,6 @@ int Server::send_data(int i)
 		responseHTTPs.erase(events[i].data.fd);
 		responses.erase(events[i].data.fd);
 		parsedRequests.erase(events[i].data.fd);
-		//_send_mode = false;
 	}
 	return (0);
 }
