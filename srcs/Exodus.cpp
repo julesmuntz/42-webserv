@@ -49,17 +49,41 @@ vector<t_server>	Exodus::get_server() const
 /* ----------------------------------setup--------------------------------------- */
 /**********************************************************************************/
 
+void	Exodus::failure()
+{
+	cout << "Config par default" << endl;
+	std::string defaults;
+	defaults =    "server {\n"
+    "    listen localhost:8000;\n"
+    "    server_name localhost;\n"
+    "    client_body_size 2000000000;\n"
+    "    error_page 404 /error/404.html;\n"
+    "    location / {\n"
+    "        allow_methods POST DELETE GET;\n"
+    "        root html;\n"
+    "        index index.html index.php;\n"
+    "        file_location static;\n"
+    "        directory_listing false;\n"
+    "    }\n"
+    "    location /google {\n"
+    "        allow_methods GET;\n"
+    "        redir_link https://google.fr;\n"
+    "}\n"
+	"}";
+	_ss.str(defaults);
+	string line;
+	while (getline(_ss, line))
+	{
+		if (recherche(line, "server") && recherche(line, "{"))
+			this->_server.push_back(set_server_def());
+	}
+}
+
 void	Exodus::setup()
 {
 	string line;
 	if (file_error)
-	{
-		cout << "config de defautl fj" << endl;
-		Exodus def(FILE_DEFAULT);
-		def.setup();
-		this->_server = def._server;
-		return ;
-	}
+		return (this->_server.clear() ,this->failure());
 	while (getline(this->_ifs, line))
 	{
 		if (recherche(line, "server") && recherche(line, "{"))
@@ -68,42 +92,52 @@ void	Exodus::setup()
 	if (this->_ifs.is_open())
 		this->_ifs.close();
 	if (this->_server.empty())
-	{
-		cout << "config de defautl" << endl;
-		Exodus def(FILE_DEFAULT);
-		def.setup();
-		this->_server = def._server;
-		return ;
-	}
+		return (this->_server.clear() ,this->failure());
 	for(long unsigned int i = 0; i < this->_server.size(); i++)
 	{
 		if (this->_server[i].listen.first == 0 || this->_server[i].listen.second.empty() || this->_server[i].server_name.empty() || this->_server[i].client_body_size == 0)
-		{
-			cout << "config de defautl" << endl;
-			Exodus def(FILE_DEFAULT);
-			def.setup();
-			this->_server = def._server;
-			return ;
-		}
+			return (this->_server.clear() ,this->failure());
 		for(long unsigned int y = 0; y < this->_server[i].location.size(); y++)
 		{
 			if (this->_server[i].location[y].redir_link.empty())
 				if (this->_server[i].location[y].uri.empty() || this->_server[i].location[y].allow_methods.empty() || this->_server[i].location[y].root.empty() || this->_server[i].location[y].index.empty() || this->_server[i].location[y].file_location.empty())
-				{
-					cout << "config de defautl" << endl;
-					Exodus def(FILE_DEFAULT);
-					def.setup();
-					this->_server = def._server;
-					return ;
-				}
+					return (this->_server.clear() ,this->failure());
 		}
 	}
-
 }
 
 /**********************************************************************************/
 /* -------------------------seteur server location------------------------------- */
 /**********************************************************************************/
+
+t_server	Exodus::set_server_def()
+{
+	string	line;
+	t_server	exodus_server;
+	string servers[4] = {"listen" ,"server_name" ,"client_body_size","error_page"};
+	void		(Exodus::*f[4])(t_server *, string) = {&Exodus::listen, &Exodus::server_name, &Exodus::client_body_size, &Exodus::error_page};
+	bool		end = false;
+
+	while (!end && getline(_ss, line))
+	{
+		if (recherche(line, "location") && recherche(line, "{"))
+			exodus_server.location.push_back(set_location_def(line));
+		else if (recherche(line, "}"))
+			end = true;
+		for(long unsigned int i = 0; i < 4; i++)
+		{
+			if (recherche(line, servers[i]))
+			{
+				(this->*f[i])(&exodus_server, line);
+				break ;
+			}
+		}
+
+	}
+	if (!end)
+		throw Exodus::error_end();
+	return (exodus_server);
+}
 
 t_server	Exodus::set_server()
 {
@@ -132,6 +166,35 @@ t_server	Exodus::set_server()
 	if (!end)
 		throw Exodus::error_end();
 	return (exodus_server);
+}
+
+t_location				Exodus::set_location_def(string line)
+{
+	bool		end = false;
+	t_location	exodus_location;
+	string	locations[8] = {"uri", "allow_methods", "root", "redir_link", "index", "directory_listing", "file_location", "cgi_path"};
+	void		(Exodus::*f[8])(t_location *, string) = {&Exodus::uri, &Exodus::allow_methods, &Exodus::root, &Exodus::redir_link, &Exodus::index, &Exodus::directory_listing, &Exodus::file_location, &Exodus::cgi_path};
+
+	exodus_location.directory_listing = false;
+
+	uri(&exodus_location, line);
+	while (!end && getline(_ss, line) )
+	{
+		for(long unsigned int i = 0; i < 8; i++)
+		{
+
+			if (recherche(line, locations[i]))
+			{
+				(this->*f[i])(&exodus_location, line);
+				break ;
+			}
+		}
+		if (recherche(line, "}"))
+			end = true;
+	}
+	if (!end)
+		throw Exodus::error_end();
+	return (exodus_location);
 }
 
 t_location				Exodus::set_location(string line)
