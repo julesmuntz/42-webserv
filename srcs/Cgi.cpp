@@ -20,10 +20,11 @@ char **ResponseHTTP::create_env(string uri)
 	string s_error;
 	ss_error >> s_error;
 	env_vars.push_back("REDIRECT_STATUS=" + s_error);
-	env_vars.push_back("DOCUMENT_ROOT=" + _location_config.root);
+	env_vars.push_back("PATH_INFO=" + _location_config.root);
 	char **env = new char *[env_vars.size() + 1];
 	for (std::size_t i = 0; i < env_vars.size(); ++i)
 	{
+		// std::cout << env_vars[i] << std::endl;
 		env[i] = new char[env_vars[i].length() + 1];
 		std::strcpy(env[i], env_vars[i].c_str());
 	}
@@ -84,6 +85,7 @@ int ResponseHTTP::write_cgi()
 int ResponseHTTP::fork_cgi()
 {
 	char *arg[] = {const_cast<char *>("/bin/php-cgi"), const_cast<char *>(_uri.c_str()), NULL};
+	// char *argTester[] = {const_cast<char *>("ubuntu_cgi_tester"), NULL};
 	_pid = fork();
 	if (_pid == -1)
 	{
@@ -121,6 +123,8 @@ int ResponseHTTP::fork_cgi()
 		_server->shutdown_server();
 		execve(arg[0], arg, _env);
 		perror("execve");
+		// execve(argTester[0], argTester, _env);
+		// perror("execve");
 		delete_env(_env, 14);
 		return (2);
 	}
