@@ -58,7 +58,6 @@ class ResponseHTTP
 		ResponseHTTP(ResponseHTTP const &);
 		~ResponseHTTP();
 		ResponseHTTP	&operator=(ResponseHTTP const &resp);
-		int		handle_cgi_request(RequestParser &rp, string uri, string file_location, t_error error);
 		string	get_response_string(void) const;
 		bool	get_need_cgi(void) const;
 		void	post_methods();

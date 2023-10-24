@@ -51,7 +51,6 @@ class Server
 		int			get_a_socket(int port);
 		int			set_up_server(void);
 		int			handle_new_connection(int sfd);
-		int			handle_cgi_request(string uri);
 		int			receive_data(int i);
 		int			send_data(int i);
 		static void	sigint_handler(int sig);

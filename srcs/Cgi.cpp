@@ -37,7 +37,7 @@ int ResponseHTTP::handle_cgi_request(string uri)
 	_uri = uri;
 	_env = create_env(uri);
 	_need_cgi = true;
-	char *arg[] = {const_cast<char *>("cgi-bin/php-cgi"), const_cast<char *>(uri.c_str()), NULL};
+	char *arg[] = {const_cast<char *>(_location_config.cgi_path.c_str()), const_cast<char *>(uri.c_str()), NULL};
 	_arg = arg;
 	if (pipe(_pipefd) == -1)
 	{
@@ -84,7 +84,7 @@ int ResponseHTTP::write_cgi()
 
 int ResponseHTTP::fork_cgi()
 {
-	char *arg[] = {const_cast<char *>("/bin/php-cgi"), const_cast<char *>(_uri.c_str()), NULL};
+	char *arg[] = {const_cast<char *>(_location_config.cgi_path.c_str()), const_cast<char *>(_uri.c_str()), NULL};
 	// char *argTester[] = {const_cast<char *>("ubuntu_cgi_tester"), NULL};
 	_pid = fork();
 	if (_pid == -1)

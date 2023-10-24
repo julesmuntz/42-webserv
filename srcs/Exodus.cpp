@@ -138,8 +138,8 @@ t_location				Exodus::set_location(string line)
 {
 	bool		end = false;
 	t_location	exodus_location;
-	string	locations[8] = {"uri", "allow_methods", "root", "redir_link", "index", "directory_listing", "file_location", "cgi_pass"};
-	void		(Exodus::*f[8])(t_location *, string) = {&Exodus::uri, &Exodus::allow_methods, &Exodus::root, &Exodus::redir_link, &Exodus::index, &Exodus::directory_listing, &Exodus::file_location, &Exodus::cgi_pass};
+	string	locations[8] = {"uri", "allow_methods", "root", "redir_link", "index", "directory_listing", "file_location", "cgi_path"};
+	void		(Exodus::*f[8])(t_location *, string) = {&Exodus::uri, &Exodus::allow_methods, &Exodus::root, &Exodus::redir_link, &Exodus::index, &Exodus::directory_listing, &Exodus::file_location, &Exodus::cgi_path};
 
 	exodus_location.directory_listing = false;
 
@@ -302,11 +302,11 @@ void	Exodus::file_location(t_location *t, string line)
 		t->file_location = extractedWord;
 }
 
-void					Exodus::cgi_pass(t_location *t, string line)
+void					Exodus::cgi_path(t_location *t, string line)
 {
-	string extractedWord = extractmots(line, "cgi_pass");
+	string extractedWord = extractmots(line, "cgi_path");
 	if (!extractedWord.empty())
-		t->cgi_pass = extractedWord;
+		t->cgi_path = extractedWord;
 }
 
 void					Exodus::directory_listing(t_location *t, string line)

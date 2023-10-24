@@ -238,10 +238,10 @@ void ResponseHTTP::generate_400_error(t_error error)
 	if (it != _static_code.end())
 	{
 		this->construct_html(it->first, it->second);
-		if (_server_config && _server_config->error_pages.find(_error) != _server_config->error_pages.end())
+		if (_server_config && _server_config->error_pages.find(static_cast<uint32_t>(error)) != _server_config->error_pages.end())
 		{
 			ifstream file;
-			string filename = "." + _server_config->error_pages.find(_error)->second;
+			string filename = _server_config->error_pages.find(static_cast<uint32_t>(error))->second;
 			file.open(filename.c_str());
 			if (!file.fail())
 			{

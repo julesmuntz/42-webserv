@@ -24,7 +24,7 @@ private:
 	void	index(t_location *, string);
 	void	redir_link(t_location *, string);
 	void	file_location(t_location *, string);
-	void	cgi_pass(t_location *, string);
+	void	cgi_path(t_location *, string);
 	void	directory_listing(t_location *, string);
 
 	t_server	set_server();

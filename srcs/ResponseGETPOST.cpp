@@ -138,6 +138,11 @@ void	ResponseHTTP::create_get_post_response(string method)
 				} 
 				if (ext == ".php")
 				{
+					std::ifstream cgiFile;
+					cgiFile.open(_location_config.cgi_path.c_str());
+					if (_location_config.cgi_path.empty() || !cgiFile)
+						return (generate_400_error(error_400));
+					cgiFile.close();
 					handle_cgi_request(uri);
 					return (generate_response_string());
 				}

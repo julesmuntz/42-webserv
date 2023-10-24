@@ -15,7 +15,7 @@ typedef struct s_location
 	vector<string>	index;
 	string			redir_link;
 	string			file_location;
-	string			cgi_pass;
+	string			cgi_path;
 	bool			directory_listing;
 }		t_location;
 
@@ -26,5 +26,4 @@ typedef struct s_server
 	uint32_t						client_body_size;
 	map<uint32_t, string>			error_pages;
 	vector<t_location>				location;
-	bool							cgi;
 }		t_server;
