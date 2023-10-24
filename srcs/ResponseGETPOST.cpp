@@ -97,7 +97,8 @@ void	ResponseHTTP::create_get_post_response(string method)
 	string		uri;
 
 	_error = no_error_200;
-	select_location();
+	if (!select_location())
+		return (_error = error_400, generate_response_string());
 	if (!method_allowed(method))
 		return (generate_response_string());
 	if (redir_is_set())
@@ -135,7 +136,7 @@ void	ResponseHTTP::create_get_post_response(string method)
 						outfile << it->fileContent;
 						outfile.close();
 					}
-				} 
+				}
 				if (ext == ".php")
 				{
 					std::ifstream cgiFile;
@@ -143,7 +144,8 @@ void	ResponseHTTP::create_get_post_response(string method)
 					if (_location_config.cgi_path.empty() || !cgiFile)
 						return (generate_400_error(error_400));
 					cgiFile.close();
-					handle_cgi_request(uri);
+					if (handle_cgi_request(uri))
+						_error = error_500;
 					return (generate_response_string());
 				}
 				file.open(uri.c_str());
@@ -160,7 +162,8 @@ void	ResponseHTTP::create_get_post_response(string method)
 					file.close();
 					_html = buffer.str();
 					return (generate_response_string());
-				}else
+				}
+				else
 				{
 					_error = error_500;
 					return (generate_response_string());

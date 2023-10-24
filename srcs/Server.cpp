@@ -287,7 +287,17 @@ int Server::serve_do_your_stuff(void)
 				int status = responseHTTPs.find(sfd)->second.write_cgi();
 				if (status == 2)
 				{
-					return (this->shutdown_server(), 0);
+					if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
+						return (perror("epoll_ctl"), 1);
+					writePipe.erase(events[i].data.fd);
+					if (events[i].data.fd != -1)
+						close(events[i].data.fd);
+					int read_fd = responseHTTPs.find(sfd)->second.get_read();
+					if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, read_fd, NULL) == -1)
+						perror("epoll_ctl");
+					readPipe.erase(read_fd);
+					if (read_fd != -1)
+						close(read_fd);
 				}
 				if (status == 1)
 				{

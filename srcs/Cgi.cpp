@@ -24,7 +24,6 @@ char **ResponseHTTP::create_env(string uri)
 	char **env = new char *[env_vars.size() + 1];
 	for (std::size_t i = 0; i < env_vars.size(); ++i)
 	{
-		// std::cout << env_vars[i] << std::endl;
 		env[i] = new char[env_vars[i].length() + 1];
 		std::strcpy(env[i], env_vars[i].c_str());
 	}
@@ -59,7 +58,12 @@ int ResponseHTTP::write_cgi()
 	if (_pid == 2)
 	{
 		if (fork_cgi() == 2)
+		{
+			_error = error_500;
+			generate_response_string();
+			_need_cgi = false;
 			return (2);
+		}
 	}
 	if (_pid != 0)
 	{
@@ -85,18 +89,16 @@ int ResponseHTTP::write_cgi()
 int ResponseHTTP::fork_cgi()
 {
 	char *arg[] = {const_cast<char *>(_location_config.cgi_path.c_str()), const_cast<char *>(_uri.c_str()), NULL};
-	// char *argTester[] = {const_cast<char *>("ubuntu_cgi_tester"), NULL};
 	_pid = fork();
 	if (_pid == -1)
 	{
 		perror("fork");
-		if (_pipefd[0] != -1)
-			close(_pipefd[0]);
+		if (_pipefd[1] != -1)
+			close(_pipefd[1]);
 		if (_fd[0] != -1)
 			close(_fd[0]);
-		if (_fd[1] != -1)
-			close(_fd[1]);
-		return 1;
+		delete_env(_env, 14);
+		return 2;
 	}
 	if (_pid == 0)
 	{
@@ -123,8 +125,6 @@ int ResponseHTTP::fork_cgi()
 		_server->shutdown_server();
 		execve(arg[0], arg, _env);
 		perror("execve");
-		// execve(argTester[0], argTester, _env);
-		// perror("execve");
 		delete_env(_env, 14);
 		return (2);
 	}
@@ -165,11 +165,11 @@ int ResponseHTTP::read_cgi()
 		int status;
 		waitpid(_pid, &status, 0);
 		delete_env(_env, 14);
-		if (WIFSIGNALED(status) && WTERMSIG(status) == 2)
-		{
-			std::cout << "SIGNAL" << std::endl;
-			//return error
-		}
+		// if (WIFSIGNALED(status) && WTERMSIG(status) == 2)
+		// {
+		// 	std::cout << "SIGNAL" << std::endl;
+		// 	//return error
+		// }
 		generate_response_string();
 		_need_cgi = false;
 		i = 0;

@@ -18,6 +18,7 @@ class ResponseHTTP
 		string			_response_string;
 		stringstream	_response;
 		t_error			_error;
+		t_server	_serv;
 		Server	*_server;
 		char	**_env;
 		char	**_arg;
@@ -42,7 +43,7 @@ class ResponseHTTP
 		bool			redir_is_set(void);
 		void			handle_dir(string &uri);
 		bool			set_location();
-		void			select_location();
+		bool			select_location();
 		bool			check_errors();
 		void			construct_response();
 		void			construct_error_no_config();

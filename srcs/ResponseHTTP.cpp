@@ -174,7 +174,13 @@ ResponseHTTP	&ResponseHTTP::operator=(ResponseHTTP const &resp)
 	this->_static_ext_map = generate_static_ext_map();
 	this->_static_code = generate_static_code();
 	this->_request = resp._request;
-	this->_server_config = resp._server_config;
+	if (resp._server_config == NULL)
+		this->_server_config = resp._server_config;
+	else
+	{
+		_serv = *resp._server_config;
+		this->_server_config = &_serv;
+	}
 	this->_error = resp._error;
 	this->_env = resp._env;
 	this->_arg = resp._arg;
@@ -285,16 +291,22 @@ bool ResponseHTTP::check_errors()
 	return (false);
 }
 
-void ResponseHTTP::select_location()
+bool ResponseHTTP::select_location()
 {
-	vector<t_location>::iterator it;
+	vector<t_location>::iterator	it;
+	bool							found;
 
+	found = false;
 	sort(_server_config->location.begin(), _server_config->location.end(), cmp);
 	for (it = _server_config->location.begin(); it != _server_config->location.end(); it++)
 	{
 		if (it->uri == _request.get_uri().substr(0, it->uri.size()))
+		{
 			_location_config = *it;
+			found = true;
+		}
 	}
+	return (found);
 }
 
 void ResponseHTTP::create_dir_page(string uri, map<string, string> files_in_dir)
