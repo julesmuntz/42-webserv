@@ -107,6 +107,8 @@ void	ResponseHTTP::create_get_post_response(string method)
 	size_t	pos = _request.get_uri().find(_location_config.uri);
 	if (pos == 0)
 		uri = get_path(_request.get_uri(), _location_config);
+	else
+		return (_error = error_400, generate_response_string());
 	if (stat(uri.c_str(), &stats) == 0)
 	{
 		if (S_ISDIR(stats.st_mode))
