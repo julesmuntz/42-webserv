@@ -178,6 +178,8 @@ void					Exodus::listen(t_server *t, string line)
 		if (delimiterPos != string::npos) {
 			t->listen.second = extractedWord.substr(0, delimiterPos);
 			t->listen.first = strtol(extractedWord.substr(delimiterPos + 1).c_str(), NULL, 10);
+			if (t->listen.first > 65535)
+				throw logic_error("listen port");
 		}
 		else
 			throw logic_error("listen");
