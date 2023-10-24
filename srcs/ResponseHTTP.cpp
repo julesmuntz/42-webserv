@@ -140,6 +140,9 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	this->_server_config = server_config;
 	this->_error = error;
 	this->_server = server;
+	this->_send_mode = false;
+	this->_write_count = 0;
+	this->_size_left = _request.get_body().size();
 	if (_server_config != NULL)
 	{
 		this->_no_location = this->set_location();
@@ -166,6 +169,7 @@ ResponseHTTP	&ResponseHTTP::operator=(ResponseHTTP const &resp)
 	this->_pipefd[1] = resp._pipefd[1];
 	this->_fd[0] = resp._fd[0];
 	this->_fd[1] = resp._fd[1];
+	this->_send_mode = resp._send_mode;
 	this->_mime_type = resp._mime_type;
 	this->_static_ext_map = generate_static_ext_map();
 	this->_static_code = generate_static_code();
@@ -360,4 +364,14 @@ int	ResponseHTTP::get_read(void) const
 string ResponseHTTP::get_response_string(void) const
 {
 	return (_response_string);
+}
+
+void	ResponseHTTP::set_send_mode(bool send_mode)
+{
+	_send_mode = send_mode;
+}
+
+bool	ResponseHTTP::get_send_mode(void) const
+{
+	return (_send_mode);
 }

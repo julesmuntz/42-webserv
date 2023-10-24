@@ -30,6 +30,9 @@ class ResponseHTTP
 		string	_header;
 		string	_body;
 		string	_output;
+		bool	_send_mode;
+		int		_write_count;
+		int		_size_left;
 		bool	_need_cgi;
 		RequestParser	_request;
 		t_server		*_server_config;
@@ -67,4 +70,6 @@ class ResponseHTTP
 		int		read_cgi(void);
 		int		get_write(void) const;
 		int		get_read(void) const;
+		bool	get_send_mode(void) const;
+		void	set_send_mode(bool);
 };

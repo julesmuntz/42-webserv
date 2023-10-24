@@ -220,10 +220,7 @@ int Server::receive_data(int i)
 
 int Server::send_data(int i)
 {
-	//static not good
-	static bool	_send_mode = false;
-
-	if (_send_mode == false)
+	if (responseHTTPs.find(events[i].data.fd)->second.get_send_mode() == false)
 	{
 		if (responseHTTPs.find(events[i].data.fd)->second.get_need_cgi() == true)
 		{
@@ -236,7 +233,7 @@ int Server::send_data(int i)
 				parsedRequests.find(events[i].data.fd)->second.get_chunked());
 			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
 			readPipe.erase(read_fd);
-			_send_mode = true;
+			responseHTTPs.find(events[i].data.fd)->second.set_send_mode(true);
 		}
 	}
 	// check return value of send
@@ -249,7 +246,7 @@ int Server::send_data(int i)
 		responseHTTPs.erase(events[i].data.fd);
 		responses.erase(events[i].data.fd);
 		parsedRequests.erase(events[i].data.fd);
-		_send_mode = false;
+		//_send_mode = false;
 	}
 	return (0);
 }
@@ -288,7 +285,6 @@ int Server::serve_do_your_stuff(void)
 			}
 			else if (writePipe.find(events[i].data.fd) != writePipe.end())
 			{
-				std::cout << "here" << std::endl;
 				int sfd = writePipe.find(events[i].data.fd)->second;
 				int status = responseHTTPs.find(sfd)->second.write_cgi();
 				if (status == 2)
