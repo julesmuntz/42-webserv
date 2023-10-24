@@ -221,18 +221,12 @@ int Server::receive_data(int i)
 
 int Server::send_data(int i)
 {
-	static bool	_send_mode = false;
-
-	if (_send_mode == false)
+	if (responseHTTPs.find(events[i].data.fd)->second.get_send_mode() == false)
 	{
 		if (responseHTTPs.find(events[i].data.fd)->second.get_need_cgi() == true)
-		{
 			return (0);
-		}
 		else
 		{
-			std::cout << "response_string : " 
-						<< responseHTTPs.find(events[i].data.fd)->second.get_response_string() << std::endl;
 			ResponseSender resp(events[i].data.fd,
 				responseHTTPs.find(events[i].data.fd)->second.get_response_string(),
 				parsedRequests.find(events[i].data.fd)->second.get_chunked());
@@ -241,10 +235,10 @@ int Server::send_data(int i)
 			//if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, read_fd, NULL) == -1)
 			//		return (this->shutdown_server("epoll_ctl lo"));
 			readPipe.erase(read_fd);
-			_send_mode = true;
+			responseHTTPs.find(events[i].data.fd)->second.set_send_mode(true);
 		}
 	}
-	// check return value of send
+	std::cout << "HIIII" << std::endl;
 	if (responses.find(events[i].data.fd)->second.send_response())
 	{
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
@@ -253,8 +247,8 @@ int Server::send_data(int i)
 		requests.erase(events[i].data.fd);
 		responseHTTPs.erase(events[i].data.fd);
 		responses.erase(events[i].data.fd);
+		std::cout << "LOLOOO" << std::endl;
 		parsedRequests.erase(events[i].data.fd);
-		_send_mode = false;
 	}
 	return (0);
 }

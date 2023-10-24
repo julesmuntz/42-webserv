@@ -216,7 +216,7 @@ int ResponseHTTP::write_cgi()
 	static int	i;
 	int			n;
 	int			size_to_send;
-	
+
 	if (size == -1)
 	{
 		size = _request.get_body().size();
@@ -333,6 +333,10 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 	this->_request = request;
 	this->_server_config = server_config;
 	this->_error = error;
+	this->_server = server;
+	this->_send_mode = false;
+	this->_write_count = 0;
+	this->_size_left = _request.get_body().size();
 	if (_server_config != NULL)
 	{
 		this->_no_location = this->set_location();
@@ -373,6 +377,9 @@ ResponseHTTP	&ResponseHTTP::operator=(ResponseHTTP const &resp)
 	this->_body = resp._body;
 	this->_response_string = resp._response_string;
 	this->_pid = resp._pid;
+	this->_send_mode = resp._send_mode;
+	this->_write_count = resp._write_count;
+	this->_size_left = resp._size_left;
 	this->_no_location = resp._no_location;
 	this->_location_config = resp._location_config;
 	return (*this);
@@ -646,4 +653,23 @@ int	ResponseHTTP::get_write(void) const
 int	ResponseHTTP::get_read(void) const
 {
 	return (_pipefd[0]);
+<<<<<<< Updated upstream
 }
+=======
+}
+
+string ResponseHTTP::get_response_string(void) const
+{
+	return (_response_string);
+}
+
+void	ResponseHTTP::set_send_mode(bool send_mode)
+{
+	_send_mode = send_mode;
+}
+
+bool	ResponseHTTP::get_send_mode(void) const
+{
+	return (_send_mode);
+}
+>>>>>>> Stashed changes
