@@ -152,9 +152,6 @@ int ResponseHTTP::read_cgi()
 	_output += addon;
 	if (n <= 0)
 	{
-		std::cout << "OUTPUT" << _output << std::endl;
-		//parsing of output to do
-		//_output.erase(0, _output.find("\n") + 3);
 		string mime_type = _output.erase(0, _output.find("\r\n\r\n") + 4);
 		if (mime_type.find("Content-Length: ") != string::npos)
 			_mime_type = mime_type.erase(mime_type.find("Content-Length: ") + 16, mime_type.find("\r\n") + 2);

@@ -128,7 +128,6 @@ void	ResponseHTTP::create_get_post_response(string method)
 					_request.parseFile();
 					for (vector<t_FileInfo>::const_iterator it = _request.get_fileInfo().begin(); it != _request.get_fileInfo().end(); it++)
 					{
-						///*tmp*/std:: cout << "Data of file " << it - _request.get_fileInfo().begin() << std::endl << "fieldName: " << it->fieldName << std::endl << "fileName: " << it->fileName << std::endl << "fileType: " << it->fileType << std::endl << "fileContent: " << max_chars(it->fileContent.c_str(), 300) << std::endl;
 						std::string uploadPath = file_location + "/" + it->fileName;
 						std::ofstream outfile(uploadPath.c_str());
 						if (!outfile)
@@ -136,7 +135,7 @@ void	ResponseHTTP::create_get_post_response(string method)
 						outfile << it->fileContent;
 						outfile.close();
 					}
-				}
+				} 
 				if (ext == ".php")
 				{
 					handle_cgi_request(uri);
@@ -155,6 +154,10 @@ void	ResponseHTTP::create_get_post_response(string method)
 					buffer << file.rdbuf();
 					file.close();
 					_html = buffer.str();
+					return (generate_response_string());
+				}else
+				{
+					_error = error_500;
 					return (generate_response_string());
 				}
 			}
