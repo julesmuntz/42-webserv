@@ -49,7 +49,6 @@ void	ResponseSender::send_chunked(size_t size)
 
 bool	ResponseSender::send_response(void)
 {
-	// check return value of send
 	cout << "Sending..." << endl;
 
 	if (_transfert)

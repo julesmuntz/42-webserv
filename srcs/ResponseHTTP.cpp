@@ -276,7 +276,6 @@ void ResponseHTTP::generate_400_error(t_error error)
 
 bool ResponseHTTP::check_errors()
 {
-	std::cout << "ERROR is " << _error << std::endl;
 	if (_error)
 		return (true);
 	if (_request.get_method() != "GET" && _request.get_method() != "DELETE" && _request.get_method() != "POST")
@@ -391,4 +390,9 @@ void	ResponseHTTP::set_send_mode(bool send_mode)
 bool	ResponseHTTP::get_send_mode(void) const
 {
 	return (_send_mode);
+}
+
+t_error	ResponseHTTP::get_error(void) const
+{
+	return (_error);
 }

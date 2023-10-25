@@ -165,11 +165,6 @@ int ResponseHTTP::read_cgi()
 		int status;
 		waitpid(_pid, &status, 0);
 		delete_env(_env, 14);
-		// if (WIFSIGNALED(status) && WTERMSIG(status) == 2)
-		// {
-		// 	std::cout << "SIGNAL" << std::endl;
-		// 	//return error
-		// }
 		generate_response_string();
 		_need_cgi = false;
 		i = 0;

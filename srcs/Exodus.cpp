@@ -52,7 +52,7 @@ vector<t_server>	Exodus::get_server() const
 void	Exodus::failure()
 {
 	this->_server.clear();
-	cout << "Config par default" << endl;
+	cout << "Default config" << endl;
 	std::string defaults;
 	defaults =    "server {\n"
     "    listen localhost:8000\n"

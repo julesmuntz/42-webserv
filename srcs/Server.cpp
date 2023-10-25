@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mbelrhaz <mbelrhaz@student.42.fr>          +#+  +:+       +#+        */
+/*   By: julmuntz <julmuntz@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/20 18:09:05 by mbelrhaz          #+#    #+#             */
-/*   Updated: 2023/10/21 22:46:42 by mbelrhaz         ###   ########.fr       */
+/*   Updated: 2023/10/25 12:16:11 by julmuntz         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ int Server::get_a_socket(int port)
 			freeaddrinfo(result);
 			return (this->shutdown_server("setsockopt"));
 		}
-		//cout << "sfd = " << sfd << endl;
+		cout << "NEW socket fd = " << sfd << endl;
 		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
 			break;
 		close(sfd);
@@ -146,7 +146,7 @@ int Server::handle_new_connection(int sfd)
 		perror("epoll_ctl: conn_sock");
 		return (0);
 	}
-	cout << "NEW fd = " << connfd << " added to epoll" << endl;
+	cout << "NEW connection fd = " << connfd << " added to epoll" << endl;
 	RequestHandler req(connfd);
 	requests.insert(pair<int, RequestHandler>(connfd, req));
 	return (0);
@@ -238,6 +238,7 @@ int Server::send_data(int i)
 	}
 	if (responses.find(events[i].data.fd)->second.send_response())
 	{
+		std::cout << "RESPONSE CODE: " << responseHTTPs.find(events[i].data.fd)->second.get_error() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
 			return (this->shutdown_server("epoll_ctl go"));
 		close(events[i].data.fd);

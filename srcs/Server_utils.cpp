@@ -49,8 +49,6 @@ t_server	*Server::choose_server(RequestParser rep, t_server *serv)
 
 void Server::shutdown_server(void)
 {
-	//cout << endl
-	//	 << "Shutting down" << endl;
 	for (int i = 0; i < EPOLL_QUEUE_LEN; i++)
 	{
 		if (events[i].data.fd != -1)
@@ -109,7 +107,6 @@ void Server::update_time(void)
 			fd = it->second.get_fd();
 			it->second.deactivate_timeout();
 			it->second.check_preparsing_errors();
-			std::cout << "ERROR " << it->second.get_error() << std::endl;
 			RequestParser parsedRequest = it->second.get_request_string();
 			parsedRequests.insert(pair<int, RequestParser>(fd, parsedRequest));
 			t_server serv;

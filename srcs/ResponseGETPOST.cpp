@@ -195,12 +195,12 @@ void ResponseHTTP::delete_methods()
 {
 	select_location();
 	string path = get_path(_request.get_uri(), _location_config);
-
+	
 	if (!isFile(path) && !isDir(path))
-		return (generate_400_error(error_400));
+		return (_error = error_400, generate_400_error(error_400));
 	if (!isWrite(path))
-		return (generate_400_error(error_404));
+		return (_error = error_404, generate_400_error(error_404));
 	if (remove(path.c_str()) != 0)
-		return (generate_400_error(error_500));
-	return (generate_400_error(no_error_200));
+		return (_error = error_500, generate_400_error(error_500));
+	return (_error = no_error_200, generate_400_error(no_error_200));
 }

@@ -54,7 +54,6 @@ class ResponseHTTP
 		int				handle_cgi_request(string uri);
 
 	public:
-		//ResponseHTTP();
 		ResponseHTTP(RequestParser &, t_server *, t_error, Server *);
 		ResponseHTTP(ResponseHTTP const &);
 		~ResponseHTTP();
@@ -72,4 +71,5 @@ class ResponseHTTP
 		int		get_read(void) const;
 		bool	get_send_mode(void) const;
 		void	set_send_mode(bool);
+		t_error get_error(void) const;
 };
