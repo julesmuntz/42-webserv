@@ -22,7 +22,10 @@ t_error	RequestHandler::get_error(void) const
 void	RequestHandler::check_preparsing_errors(void)
 {
 	if (req.time.timeout) // check timeout
+	{
 		error = error_408;
+		std::cout << "POUTOUUUU" << std::endl;
+	}
 	else if (bad_request) // check bad_request
 		error = error_400;
 	else if (req.msg_too_long) // check message size
@@ -52,4 +55,9 @@ bool	RequestHandler::add_data(char *str, size_t nread)
 		return (false);
 	}
 	return (!this->request_is_over());
+}
+
+int	RequestHandler::get_fd(void) const
+{
+	return (this->fd);
 }
