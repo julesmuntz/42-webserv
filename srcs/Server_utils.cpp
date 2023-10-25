@@ -98,7 +98,6 @@ int Server::shutdown_server(string str_err)
 void Server::update_time(void)
 {
 	map<int, RequestHandler>::iterator it;
-	//struct epoll_event event;
 
 	for (it = requests.begin(); it != requests.end(); it++)
 	{

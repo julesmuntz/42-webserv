@@ -186,7 +186,8 @@ void	ResponseHTTP::create_get_post_response(string method)
 			return (generate_response_string());
 		}
 	}
-	_error = error_404;
+	if (_html.empty())
+		_error = error_404;
 	return (generate_response_string());
 }
 
