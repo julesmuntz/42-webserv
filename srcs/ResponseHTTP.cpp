@@ -149,7 +149,9 @@ ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_er
 		this->construct_response();
 		return;
 	}
-	this->generate_400_error(error_400);
+	if (!error)
+		error = error_400;
+	this->generate_400_error(error);
 }
 
 ResponseHTTP::ResponseHTTP(ResponseHTTP const &resp)
@@ -274,6 +276,7 @@ void ResponseHTTP::generate_400_error(t_error error)
 
 bool ResponseHTTP::check_errors()
 {
+	std::cout << "ERROR is " << _error << std::endl;
 	if (_error)
 		return (true);
 	if (_request.get_method() != "GET" && _request.get_method() != "DELETE" && _request.get_method() != "POST")

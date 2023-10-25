@@ -98,17 +98,30 @@ int Server::shutdown_server(string str_err)
 void Server::update_time(void)
 {
 	map<int, RequestHandler>::iterator it;
-	struct epoll_event event;
+	//struct epoll_event event;
 
 	for (it = requests.begin(); it != requests.end(); it++)
 	{
+		int	fd;
+		struct epoll_event event;
+
 		if (it->second.check_timeout())
 		{
+			fd = it->second.get_fd();
 			it->second.deactivate_timeout();
+			it->second.check_preparsing_errors();
+			std::cout << "ERROR " << it->second.get_error() << std::endl;
+			RequestParser parsedRequest = it->second.get_request_string();
+			parsedRequests.insert(pair<int, RequestParser>(fd, parsedRequest));
+			t_server serv;
+			t_server *p_serv = choose_server(parsedRequest, &serv);
+			ResponseHTTP responseHTTP =  ResponseHTTP(parsedRequest, p_serv, it->second.get_error(), this);
+			responseHTTPs.insert(pair<int, ResponseHTTP>(fd, responseHTTP));
+			memset(&event, 0, sizeof(event));
 			event.events = EPOLLOUT;
-			event.data.fd = it->first;
-			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, it->first, &event) == -1)
-				this->shutdown_server("epoll_ctl");
+			event.data.fd = fd;
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &event) == -1)
+				perror("epoll_ctl: mod");
 		}
 	}
 }

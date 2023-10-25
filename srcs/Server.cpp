@@ -277,9 +277,7 @@ int Server::serve_do_your_stuff(void)
 			else if (readPipe.find(events[i].data.fd) != readPipe.end())
 			{
 				int sfd = readPipe.find(events[i].data.fd)->second;
-				if (responseHTTPs.find(sfd)->second.read_cgi())
-				{
-				}
+				responseHTTPs.find(sfd)->second.read_cgi();
 			}
 			else if (writePipe.find(events[i].data.fd) != writePipe.end())
 			{

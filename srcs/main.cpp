@@ -7,7 +7,7 @@ int main(int argc, char ** argv)
 		return (cerr << "./webserv [configuration file]" << endl, 0);
 
 	Server				webserver;
-	int					ret;
+	int					ret = 0;
 	vector<t_server>	context_servers;
 
 	try {

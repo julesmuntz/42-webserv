@@ -5,7 +5,7 @@
 using namespace std;
 
 #define HEADER_MAX_SIZE	10000
-#define MSG_MAX_SIZE	INT_MAX
+#define MSG_MAX_SIZE	8388600
 
 typedef enum	e_error {
 	error_400    = 400, // bad request
@@ -35,6 +35,7 @@ class RequestHandler : virtual public RequestEndDeterminator
 		void	set_error(t_error new_error);
 		string	get_request_string(void) const;
 		t_error	get_error(void) const;
+		int		get_fd(void) const;
 		bool	add_data(char *str, size_t nread);
 		void	check_preparsing_errors(void); //timeout, request header too long, and msg too long (request body too long), and bad request
 };
