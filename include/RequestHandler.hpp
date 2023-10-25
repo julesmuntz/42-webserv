@@ -5,7 +5,7 @@
 using namespace std;
 
 #define HEADER_MAX_SIZE	10000
-#define MSG_MAX_SIZE	INT_MAX
+#define MSG_MAX_SIZE	8388600
 
 typedef enum	e_error {
 	error_400    = 400, // bad request
