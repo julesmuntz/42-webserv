@@ -303,8 +303,7 @@ void					Exodus::error_page(t_server *t, string line)
 			listenIndex += 2;
 		}
 	}
-	elseerror end
-
+	else
 		throw logic_error("error_page") ;
 }
 
@@ -375,7 +374,7 @@ void	Exodus::redir_link(t_location *t, string line)
 }
 
 void	Exodus::file_location(t_location *t, string line)
-{error end
+{
 
 	string extractedWord = extractmots(line, "file_location");
 	if (!extractedWord.empty())
