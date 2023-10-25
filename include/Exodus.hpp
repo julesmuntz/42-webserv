@@ -19,6 +19,7 @@ private:
 	ifstream			_ifs;
 	std::istringstream	_ss;
 	vector<t_server>	_server;
+	bool	serv;
 	bool		file_error;
 	void	failure();
 	void	listen(t_server *, string);

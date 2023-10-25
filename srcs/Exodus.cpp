@@ -16,7 +16,7 @@ Exodus::Exodus(string const filename)
 {
 	string		extension;
 	file_error = false;
-
+	serv = true;
 	extension = FILE_CONF;
 	if ((filename.size() >= extension.size() && filename.compare(filename.size() - extension.size(), extension.size(), extension)) ||
 		(filename.size() < extension.size()))
@@ -51,6 +51,7 @@ vector<t_server>	Exodus::get_server() const
 
 void	Exodus::failure()
 {
+	this->_server.clear();
 	cout << "Config par default" << endl;
 	std::string defaults;
 	defaults =    "server {\n"
@@ -91,6 +92,8 @@ void	Exodus::setup()
 	}
 	if (this->_ifs.is_open())
 		this->_ifs.close();
+	if (!serv)
+		return (this->_server.clear() ,this->failure());
 	if (this->_server.empty())
 		return (this->_server.clear() ,this->failure());
 	for(long unsigned int i = 0; i < this->_server.size(); i++)
@@ -143,14 +146,18 @@ t_server	Exodus::set_server()
 {
 	string	line;
 	t_server	exodus_server;
+	t_server	exodus_servers;
 	string servers[4] = {"listen" ,"server_name" ,"client_body_size","error_page"};
 	void		(Exodus::*f[4])(t_server *, string) = {&Exodus::listen, &Exodus::server_name, &Exodus::client_body_size, &Exodus::error_page};
 	bool		end = false;
 
 	while (!end && getline(this->_ifs, line))
 	{
-		if (recherche(line, "location") && recherche(line, "{"))
-			exodus_server.location.push_back(set_location(line));
+		if (recherche(line, "location"))
+			if (recherche(line, "{"))
+				exodus_server.location.push_back(set_location(line));
+			else
+				serv = false;
 		else if (recherche(line, "}"))
 			end = true;
 		for(long unsigned int i = 0; i < 4; i++)
@@ -293,7 +300,8 @@ void					Exodus::error_page(t_server *t, string line)
 			listenIndex += 2;
 		}
 	}
-	else
+	elseerror end
+
 		throw logic_error("error_page") ;
 }
 
@@ -303,9 +311,12 @@ void					Exodus::error_page(t_server *t, string line)
 
 void	Exodus::uri(t_location *t, string line)
 {
+	line.erase(std::remove(line.begin(), line.end(), '{'), line.end());
 	string extractedWord = extractmots(line, "location");
+
 	if (!extractedWord.empty())
 		t->uri = extractedWord;
+
 }
 
 void					Exodus::allow_methods(t_location *t, string line)
@@ -361,7 +372,8 @@ void	Exodus::redir_link(t_location *t, string line)
 }
 
 void	Exodus::file_location(t_location *t, string line)
-{
+{error end
+
 	string extractedWord = extractmots(line, "file_location");
 	if (!extractedWord.empty())
 		t->file_location = extractedWord;
