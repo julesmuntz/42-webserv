@@ -154,9 +154,6 @@ int Server::handle_new_connection(int sfd)
 
 /* Handles the data sent to connection sockets by the client */
 
-// return error server instead of shutting down the server, or before shutting down the server
-// define a server error state to be able to respond to all the clients before quitting
-
 int Server::receive_data(int i)
 {
 	struct epoll_event event;
@@ -178,7 +175,8 @@ int Server::receive_data(int i)
 		requests.erase(events[i].data.fd);
 		return (0);
 	}
-	buf[nread] = '\0';
+	if (nread >= 0)
+		buf[nread] = '\0';
 	if (!(requests.find(events[i].data.fd))->second.add_data(buf, nread))
 	{
 		requests.find(events[i].data.fd)->second.deactivate_timeout();

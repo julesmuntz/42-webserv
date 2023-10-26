@@ -21,7 +21,7 @@ using namespace std;
 #define BACKLOG 10
 #define EPOLL_QUEUE_LEN 100000
 #define BUF_SIZE 1024
-#define TIMEOUT  10
+#define TIMEOUT  100
 #define FILE_CONF ".conf"
 #define FILE_DEFAULT "conf/default.conf"
 #define ERROR_FILENAME "config file does not end with .conf"

@@ -36,6 +36,6 @@ class RequestHandler : virtual public RequestEndDeterminator
 		string	get_request_string(void) const;
 		t_error	get_error(void) const;
 		int		get_fd(void) const;
-		bool	add_data(char *str, size_t nread);
+		bool	add_data(char *str, long long nread);
 		void	check_preparsing_errors(void); //timeout, request header too long, and msg too long (request body too long), and bad request
 };

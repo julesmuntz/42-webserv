@@ -39,10 +39,12 @@ void	RequestHandler::check_preparsing_errors(void)
 	}
 }
 
-bool	RequestHandler::add_data(char *str, size_t nread)
+bool	RequestHandler::add_data(char *str, long long nread)
 {
 	std::string	addon;
 
+	if (nread == -1)
+		return (false);
 	addon.assign(str, nread);
 	req.request += addon;
 	msg_len += nread;
