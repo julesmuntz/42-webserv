@@ -8,6 +8,8 @@
 						<title>Document</title></head> \
 						<body>houhou</body></html>\n\n"
 
+#define TIMEOUT_RESPONSE	3
+
 class Server;
 
 class ResponseHTTP
@@ -35,6 +37,7 @@ class ResponseHTTP
 		int		_write_count;
 		int		_size_left;
 		bool	_need_cgi;
+		t_time	_time;
 		RequestParser	_request;
 		t_server		*_server_config;
 		t_location		_location_config;
@@ -60,6 +63,7 @@ class ResponseHTTP
 		ResponseHTTP	&operator=(ResponseHTTP const &resp);
 		string	get_response_string(void) const;
 		bool	get_need_cgi(void) const;
+		void	set_need_cgi(bool);
 		void	post_methods();
 		void	delete_methods();
 		void	construct_html(uint32_t, string &);
@@ -72,4 +76,9 @@ class ResponseHTTP
 		bool	get_send_mode(void) const;
 		void	set_send_mode(bool);
 		t_error get_error(void) const;
+		bool	check_timeout(void);
+		void	deactivate_timeout(void);
+		void	kill_child(void) const;
+		void	_delete_env(void);
+		void	close_pipes(void);
 };

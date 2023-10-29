@@ -75,7 +75,9 @@ int ResponseHTTP::write_cgi()
 		{
 			return (1);
 		}
-		int n = write(_fd[1], _request.get_body().c_str() + _write_count, size_to_send);
+		int	n = -1;
+		if (_fd[1] != -1)
+			n = write(_fd[1], _request.get_body().c_str() + _write_count, size_to_send);
 		_write_count += size_to_send;
 		_size_left -= size_to_send;
 		if (n <= 0)
@@ -133,15 +135,10 @@ int ResponseHTTP::fork_cgi()
 
 int ResponseHTTP::read_cgi()
 {
-	static int	i;
-
 	int	n = 0;
-	if (i == 0)
-	{
-		if (_pipefd[1] != -1)
-			close(_pipefd[1]);
-	}
-	i = 1;
+
+	if (_pipefd[1] != -1)
+		close(_pipefd[1]);
 	char	buffer[10000];
 	if (_pipefd[0] != -1)
 		n = read(_pipefd[0], buffer, 9999);
@@ -156,8 +153,8 @@ int ResponseHTTP::read_cgi()
 		if (mime_type.find("Content-Length: ") != string::npos)
 			_mime_type = mime_type.erase(mime_type.find("Content-Length: ") + 16, mime_type.find("\r\n") + 2);
 		_html = _output;
-		if (_pipefd[0] != -1)
-			close(_pipefd[0]);
+		//if (_pipefd[0] != -1)
+		//	close(_pipefd[0]);
 		if (_fd[0] != -1)
 			close(_fd[0]);
 		if (_fd[1] != -1)
@@ -167,8 +164,15 @@ int ResponseHTTP::read_cgi()
 		delete_env(_env, 14);
 		generate_response_string();
 		_need_cgi = false;
-		i = 0;
 		return 1;
 	}
 	return 0;
+}
+
+void	ResponseHTTP::close_pipes(void)
+{
+	if (_fd[0] != -1)
+		close(_fd[0]);
+	if (_pipefd[1] != -1)
+		close(_pipefd[1]);
 }

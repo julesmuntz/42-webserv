@@ -2,6 +2,9 @@
 #include <fstream>
 #include <dirent.h>
 #include "ResponseDir.hpp"
+#include "RequestEndDeterminator.hpp"
+#include "Server.hpp"
+#include "utils.hpp"
 
 /**********************************************************************************/
 /* -------------------------constructeur destructeur----------------------------- */
@@ -125,10 +128,16 @@ static map<uint32_t, string> generate_static_code()
 	return (result);
 }
 
-//ResponseHTTP::ResponseHTTP() {};
-
 ResponseHTTP::ResponseHTTP(RequestParser &request, t_server *server_config, t_error error , Server *server)
 {
+	time_t	ref;
+
+	time(&ref);
+	this->_env = NULL;
+	this->_time.active = true;
+	this->_time.start_time = ref;
+	this->_time.timeout = false;
+	this->_time.time_passed_since = 0;
 	this->_pid = 2;
 	this->_need_cgi = false;
 	this->_pipefd[0] = -1;
@@ -166,6 +175,10 @@ ResponseHTTP::~ResponseHTTP() {}
 
 ResponseHTTP	&ResponseHTTP::operator=(ResponseHTTP const &resp)
 {
+	this->_time.active = resp._time.active;
+	this->_time.start_time = resp._time.start_time;
+	this->_time.timeout = resp._time.timeout;
+	this->_time.time_passed_since = resp._time.time_passed_since;
 	this->_need_cgi = resp._need_cgi;
 	this->_pipefd[0] = resp._pipefd[0];
 	this->_pipefd[1] = resp._pipefd[1];
@@ -367,6 +380,11 @@ bool	ResponseHTTP::get_need_cgi(void) const
 	return (_need_cgi);
 }
 
+void	ResponseHTTP::set_need_cgi(bool status)
+{
+	_need_cgi = status;
+}
+
 int	ResponseHTTP::get_write(void) const
 {
 	return (_fd[1]);
@@ -395,4 +413,36 @@ bool	ResponseHTTP::get_send_mode(void) const
 t_error	ResponseHTTP::get_error(void) const
 {
 	return (_error);
+}
+
+void	ResponseHTTP::deactivate_timeout(void)
+{
+	this->_time.active = false;
+}
+
+bool	ResponseHTTP::check_timeout(void)
+{
+	time_t	now;
+
+	if (this->_time.active == false)
+		return (false);
+	time(&now);
+	this->_time.time_passed_since = difftime(now, this->_time.start_time);
+	if (this->_time.time_passed_since > TIMEOUT_RESPONSE)
+	{
+		this->_time.timeout = true;
+		return (true);
+	}
+	return (false);
+}
+
+void	ResponseHTTP::kill_child(void) const
+{
+	kill(_pid, SIGKILL);
+}
+
+void	ResponseHTTP::_delete_env(void)
+{
+	if (_env != NULL)
+		delete_env(_env, 14);
 }

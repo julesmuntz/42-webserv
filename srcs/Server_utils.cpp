@@ -95,7 +95,7 @@ int Server::shutdown_server(string str_err)
 
 void Server::update_time(void)
 {
-	map<int, RequestHandler>::iterator it;
+	map<int, RequestHandler>::iterator	it;
 
 	for (it = requests.begin(); it != requests.end(); it++)
 	{
@@ -118,6 +118,26 @@ void Server::update_time(void)
 			event.data.fd = fd;
 			if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &event) == -1)
 				perror("epoll_ctl: mod");
+		}
+	}
+
+	map<int, ResponseHTTP>::iterator	ite;
+
+	for (ite = responseHTTPs.begin(); ite != responseHTTPs.end(); ite++)
+	{
+		if (ite->second.get_need_cgi() && ite->second.check_timeout())
+		{
+			ite->second.deactivate_timeout();
+			ite->second.set_need_cgi(false);
+			ite->second._delete_env();
+			int write_fd = ite->second.get_write();
+			if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, write_fd, NULL) == -1)
+					perror("epoll_ctl write_fd in update_time");
+			writePipe.erase(write_fd);
+			if (write_fd != -1)
+				close(write_fd);
+			ite->second.close_pipes();
+			ite->second.kill_child();
 		}
 	}
 }

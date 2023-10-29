@@ -230,7 +230,14 @@ int Server::send_data(int i)
 				responseHTTPs.find(events[i].data.fd)->second.get_response_string(),
 				parsedRequests.find(events[i].data.fd)->second.get_chunked());
 			responses.insert(pair<int, ResponseSender>(events[i].data.fd, resp));
-			readPipe.erase(read_fd);
+			read_fd = responseHTTPs.find(events[i].data.fd)->second.get_read();
+			if (read_fd != -1)
+			{
+				readPipe.erase(read_fd);
+				if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, read_fd, NULL) == -1)
+					perror("epoll_ctl go");
+				close(read_fd);
+			}
 			responseHTTPs.find(events[i].data.fd)->second.set_send_mode(true);
 		}
 	}
@@ -238,7 +245,7 @@ int Server::send_data(int i)
 	{
 		std::cout << "RESPONSE CODE: " << responseHTTPs.find(events[i].data.fd)->second.get_error() << std::endl;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-			return (this->shutdown_server("epoll_ctl go"));
+			perror("epoll_ctl go");
 		close(events[i].data.fd);
 		requests.erase(events[i].data.fd);
 		responseHTTPs.erase(events[i].data.fd);
@@ -285,7 +292,7 @@ int Server::serve_do_your_stuff(void)
 				if (status == 2)
 				{
 					if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-						return (perror("epoll_ctl"), 1);
+						perror("epoll_ctl line 299");
 					writePipe.erase(events[i].data.fd);
 					if (events[i].data.fd != -1)
 						close(events[i].data.fd);
@@ -299,13 +306,14 @@ int Server::serve_do_your_stuff(void)
 				if (status == 1)
 				{
 					if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) == -1)
-						return (perror("epoll_ctl"), 1);
+						perror("epoll_ctl line 313");
 					writePipe.erase(events[i].data.fd);
+					close(events[i].data.fd);
 				}
 			}
 			else
 			{
-				if (events[i].events == EPOLLIN)
+				if (events[i].events == EPOLLIN && requests.find(events[i].data.fd) != requests.end())
 				{
 					if (this->receive_data(i))
 						return (1);
